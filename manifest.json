@@ -1,0 +1,11 @@
+{
+  "display_name": "Character Forge",
+  "name": "character-forge",
+  "description": "AI-assisted character generator. Describe a character in plain language, get back a complete Character Card V3 with embedded lorebook.",
+  "version": "0.0.1",
+  "author": "Character Forge Contributors",
+  "homepage": "https://github.com/calebhk98/character-forge",
+  "requires": {
+    "sillytavern": ">=1.10.0"
+  }
+}
