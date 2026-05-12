@@ -2,7 +2,6 @@
 
 > An AI-assisted character generator extension for [SillyTavern](https://github.com/SillyTavern/SillyTavern). Describe a character in plain language, get back a complete V3 character card with an embedded lorebook.
 
-> **Heads up:** the name `character-forge` / `Character Forge` is a working title. If you want something different, do a find/replace across the repo before publishing.
 
 ## Status
 
