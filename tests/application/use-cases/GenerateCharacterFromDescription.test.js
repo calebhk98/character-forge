@@ -13,7 +13,7 @@ import { Character } from '../../../src/domain/entities/Character.js';
 /**
  * Fake prompt builder for testing.
  *
- * @extends IPromptBuilder
+ * @augments IPromptBuilder
  */
 class FakePromptBuilder extends IPromptBuilder {
     /**
@@ -46,7 +46,7 @@ class FakePromptBuilder extends IPromptBuilder {
 /**
  * Fake LLM provider for testing.
  *
- * @extends ILlmProvider
+ * @augments ILlmProvider
  */
 class FakeLlmProvider extends ILlmProvider {
     /**
@@ -82,7 +82,7 @@ class FakeLlmProvider extends ILlmProvider {
 /**
  * Fake logger for testing.
  *
- * @extends ILogger
+ * @augments ILogger
  */
 class FakeLogger extends ILogger {
     /**
