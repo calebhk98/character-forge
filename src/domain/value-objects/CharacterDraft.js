@@ -11,9 +11,9 @@ export class CharacterDraft {
     /**
      * Construct a CharacterDraft.
      *
-     * @param {object} data
-     * @param {import('../entities/Character.js').Character} data.character
-     * @param {import('../entities/Lorebook.js').Lorebook} [data.lorebook]
+     * @param {object} data - draft data object
+     * @param {import('../entities/Character.js').Character} data.character - the character entity
+     * @param {import('../entities/Lorebook.js').Lorebook} [data.lorebook] - optional embedded lorebook
      */
     constructor(data) {
         this.character = data.character;

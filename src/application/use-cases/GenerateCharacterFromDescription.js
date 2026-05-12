@@ -11,9 +11,9 @@ export class GenerateCharacterFromDescription {
     /**
      * Construct the use case with its dependencies.
      *
-     * @param {import('../ports/IPromptBuilder.js').IPromptBuilder} promptBuilder
-     * @param {import('../ports/ILlmProvider.js').ILlmProvider} llmProvider
-     * @param {import('../ports/ILogger.js').ILogger} logger
+     * @param {import('../ports/IPromptBuilder.js').IPromptBuilder} promptBuilder - port for building generation requests
+     * @param {import('../ports/ILlmProvider.js').ILlmProvider} llmProvider - port for LLM text generation
+     * @param {import('../ports/ILogger.js').ILogger} logger - port for diagnostic logging
      */
     constructor(promptBuilder, llmProvider, logger) {
         this.promptBuilder = promptBuilder;
@@ -24,9 +24,9 @@ export class GenerateCharacterFromDescription {
     /**
      * Execute the use case.
      *
-     * @param {string} _description - character concept
+     * @param {string} _description - character concept in plain language
      * @param {object} [_options] - generation options
-     * @returns {Promise<import('../../domain/entities/Character.js').Character>} generated character
+     * @returns {Promise<import('../../domain/entities/Character.js').Character>} generated character entity
      */
     async execute(_description, _options = {}) {
         // TODO: implement

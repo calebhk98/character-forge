@@ -14,10 +14,8 @@ export class CardV3Formatter extends ICardFormatter {
     /**
      * Format a character and lorebook to V3 JSON.
      *
-     * @param {import('../../domain/entities/Character.js').Character} character
-     * @param {import('../../domain/entities/Lorebook.js').Lorebook} [lorebook]
-     * @param _character
-     * @param _lorebook
+     * @param {import('../../domain/entities/Character.js').Character} _character - character to format
+     * @param {import('../../domain/entities/Lorebook.js').Lorebook} [_lorebook] - optional lorebook to embed
      * @returns {object} Character Card V3 JSON object
      */
     format(_character, _lorebook) {

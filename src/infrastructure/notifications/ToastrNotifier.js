@@ -14,7 +14,7 @@ export class ToastrNotifier extends INotifier {
     /**
      * Construct the notifier.
      *
-     * @param {object} stContext result of getContext()
+     * @param {object} stContext - result of getContext()
      */
     constructor(stContext) {
         super();
@@ -24,8 +24,8 @@ export class ToastrNotifier extends INotifier {
     /**
      * Show an info notification.
      *
-     * @param {string} message
-     * @param _message
+     * @param {string} _message - notification text
+     * @returns {void}
      */
     info(_message) {
         // TODO: implement - call window.toastr.info or similar
@@ -35,8 +35,8 @@ export class ToastrNotifier extends INotifier {
     /**
      * Show a success notification.
      *
-     * @param {string} message
-     * @param _message
+     * @param {string} _message - notification text
+     * @returns {void}
      */
     success(_message) {
         // TODO: implement - call window.toastr.success or similar
@@ -46,8 +46,8 @@ export class ToastrNotifier extends INotifier {
     /**
      * Show a warning notification.
      *
-     * @param {string} message
-     * @param _message
+     * @param {string} _message - notification text
+     * @returns {void}
      */
     warning(_message) {
         // TODO: implement - call window.toastr.warning or similar
@@ -57,8 +57,8 @@ export class ToastrNotifier extends INotifier {
     /**
      * Show an error notification.
      *
-     * @param {string} message
-     * @param _message
+     * @param {string} _message - notification text
+     * @returns {void}
      */
     error(_message) {
         // TODO: implement - call window.toastr.error or similar

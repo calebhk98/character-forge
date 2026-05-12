@@ -10,13 +10,13 @@ export class Lorebook {
     /**
      * Construct a Lorebook.
      *
-     * @param {object} data
-     * @param {string} [data.name]
-     * @param {string} [data.description]
-     * @param {import('./LorebookEntry.js').LorebookEntry[]} [data.entries]
-     * @param {number} [data.scan_depth]
-     * @param {number} [data.token_budget]
-     * @param {boolean} [data.recursive_scanning]
+     * @param {object} data - lorebook data object
+     * @param {string} [data.name] - lorebook name
+     * @param {string} [data.description] - lorebook description
+     * @param {import('./LorebookEntry.js').LorebookEntry[]} [data.entries] - array of lorebook entries
+     * @param {number} [data.scan_depth] - depth for scanning context
+     * @param {number} [data.token_budget] - token budget for lorebook
+     * @param {boolean} [data.recursive_scanning] - whether to enable recursive scanning
      */
     constructor(data = {}) {
         this.name = data.name || '';

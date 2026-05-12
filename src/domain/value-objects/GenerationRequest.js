@@ -10,11 +10,11 @@ export class GenerationRequest {
     /**
      * Construct a GenerationRequest.
      *
-     * @param {object} data
-     * @param {string} data.systemPrompt
-     * @param {string} data.userPrompt
-     * @param {number} [data.temperature]
-     * @param {number} [data.maxTokens]
+     * @param {object} data - generation request data
+     * @param {string} data.systemPrompt - system context/instructions for the LLM
+     * @param {string} data.userPrompt - user message/prompt for the LLM
+     * @param {number} [data.temperature] - sampling temperature (0.0-1.0)
+     * @param {number} [data.maxTokens] - maximum tokens to generate
      */
     constructor(data) {
         this.systemPrompt = data.systemPrompt;

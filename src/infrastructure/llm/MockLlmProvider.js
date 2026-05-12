@@ -13,7 +13,7 @@ export class MockLlmProvider extends ILlmProvider {
     /**
      * Construct with mock response data.
      *
-     * @param {object} mockResponses map of prompt patterns to canned responses
+     * @param {object} mockResponses - map of prompt patterns to canned responses
      */
     constructor(mockResponses = {}) {
         super();
@@ -23,9 +23,8 @@ export class MockLlmProvider extends ILlmProvider {
     /**
      * Return a mock response based on the request.
      *
-     * @param {import('../../application/ports/ILlmProvider.js').GenerationRequest} request
-     * @param _request
-     * @returns {Promise<string>}
+     * @param {import('../../application/ports/ILlmProvider.js').GenerationRequest} _request - generation parameters
+     * @returns {Promise<string>} mocked generated text
      */
     async generate(_request) {
         // TODO: implement - return mocked JSON for testing

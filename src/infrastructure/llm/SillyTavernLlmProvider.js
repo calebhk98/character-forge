@@ -14,7 +14,7 @@ export class SillyTavernLlmProvider extends ILlmProvider {
     /**
      * Construct with SillyTavern context.
      *
-     * @param {object} stContext result of getContext()
+     * @param {object} stContext - result of getContext()
      */
     constructor(stContext) {
         super();
@@ -24,9 +24,8 @@ export class SillyTavernLlmProvider extends ILlmProvider {
     /**
      * Generate text via SillyTavern's active connection.
      *
-     * @param {import('../../application/ports/ILlmProvider.js').GenerationRequest} request
-     * @param _request
-     * @returns {Promise<string>}
+     * @param {import('../../application/ports/ILlmProvider.js').GenerationRequest} _request - generation parameters
+     * @returns {Promise<string>} generated text response
      */
     async generate(_request) {
         // TODO: implement - call this.ctx.generateQuietPrompt or similar

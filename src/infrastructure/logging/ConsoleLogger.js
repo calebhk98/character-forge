@@ -13,7 +13,7 @@ export class ConsoleLogger extends ILogger {
     /**
      * Construct the logger.
      *
-     * @param {string} [prefix] prefix for all log lines
+     * @param {string} [prefix] - prefix for all log lines
      */
     constructor(prefix = 'CharacterForge') {
         super();
@@ -23,10 +23,9 @@ export class ConsoleLogger extends ILogger {
     /**
      * Log a debug message.
      *
-     * @param {string} message
-     * @param {*} [data]
-     * @param _message
-     * @param _data
+     * @param {string} _message - debug message text
+     * @param {*} [_data] - optional context data to log
+     * @returns {void}
      */
     debug(_message, _data) {
         // TODO: implement - console.debug with prefix
@@ -36,10 +35,9 @@ export class ConsoleLogger extends ILogger {
     /**
      * Log an info message.
      *
-     * @param {string} message
-     * @param {*} [data]
-     * @param _message
-     * @param _data
+     * @param {string} _message - info message text
+     * @param {*} [_data] - optional context data to log
+     * @returns {void}
      */
     info(_message, _data) {
         // TODO: implement - console.info with prefix
@@ -49,10 +47,9 @@ export class ConsoleLogger extends ILogger {
     /**
      * Log a warning message.
      *
-     * @param {string} message
-     * @param {*} [data]
-     * @param _message
-     * @param _data
+     * @param {string} _message - warning message text
+     * @param {*} [_data] - optional context data to log
+     * @returns {void}
      */
     warn(_message, _data) {
         // TODO: implement - console.warn with prefix
@@ -62,10 +59,9 @@ export class ConsoleLogger extends ILogger {
     /**
      * Log an error message.
      *
-     * @param {string} message
-     * @param {*} [data]
-     * @param _message
-     * @param _data
+     * @param {string} _message - error message text
+     * @param {*} [_data] - optional context data to log
+     * @returns {void}
      */
     error(_message, _data) {
         // TODO: implement - console.error with prefix

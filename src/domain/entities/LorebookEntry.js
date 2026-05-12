@@ -10,13 +10,13 @@ export class LorebookEntry {
     /**
      * Construct a LorebookEntry. Validates that keys is non-empty.
      *
-     * @param {object} data
+     * @param {object} data - entry data object
      * @param {string[]} data.keys - trigger words that activate this entry
      * @param {string} data.content - text injected when a key appears in chat
-     * @param {string} [data.name]
-     * @param {string} [data.comment]
-     * @param {number} [data.priority]
-     * @param {number} [data.insertion_order]
+     * @param {string} [data.name] - optional entry name
+     * @param {string} [data.comment] - optional comment about the entry
+     * @param {number} [data.priority] - optional priority value
+     * @param {number} [data.insertion_order] - optional insertion order
      */
     constructor(data) {
         // TODO: validate keys is non-empty array

@@ -10,10 +10,10 @@ export class SaveCharacterToTavern {
     /**
      * Construct the use case with its dependencies.
      *
-     * @param {import('../ports/ICardFormatter.js').ICardFormatter} cardFormatter
-     * @param {import('../ports/ICharacterRepository.js').ICharacterRepository} characterRepository
-     * @param {import('../ports/INotifier.js').INotifier} notifier
-     * @param {import('../ports/ILogger.js').ILogger} logger
+     * @param {import('../ports/ICardFormatter.js').ICardFormatter} cardFormatter - port for formatting to V3 JSON
+     * @param {import('../ports/ICharacterRepository.js').ICharacterRepository} characterRepository - port for persisting characters
+     * @param {import('../ports/INotifier.js').INotifier} notifier - port for user-facing notifications
+     * @param {import('../ports/ILogger.js').ILogger} logger - port for diagnostic logging
      */
     constructor(cardFormatter, characterRepository, notifier, logger) {
         this.cardFormatter = cardFormatter;
@@ -26,7 +26,7 @@ export class SaveCharacterToTavern {
      * Execute the use case.
      *
      * @param {import('../../domain/entities/Character.js').Character} _character - character to save
-     * @param {import('../../domain/entities/Lorebook.js').Lorebook} [_lorebook] - lorebook to save
+     * @param {import('../../domain/entities/Lorebook.js').Lorebook} [_lorebook] - optional embedded lorebook
      * @returns {Promise<string>} identifier of saved character
      */
     async execute(_character, _lorebook) {
