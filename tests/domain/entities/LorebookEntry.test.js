@@ -50,6 +50,7 @@ describe('LorebookEntry - validation', () => {
         const data = {
             content: 'Magic is powerful',
         };
+        // @ts-expect-error intentionally passing invalid data
         expect(() => new LorebookEntry(data)).toThrow();
     });
 
@@ -66,6 +67,7 @@ describe('LorebookEntry - validation', () => {
             keys: 'magic',
             content: 'Magic is powerful',
         };
+        // @ts-expect-error intentionally passing invalid data
         expect(() => new LorebookEntry(data)).toThrow();
     });
 });

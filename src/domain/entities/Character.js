@@ -7,6 +7,33 @@
  * A complete character with all V3 card fields.
  */
 export class Character {
+    /** @type {string} character name */
+    name;
+
+    /** @type {string} character background and description */
+    description;
+
+    /** @type {string} character personality traits */
+    personality;
+
+    /** @type {string} scenario or context for the character */
+    scenario;
+
+    /** @type {string} character's first message */
+    first_mes;
+
+    /** @type {string} example dialogue messages */
+    mes_example;
+
+    /** @type {string|undefined} optional creator notes */
+    creator_notes;
+
+    /** @type {string|undefined} optional system prompt */
+    system_prompt;
+
+    /** @type {string|undefined} optional post-history instructions */
+    post_history_instructions;
+
     /**
      * Construct a Character from raw data. Validates required fields.
      *

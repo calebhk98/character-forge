@@ -7,6 +7,24 @@
  * A single lorebook entry with trigger keys and injected content.
  */
 export class LorebookEntry {
+    /** @type {string[]} trigger words that activate this entry */
+    keys;
+
+    /** @type {string} text injected when a key appears in chat */
+    content;
+
+    /** @type {string|undefined} optional entry name */
+    name;
+
+    /** @type {string|undefined} optional comment about the entry */
+    comment;
+
+    /** @type {number|undefined} optional priority value */
+    priority;
+
+    /** @type {number|undefined} optional insertion order */
+    insertion_order;
+
     /**
      * Construct a LorebookEntry. Validates that keys is non-empty.
      *
