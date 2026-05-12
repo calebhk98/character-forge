@@ -4,6 +4,8 @@
  * and returns a Character entity.
  */
 
+import { Character } from '../../domain/entities/Character.js';
+
 /**
  * Generate a character from a text description.
  */
@@ -24,12 +26,27 @@ export class GenerateCharacterFromDescription {
     /**
      * Execute the use case.
      *
-     * @param {string} _description - character concept in plain language
-     * @param {object} [_options] - generation options
+     * @param {string} description - character concept in plain language
+     * @param {object} [options] - generation options
      * @returns {Promise<import('../../domain/entities/Character.js').Character>} generated character entity
      */
-    async execute(_description, _options = {}) {
-        // TODO: implement
-        throw new Error('GenerateCharacterFromDescription.execute not implemented');
+    async execute(description, options = {}) {
+        this.logger.debug('Generating character from description', { description });
+
+        const request = this.promptBuilder.build(description, options);
+        const response = await this.llmProvider.generate(request);
+
+        let characterData;
+        try {
+            characterData = JSON.parse(response);
+        } catch (error) {
+            this.logger.error('Failed to parse LLM response as JSON', { response, error: error.message });
+            throw new Error('LLM response is not valid JSON');
+        }
+
+        const character = new Character(characterData);
+        this.logger.info('Character generated successfully', { name: character.name });
+
+        return character;
     }
 }
