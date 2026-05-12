@@ -7,13 +7,35 @@
 
 // @ts-check
 
+import { CharacterGeneratorPanel } from './src/ui/panels/CharacterGeneratorPanel.js';
+
 /**
  * Extension entry point. Called by SillyTavern on extension load.
  * The name is part of SillyTavern's extension API contract.
  */
 async function setup() {
-    // TODO: implement - register extension, set up event listeners
-    throw new Error('Character Forge extension setup not implemented');
+    // Get or create the extension panel container
+    const panelContainer = document.getElementById('character-forge-panel')
+        || createPanelContainer();
+
+    // Create and render the panel
+    const panel = new CharacterGeneratorPanel(null);
+    panel.render(panelContainer);
+
+    console.log('[Character Forge] Extension loaded and panel rendered');
+}
+
+/**
+ * Create the panel container element if it doesn't exist.
+ *
+ * @returns {HTMLElement} the created container
+ */
+function createPanelContainer() {
+    const container = document.createElement('div');
+    container.id = 'character-forge-container';
+    container.className = 'character-forge-container';
+    document.body.appendChild(container);
+    return container;
 }
 
 // Register the extension with SillyTavern
