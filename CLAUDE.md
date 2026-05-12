@@ -17,12 +17,6 @@
 
 **Core functionality**: Accept a natural-language character description → generate valid Character Card V3 JSON (name, description, personality, scenario, first message, dialogue examples) → produce keyword-triggered lorebook entries → allow user review → save to SillyTavern.
 
-**Current Setup**: ✅ Slice 0 (Bootstrap) complete
-- All infrastructure in place (ESLint, Vitest, jsdom, CI/CD)
-- Skeleton files with proper JSDoc headers ready for implementation
-- Tests passing (10/10), lint passing (0 errors)
-- Ready to begin TDD on Slice 1 (Domain entities)
-
 ## Quick Reference
 
 ### Key Directories
