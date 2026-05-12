@@ -21,8 +21,8 @@ import { SaveCharacterToTavern } from '../application/use-cases/SaveCharacterToT
  * Factory table for LLM providers. Maps config keys to constructor functions.
  */
 const LLM_FACTORIES = {
-    'silly-tavern': (cfg, ctx) => new SillyTavernLlmProvider(ctx),
-    'mock': (cfg, ctx) => new MockLlmProvider(cfg.mockResponses),
+    'silly-tavern': (cfg, _ctx) => new SillyTavernLlmProvider(_ctx),
+    'mock': (cfg, _ctx) => new MockLlmProvider(cfg.mockResponses),
 };
 
 /**

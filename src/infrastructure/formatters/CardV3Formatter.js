@@ -7,7 +7,8 @@ import { ICardFormatter } from '../../application/ports/ICardFormatter.js';
 
 /**
  * Formatter for Character Card V3 spec.
- * @extends ICardFormatter
+ *
+ * @augments ICardFormatter
  */
 export class CardV3Formatter extends ICardFormatter {
     /**
@@ -15,9 +16,11 @@ export class CardV3Formatter extends ICardFormatter {
      *
      * @param {import('../../domain/entities/Character.js').Character} character
      * @param {import('../../domain/entities/Lorebook.js').Lorebook} [lorebook]
-     * @returns {Object} Character Card V3 JSON object
+     * @param _character
+     * @param _lorebook
+     * @returns {object} Character Card V3 JSON object
      */
-    format(character, lorebook) {
+    format(_character, _lorebook) {
         // TODO: implement - assemble V3 spec structure
         throw new Error('CardV3Formatter.format not implemented');
     }

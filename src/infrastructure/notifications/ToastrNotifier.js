@@ -7,7 +7,8 @@ import { INotifier } from '../../application/ports/INotifier.js';
 
 /**
  * Notifier that uses SillyTavern's Toastr notifications.
- * @extends INotifier
+ *
+ * @augments INotifier
  */
 export class ToastrNotifier extends INotifier {
     /**
@@ -24,8 +25,9 @@ export class ToastrNotifier extends INotifier {
      * Show an info notification.
      *
      * @param {string} message
+     * @param _message
      */
-    info(message) {
+    info(_message) {
         // TODO: implement - call window.toastr.info or similar
         throw new Error('ToastrNotifier.info not implemented');
     }
@@ -34,8 +36,9 @@ export class ToastrNotifier extends INotifier {
      * Show a success notification.
      *
      * @param {string} message
+     * @param _message
      */
-    success(message) {
+    success(_message) {
         // TODO: implement - call window.toastr.success or similar
         throw new Error('ToastrNotifier.success not implemented');
     }
@@ -44,8 +47,9 @@ export class ToastrNotifier extends INotifier {
      * Show a warning notification.
      *
      * @param {string} message
+     * @param _message
      */
-    warning(message) {
+    warning(_message) {
         // TODO: implement - call window.toastr.warning or similar
         throw new Error('ToastrNotifier.warning not implemented');
     }
@@ -54,8 +58,9 @@ export class ToastrNotifier extends INotifier {
      * Show an error notification.
      *
      * @param {string} message
+     * @param _message
      */
-    error(message) {
+    error(_message) {
         // TODO: implement - call window.toastr.error or similar
         throw new Error('ToastrNotifier.error not implemented');
     }

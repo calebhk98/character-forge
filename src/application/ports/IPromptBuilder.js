@@ -5,17 +5,18 @@
 
 /**
  * Abstract prompt builder. Subclass and implement build().
+ *
  * @abstract
  */
 export class IPromptBuilder {
     /**
      * Build a generation request from a character description.
      *
-     * @param {string} description
-     * @param {object} [options]
-     * @returns {import('../value-objects/GenerationRequest.js').GenerationRequest}
+     * @param {string} _description - character concept in plain language
+     * @param {object} [_options] - generation options
+     * @returns {import('../../domain/value-objects/GenerationRequest.js').GenerationRequest} generation request
      */
-    build(description, options = {}) {
+    build(_description, _options = {}) {
         throw new Error('IPromptBuilder.build must be implemented by subclass');
     }
 }

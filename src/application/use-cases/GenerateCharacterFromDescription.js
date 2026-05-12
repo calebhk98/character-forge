@@ -24,11 +24,11 @@ export class GenerateCharacterFromDescription {
     /**
      * Execute the use case.
      *
-     * @param {string} description
-     * @param {object} [options]
-     * @returns {Promise<import('../../domain/entities/Character.js').Character>}
+     * @param {string} _description - character concept
+     * @param {object} [_options] - generation options
+     * @returns {Promise<import('../../domain/entities/Character.js').Character>} generated character
      */
-    async execute(description, options = {}) {
+    async execute(_description, _options = {}) {
         // TODO: implement
         throw new Error('GenerateCharacterFromDescription.execute not implemented');
     }

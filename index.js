@@ -7,9 +7,6 @@
 
 // @ts-check
 
-import { buildContainer } from './src/composition/Container.js';
-import { CharacterGeneratorPanel } from './src/ui/panels/CharacterGeneratorPanel.js';
-
 /**
  * Extension entry point. Called by SillyTavern on extension load.
  * The name is part of SillyTavern's extension API contract.

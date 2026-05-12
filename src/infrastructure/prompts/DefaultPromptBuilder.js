@@ -10,7 +10,8 @@ import { GenerationRequest } from '../../domain/value-objects/GenerationRequest.
 
 /**
  * Default prompt builder. Constructs structured requests for character generation.
- * @extends IPromptBuilder
+ *
+ * @augments IPromptBuilder
  */
 export class DefaultPromptBuilder extends IPromptBuilder {
     /**
@@ -23,13 +24,13 @@ export class DefaultPromptBuilder extends IPromptBuilder {
     /**
      * Build a generation request from a character description.
      *
-     * @param {string} description
-     * @param {object} [options]
-     * @param {number} [options.entryCount] target lorebook entries
-     * @param {number} [options.temperature] LLM temperature
-     * @returns {GenerationRequest}
+     * @param {string} _description - character concept
+     * @param {object} [_options] - generation options
+     * @param {number} [_options.entryCount] - target lorebook entries
+     * @param {number} [_options.temperature] - LLM temperature
+     * @returns {GenerationRequest} structured generation request
      */
-    build(description, options = {}) {
+    build(_description, _options = {}) {
         // TODO: implement - assemble system prompt and user prompt
         throw new Error('DefaultPromptBuilder.build not implemented');
     }

@@ -25,11 +25,11 @@ export class SaveCharacterToTavern {
     /**
      * Execute the use case.
      *
-     * @param {import('../../domain/entities/Character.js').Character} character
-     * @param {import('../../domain/entities/Lorebook.js').Lorebook} [lorebook]
+     * @param {import('../../domain/entities/Character.js').Character} _character - character to save
+     * @param {import('../../domain/entities/Lorebook.js').Lorebook} [_lorebook] - lorebook to save
      * @returns {Promise<string>} identifier of saved character
      */
-    async execute(character, lorebook) {
+    async execute(_character, _lorebook) {
         // TODO: implement
         throw new Error('SaveCharacterToTavern.execute not implemented');
     }

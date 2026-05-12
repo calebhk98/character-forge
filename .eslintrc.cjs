@@ -8,6 +8,9 @@ module.exports = {
         'eslint:recommended',
         'plugin:jsdoc/recommended',
     ],
+    plugins: [
+        'import',
+    ],
     parserOptions: {
         ecmaVersion: 'latest',
         sourceType: 'module',
@@ -21,7 +24,7 @@ module.exports = {
         'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
         'max-lines': ['error', 500],
         'max-lines-per-function': ['error', 60],
-        'max-depth': ['error', 5],
+        'max-depth': ['error', 4],
         'complexity': ['error', 10],
         'import/no-restricted-paths': [
             'error',
@@ -63,6 +66,8 @@ module.exports = {
             },
         ],
         'jsdoc/require-file-overview': ['error'],
+        'jsdoc/require-param': ['error'],
+        'jsdoc/require-returns': ['error'],
         'jsdoc/tag-lines': ['error', 'any', { startLines: 1 }],
         'no-multiple-empty-lines': ['error', { max: 1 }],
     },

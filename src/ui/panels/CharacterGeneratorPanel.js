@@ -11,25 +11,27 @@ export class CharacterGeneratorPanel {
     /**
      * Construct the panel with its dependencies.
      *
-     * @param {object} container application container with wired services
+     * @param {object} _container application container with wired services
      */
-    constructor(container) {
-        this.container = container;
+    constructor(_container) {
+        this.container = _container;
         this.element = null;
     }
 
     /**
      * Render the panel into a DOM element.
      *
-     * @param {HTMLElement} targetElement
+     * @param {HTMLElement} _targetElement - element to render into
      */
-    render(targetElement) {
+    render(_targetElement) {
         // TODO: implement - populate targetElement with panel HTML/structure
         throw new Error('CharacterGeneratorPanel.render not implemented');
     }
 
     /**
      * Handle the generate button click.
+     *
+     * @returns {Promise<void>}
      */
     async onGenerateClick() {
         // TODO: implement - call use cases, update UI with result
@@ -38,6 +40,8 @@ export class CharacterGeneratorPanel {
 
     /**
      * Handle the save button click.
+     *
+     * @returns {Promise<void>}
      */
     async onSaveClick() {
         // TODO: implement - save the character and lorebook

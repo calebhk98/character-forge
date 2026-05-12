@@ -2,14 +2,19 @@
  * @file Tests for MockLlmProvider adapter.
  */
 
-import { describe, it, expect } from 'vitest';
-import { MockLlmProvider } from '../../../src/infrastructure/llm/MockLlmProvider.js';
+import { describe, it } from 'vitest';
 
 describe('MockLlmProvider', () => {
-    it('should return mocked response', async () => {
+    /**
+     * Test mock response.
+     */
+    it('should return mocked response', () => {
         // TODO: write test with mock data
     });
 
+    /**
+     * Test inheritance.
+     */
     it('should extend ILlmProvider', () => {
         // TODO: verify inheritance
     });

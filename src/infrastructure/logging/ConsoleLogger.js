@@ -6,7 +6,8 @@ import { ILogger } from '../../application/ports/ILogger.js';
 
 /**
  * Logger that outputs to console.
- * @extends ILogger
+ *
+ * @augments ILogger
  */
 export class ConsoleLogger extends ILogger {
     /**
@@ -24,8 +25,10 @@ export class ConsoleLogger extends ILogger {
      *
      * @param {string} message
      * @param {*} [data]
+     * @param _message
+     * @param _data
      */
-    debug(message, data) {
+    debug(_message, _data) {
         // TODO: implement - console.debug with prefix
         throw new Error('ConsoleLogger.debug not implemented');
     }
@@ -35,8 +38,10 @@ export class ConsoleLogger extends ILogger {
      *
      * @param {string} message
      * @param {*} [data]
+     * @param _message
+     * @param _data
      */
-    info(message, data) {
+    info(_message, _data) {
         // TODO: implement - console.info with prefix
         throw new Error('ConsoleLogger.info not implemented');
     }
@@ -46,8 +51,10 @@ export class ConsoleLogger extends ILogger {
      *
      * @param {string} message
      * @param {*} [data]
+     * @param _message
+     * @param _data
      */
-    warn(message, data) {
+    warn(_message, _data) {
         // TODO: implement - console.warn with prefix
         throw new Error('ConsoleLogger.warn not implemented');
     }
@@ -57,8 +64,10 @@ export class ConsoleLogger extends ILogger {
      *
      * @param {string} message
      * @param {*} [data]
+     * @param _message
+     * @param _data
      */
-    error(message, data) {
+    error(_message, _data) {
         // TODO: implement - console.error with prefix
         throw new Error('ConsoleLogger.error not implemented');
     }

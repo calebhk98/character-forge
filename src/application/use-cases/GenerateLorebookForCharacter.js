@@ -24,11 +24,11 @@ export class GenerateLorebookForCharacter {
     /**
      * Execute the use case.
      *
-     * @param {string} description
-     * @param {object} [options]
-     * @returns {Promise<import('../../domain/entities/Lorebook.js').Lorebook>}
+     * @param {string} _description - character concept
+     * @param {object} [_options] - generation options
+     * @returns {Promise<import('../../domain/entities/Lorebook.js').Lorebook>} generated lorebook
      */
-    async execute(description, options = {}) {
+    async execute(_description, _options = {}) {
         // TODO: implement
         throw new Error('GenerateLorebookForCharacter.execute not implemented');
     }

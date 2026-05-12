@@ -6,7 +6,8 @@ import { ILorebookRepository } from '../../application/ports/ILorebookRepository
 
 /**
  * Lorebook repository using SillyTavern's storage.
- * @extends ILorebookRepository
+ *
+ * @augments ILorebookRepository
  */
 export class SillyTavernLorebookRepository extends ILorebookRepository {
     /**
@@ -22,10 +23,10 @@ export class SillyTavernLorebookRepository extends ILorebookRepository {
     /**
      * Save a lorebook to SillyTavern.
      *
-     * @param {import('../../domain/entities/Lorebook.js').Lorebook} lorebook
+     * @param {import('../../domain/entities/Lorebook.js').Lorebook} _lorebook - lorebook to save
      * @returns {Promise<string>} lorebook identifier
      */
-    async save(lorebook) {
+    async save(_lorebook) {
         // TODO: implement - write lorebook entries to ST's world info storage
         throw new Error('SillyTavernLorebookRepository.save not implemented');
     }

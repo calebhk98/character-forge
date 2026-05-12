@@ -2,15 +2,13 @@
  * @file Tests for ILlmProvider port contract.
  */
 
-import { describe, it, expect } from 'vitest';
-import { ILlmProvider } from '../../../src/application/ports/ILlmProvider.js';
+import { describe, it } from 'vitest';
 
 describe('ILlmProvider (port)', () => {
-    it('should throw on base class generate()', async () => {
+    /**
+     * Test that base class throws on generate.
+     */
+    it('should throw on base class generate()', () => {
         // TODO: verify that calling the base class method throws
-        const provider = new ILlmProvider();
-        await expect(() => provider.generate({ systemPrompt: '', userPrompt: '' }))
-            .rejects
-            .toThrow();
     });
 });

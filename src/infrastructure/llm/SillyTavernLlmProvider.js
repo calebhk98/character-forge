@@ -7,7 +7,8 @@ import { ILlmProvider } from '../../application/ports/ILlmProvider.js';
 
 /**
  * LLM provider that uses SillyTavern's own connection manager.
- * @extends ILlmProvider
+ *
+ * @augments ILlmProvider
  */
 export class SillyTavernLlmProvider extends ILlmProvider {
     /**
@@ -24,9 +25,10 @@ export class SillyTavernLlmProvider extends ILlmProvider {
      * Generate text via SillyTavern's active connection.
      *
      * @param {import('../../application/ports/ILlmProvider.js').GenerationRequest} request
+     * @param _request
      * @returns {Promise<string>}
      */
-    async generate(request) {
+    async generate(_request) {
         // TODO: implement - call this.ctx.generateQuietPrompt or similar
         throw new Error('SillyTavernLlmProvider.generate not implemented');
     }

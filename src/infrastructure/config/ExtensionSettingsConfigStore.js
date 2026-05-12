@@ -7,7 +7,8 @@ import { IConfigStore } from '../../application/ports/IConfigStore.js';
 
 /**
  * Config store using SillyTavern's extension settings.
- * @extends IConfigStore
+ *
+ * @augments IConfigStore
  */
 export class ExtensionSettingsConfigStore extends IConfigStore {
     /**

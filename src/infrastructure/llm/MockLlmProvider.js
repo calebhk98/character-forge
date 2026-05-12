@@ -6,7 +6,8 @@ import { ILlmProvider } from '../../application/ports/ILlmProvider.js';
 
 /**
  * Mock LLM provider that returns preset responses.
- * @extends ILlmProvider
+ *
+ * @augments ILlmProvider
  */
 export class MockLlmProvider extends ILlmProvider {
     /**
@@ -23,9 +24,10 @@ export class MockLlmProvider extends ILlmProvider {
      * Return a mock response based on the request.
      *
      * @param {import('../../application/ports/ILlmProvider.js').GenerationRequest} request
+     * @param _request
      * @returns {Promise<string>}
      */
-    async generate(request) {
+    async generate(_request) {
         // TODO: implement - return mocked JSON for testing
         throw new Error('MockLlmProvider.generate not implemented');
     }

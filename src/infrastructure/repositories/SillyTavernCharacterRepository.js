@@ -6,7 +6,8 @@ import { ICharacterRepository } from '../../application/ports/ICharacterReposito
 
 /**
  * Character repository using SillyTavern's storage.
- * @extends ICharacterRepository
+ *
+ * @augments ICharacterRepository
  */
 export class SillyTavernCharacterRepository extends ICharacterRepository {
     /**
@@ -22,10 +23,10 @@ export class SillyTavernCharacterRepository extends ICharacterRepository {
     /**
      * Save a character card to SillyTavern.
      *
-     * @param {Object} cardJson Character Card V3 JSON
+     * @param {object} _cardJson - Character Card V3 JSON
      * @returns {Promise<string>} character filename or identifier
      */
-    async save(cardJson) {
+    async save(_cardJson) {
         // TODO: implement - write cardJson to ST's character storage
         throw new Error('SillyTavernCharacterRepository.save not implemented');
     }

@@ -4,25 +4,26 @@
  */
 
 /**
- * @typedef {Object} GenerationRequest
- * @property {string} systemPrompt
- * @property {string} userPrompt
- * @property {number} [temperature]
- * @property {number} [maxTokens]
+ * @typedef {object} GenerationRequest
+ * @property {string} systemPrompt - system context for the LLM
+ * @property {string} userPrompt - user message/request
+ * @property {number} [temperature] - sampling temperature
+ * @property {number} [maxTokens] - max response length
  */
 
 /**
  * Abstract LLM provider. Subclass and implement generate().
+ *
  * @abstract
  */
 export class ILlmProvider {
     /**
      * Generate text from a structured request.
      *
-     * @param {GenerationRequest} request
-     * @returns {Promise<string>}
+     * @param {GenerationRequest} _request - generation parameters
+     * @returns {Promise<string>} generated text
      */
-    async generate(request) {
+    async generate(_request) {
         throw new Error('ILlmProvider.generate must be implemented by subclass');
     }
 }
