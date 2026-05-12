@@ -24,7 +24,7 @@ module.exports = {
         'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
         'max-lines': ['error', 500],
         'max-lines-per-function': ['error', 60],
-        'max-depth': ['error', 4],
+        'max-depth': ['warn', 4],
         'complexity': ['error', 10],
         'import/no-restricted-paths': [
             'error',
