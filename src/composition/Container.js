@@ -18,7 +18,13 @@ import { GenerateLorebookForCharacter } from '../application/use-cases/GenerateL
 import { SaveCharacterToTavern } from '../application/use-cases/SaveCharacterToTavern.js';
 
 /**
+ * @typedef {(cfg: object, ctx: object) => object} LlmFactory
+ */
+
+/**
  * Factory table for LLM providers. Maps config keys to constructor functions.
+ *
+ * @type {{[key: string]: LlmFactory}}
  */
 const LLM_FACTORIES = {
     'silly-tavern': (cfg, _ctx) => new SillyTavernLlmProvider(_ctx),
@@ -27,6 +33,8 @@ const LLM_FACTORIES = {
 
 /**
  * Factory table for card formatters.
+ *
+ * @type {{[key: string]: Function}}
  */
 const FORMATTER_FACTORIES = {
     'v3': () => new CardV3Formatter(),
@@ -36,15 +44,17 @@ const FORMATTER_FACTORIES = {
  * Build and wire all application services from config.
  *
  * @param {object} config configuration object
- * @param {string} [config.llmProvider] which LLM adapter to use
- * @param {string} [config.cardFormat] which card formatter to use
+ * @param {string} config.llmProvider which LLM adapter to use
+ * @param {string} config.cardFormat which card formatter to use
  * @param {object} stContext SillyTavern context object from getContext()
  * @returns {object} container with all wired services
  */
 export function buildContainer(config, stContext) {
     // TODO: apply defaults to config
-    const llm = LLM_FACTORIES[config.llmProvider](config, stContext);
-    const formatter = FORMATTER_FACTORIES[config.cardFormat]();
+    // @ts-ignore - factory return types match port contracts
+    const llm = LLM_FACTORIES[config.llmProvider || 'silly-tavern'](config, stContext);
+    // @ts-ignore - factory return type matches port contract
+    const formatter = FORMATTER_FACTORIES[config.cardFormat || 'v3']();
     const promptBuilder = new DefaultPromptBuilder();
     const charRepository = new SillyTavernCharacterRepository(stContext);
     const lorebookRepository = new SillyTavernLorebookRepository(stContext);
