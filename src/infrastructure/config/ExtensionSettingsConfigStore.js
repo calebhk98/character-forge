@@ -1,0 +1,49 @@
+/**
+ * @file Config store adapter that reads/writes to SillyTavern's
+ * extension_settings[moduleName] bucket.
+ */
+
+import { IConfigStore } from '../../application/ports/IConfigStore.js';
+
+/**
+ * Config store using SillyTavern's extension settings.
+ *
+ * @augments IConfigStore
+ */
+export class ExtensionSettingsConfigStore extends IConfigStore {
+    /**
+     * Construct with module name and SillyTavern context.
+     *
+     * @param {string} moduleName extension module name
+     * @param {object} stContext result of getContext()
+     */
+    constructor(moduleName, stContext) {
+        super();
+        this.moduleName = moduleName;
+        this.ctx = stContext;
+    }
+
+    /**
+     * Get a config value.
+     *
+     * @param {string} _key - configuration key
+     * @param {*} [_defaultValue] - default value if key not found
+     * @returns {*} configuration value
+     */
+    get(_key, _defaultValue) {
+        // TODO: implement - return from ST extension_settings
+        throw new Error('ExtensionSettingsConfigStore.get not implemented');
+    }
+
+    /**
+     * Set a config value.
+     *
+     * @param {string} _key - configuration key
+     * @param {*} _value - configuration value to set
+     * @returns {Promise<void>}
+     */
+    async set(_key, _value) {
+        // TODO: implement - write to ST extension_settings
+        throw new Error('ExtensionSettingsConfigStore.set not implemented');
+    }
+}

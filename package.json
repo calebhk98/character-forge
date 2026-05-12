@@ -1,0 +1,34 @@
+{
+  "name": "character-forge",
+  "version": "0.0.1",
+  "description": "AI-assisted character generator extension for SillyTavern",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest watch",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky install 2>/dev/null || true"
+  },
+  "keywords": [
+    "character-card",
+    "character-forge",
+    "silly-tavern",
+    "extension",
+    "ai"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-jsdoc": "^48.2.5",
+    "husky": "^9.0.11",
+    "jsdom": "^24.0.0",
+    "typescript": "^5.3.3",
+    "vitest": "^1.2.0"
+  }
+}

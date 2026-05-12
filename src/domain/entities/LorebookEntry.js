@@ -1,0 +1,25 @@
+/**
+ * @file LorebookEntry domain entity. A single keyword-triggered entry
+ * in a character's embedded lorebook (Character Card V3 character_book).
+ */
+
+/**
+ * A single lorebook entry with trigger keys and injected content.
+ */
+export class LorebookEntry {
+    /**
+     * Construct a LorebookEntry. Validates that keys is non-empty.
+     *
+     * @param {object} data - entry data object
+     * @param {string[]} data.keys - trigger words that activate this entry
+     * @param {string} data.content - text injected when a key appears in chat
+     * @param {string} [data.name] - optional entry name
+     * @param {string} [data.comment] - optional comment about the entry
+     * @param {number} [data.priority] - optional priority value
+     * @param {number} [data.insertion_order] - optional insertion order
+     */
+    constructor(data) {
+        // TODO: validate keys is non-empty array
+        Object.assign(this, data);
+    }
+}
