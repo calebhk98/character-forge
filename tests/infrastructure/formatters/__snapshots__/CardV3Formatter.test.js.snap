@@ -1,0 +1,110 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`CardV3Formatter (snapshots) > should produce valid V3 structure snapshot 1`] = `
+{
+  "data": {
+    "alternate_greetings": [],
+    "character_book": {
+      "description": "",
+      "entries": [],
+      "name": "",
+      "recursive_scanning": false,
+      "scan_depth": 2,
+      "token_budget": 0,
+    },
+    "creator_notes": undefined,
+    "description": "A mysterious mage",
+    "extensions": {},
+    "first_mes": "Welcome, traveler.",
+    "mes_example": "How can I assist you?",
+    "name": "Aria",
+    "personality": "Curious and witty",
+    "post_history_instructions": undefined,
+    "scenario": "In a magical tower",
+    "system_prompt": undefined,
+    "tags": [],
+  },
+  "spec": "chara_card_v3",
+  "spec_version": "3.0",
+}
+`;
+
+exports[`CardV3Formatter (snapshots) > should produce valid V3 structure with lorebook snapshot 1`] = `
+{
+  "data": {
+    "alternate_greetings": [],
+    "character_book": {
+      "description": "Background knowledge",
+      "entries": [
+        LorebookEntry {
+          "comment": undefined,
+          "content": "Magic is the art of manipulation",
+          "insertion_order": undefined,
+          "keys": [
+            "magic",
+            "spell",
+          ],
+          "name": "Magic Entry",
+          "priority": 1,
+        },
+        LorebookEntry {
+          "comment": undefined,
+          "content": "The tower stands tall",
+          "insertion_order": undefined,
+          "keys": [
+            "tower",
+          ],
+          "name": undefined,
+          "priority": undefined,
+        },
+      ],
+      "name": "World Info",
+      "recursive_scanning": true,
+      "scan_depth": 3,
+      "token_budget": 500,
+    },
+    "creator_notes": undefined,
+    "description": "A mysterious mage",
+    "extensions": {},
+    "first_mes": "Welcome, traveler.",
+    "mes_example": "How can I assist you?",
+    "name": "Aria",
+    "personality": "Curious and witty",
+    "post_history_instructions": undefined,
+    "scenario": "In a magical tower",
+    "system_prompt": undefined,
+    "tags": [],
+  },
+  "spec": "chara_card_v3",
+  "spec_version": "3.0",
+}
+`;
+
+exports[`CardV3Formatter (snapshots) > should produce valid V3 structure with optional fields snapshot 1`] = `
+{
+  "data": {
+    "alternate_greetings": [],
+    "character_book": {
+      "description": "",
+      "entries": [],
+      "name": "",
+      "recursive_scanning": false,
+      "scan_depth": 2,
+      "token_budget": 0,
+    },
+    "creator_notes": "Created by user",
+    "description": "A mysterious mage",
+    "extensions": {},
+    "first_mes": "Welcome, traveler.",
+    "mes_example": "How can I assist you?",
+    "name": "Aria",
+    "personality": "Curious and witty",
+    "post_history_instructions": "Remember the context",
+    "scenario": "In a magical tower",
+    "system_prompt": "You are a mage",
+    "tags": [],
+  },
+  "spec": "chara_card_v3",
+  "spec_version": "3.0",
+}
+`;

@@ -123,3 +123,26 @@ describe('CardV3Formatter', () => {
         expect(result.data.character_book.entries).toEqual([]);
     });
 });
+
+describe('CardV3Formatter (snapshots)', () => {
+    it('should produce valid V3 structure snapshot', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(createBasicCharacter());
+
+        expect(result).toMatchSnapshot();
+    });
+
+    it('should produce valid V3 structure with lorebook snapshot', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(createBasicCharacter(), createLoreBook());
+
+        expect(result).toMatchSnapshot();
+    });
+
+    it('should produce valid V3 structure with optional fields snapshot', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(createCharacterWithOptionals());
+
+        expect(result).toMatchSnapshot();
+    });
+});
