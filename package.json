@@ -10,7 +10,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "tsc -p jsconfig.json --noEmit",
-    "prepare": "husky install 2>/dev/null || true"
+    "prepare": "simple-git-hooks"
   },
   "keywords": [
     "character-card",
@@ -21,13 +21,16 @@
   ],
   "author": "",
   "license": "MIT",
+  "simple-git-hooks": {
+    "pre-commit": "npm run lint && npm test"
+  },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "eslint": "^8.57.0",
     "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-jsdoc": "^48.2.5",
-    "husky": "^9.0.11",
     "jsdom": "^24.0.0",
+    "simple-git-hooks": "^2.13.1",
     "typescript": "^5.3.3",
     "vitest": "^1.2.0"
   }
