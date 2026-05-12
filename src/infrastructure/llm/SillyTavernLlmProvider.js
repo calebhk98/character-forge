@@ -24,11 +24,19 @@ export class SillyTavernLlmProvider extends ILlmProvider {
     /**
      * Generate text via SillyTavern's active connection.
      *
-     * @param {import('../../application/ports/ILlmProvider.js').GenerationRequest} _request - generation parameters
+     * @param {import('../../application/ports/ILlmProvider.js').GenerationRequest} request - generation parameters
      * @returns {Promise<string>} generated text response
      */
-    async generate(_request) {
-        // TODO: implement - call this.ctx.generateQuietPrompt or similar
-        throw new Error('SillyTavernLlmProvider.generate not implemented');
+    async generate(request) {
+        const { generateQuietPrompt } = this.ctx;
+
+        const response = await generateQuietPrompt({
+            quietPrompt: request.userPrompt,
+            systemPrompt: request.systemPrompt,
+            temperature: request.temperature,
+            maxTokens: request.maxTokens,
+        });
+
+        return response;
     }
 }
