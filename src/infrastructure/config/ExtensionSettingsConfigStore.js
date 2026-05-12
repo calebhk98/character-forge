@@ -26,11 +26,11 @@ export class ExtensionSettingsConfigStore extends IConfigStore {
     /**
      * Get a config value.
      *
-     * @param {string} key
-     * @param {*} [defaultValue]
-     * @returns {*}
+     * @param {string} _key - configuration key
+     * @param {*} [_defaultValue] - default value if key not found
+     * @returns {*} configuration value
      */
-    get(key, defaultValue) {
+    get(_key, _defaultValue) {
         // TODO: implement - return from ST extension_settings
         throw new Error('ExtensionSettingsConfigStore.get not implemented');
     }
@@ -38,11 +38,11 @@ export class ExtensionSettingsConfigStore extends IConfigStore {
     /**
      * Set a config value.
      *
-     * @param {string} key
-     * @param {*} value
+     * @param {string} _key - configuration key
+     * @param {*} _value - configuration value to set
      * @returns {Promise<void>}
      */
-    async set(key, value) {
+    async set(_key, _value) {
         // TODO: implement - write to ST extension_settings
         throw new Error('ExtensionSettingsConfigStore.set not implemented');
     }
