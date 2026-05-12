@@ -1,0 +1,148 @@
+/**
+ * @file Tests for CardV3Formatter adapter.
+ */
+
+import { describe, it, expect } from 'vitest';
+import { CardV3Formatter } from '../../../src/infrastructure/formatters/CardV3Formatter.js';
+import { Character } from '../../../src/domain/entities/Character.js';
+import { Lorebook } from '../../../src/domain/entities/Lorebook.js';
+import { LorebookEntry } from '../../../src/domain/entities/LorebookEntry.js';
+
+/**
+ * Helper: create a basic character for tests.
+ *
+ * @returns {Character} basic character
+ */
+function createBasicCharacter() {
+    return new Character({
+        name: 'Aria',
+        description: 'A mysterious mage',
+        personality: 'Curious and witty',
+        scenario: 'In a magical tower',
+        first_mes: 'Welcome, traveler.',
+        mes_example: 'How can I assist you?',
+    });
+}
+
+/**
+ * Helper: create a character with optional fields.
+ *
+ * @returns {Character} character with optional fields
+ */
+function createCharacterWithOptionals() {
+    return new Character({
+        name: 'Aria',
+        description: 'A mysterious mage',
+        personality: 'Curious and witty',
+        scenario: 'In a magical tower',
+        first_mes: 'Welcome, traveler.',
+        mes_example: 'How can I assist you?',
+        creator_notes: 'Created by user',
+        system_prompt: 'You are a mage',
+        post_history_instructions: 'Remember the context',
+    });
+}
+
+/**
+ * Helper: create a lorebook with entries.
+ *
+ * @returns {Lorebook} lorebook with sample entries
+ */
+function createLoreBook() {
+    return new Lorebook({
+        name: 'World Info',
+        description: 'Background knowledge',
+        scan_depth: 3,
+        token_budget: 500,
+        recursive_scanning: true,
+        entries: [
+            new LorebookEntry({
+                keys: ['magic', 'spell'],
+                content: 'Magic is the art of manipulation',
+                name: 'Magic Entry',
+                priority: 1,
+            }),
+            new LorebookEntry({
+                keys: ['tower'],
+                content: 'The tower stands tall',
+            }),
+        ],
+    });
+}
+
+describe('CardV3Formatter', () => {
+    it('should produce valid V3 structure from Character', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(createBasicCharacter());
+
+        expect(result.spec).toBe('chara_card_v3');
+        expect(result.spec_version).toBe('3.0');
+        expect(result.data.name).toBe('Aria');
+    });
+
+    it('should include V3 required fields in data', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(createBasicCharacter());
+        const { data } = result;
+
+        expect(data).toHaveProperty('alternate_greetings');
+        expect(data).toHaveProperty('tags');
+        expect(data).toHaveProperty('extensions');
+        expect(data).toHaveProperty('character_book');
+    });
+
+    it('should include optional character fields when present', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(createCharacterWithOptionals());
+
+        expect(result.data.creator_notes).toBe('Created by user');
+        expect(result.data.system_prompt).toBe('You are a mage');
+        expect(result.data.post_history_instructions).toBe('Remember the context');
+    });
+
+    it('should embed lorebook with entries in character_book', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(createBasicCharacter(), createLoreBook());
+
+        expect(result.data.character_book.name).toBe('World Info');
+        expect(result.data.character_book.entries).toHaveLength(2);
+    });
+
+    it('should handle empty lorebook gracefully', () => {
+        const formatter = new CardV3Formatter();
+        const lorebook = new Lorebook();
+        const result = formatter.format(createBasicCharacter(), lorebook);
+
+        expect(result.data.character_book.entries).toEqual([]);
+    });
+
+    it('should create default lorebook when none provided', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(createBasicCharacter());
+
+        expect(result.data.character_book.entries).toEqual([]);
+    });
+});
+
+describe('CardV3Formatter (snapshots)', () => {
+    it('should produce valid V3 structure snapshot', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(createBasicCharacter());
+
+        expect(result).toMatchSnapshot();
+    });
+
+    it('should produce valid V3 structure with lorebook snapshot', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(createBasicCharacter(), createLoreBook());
+
+        expect(result).toMatchSnapshot();
+    });
+
+    it('should produce valid V3 structure with optional fields snapshot', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(createCharacterWithOptionals());
+
+        expect(result).toMatchSnapshot();
+    });
+});
