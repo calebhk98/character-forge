@@ -9,6 +9,7 @@
  * @abstract
  */
 export class IPromptBuilder {
+    // eslint-disable-next-line jsdoc/require-returns-check
     /**
      * Build a generation request from a character description.
      *

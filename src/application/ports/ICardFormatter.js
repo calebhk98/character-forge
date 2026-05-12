@@ -9,6 +9,7 @@
  * @abstract
  */
 export class ICardFormatter {
+    // eslint-disable-next-line jsdoc/require-returns-check
     /**
      * Format a character and its lorebook to a card JSON structure.
      *

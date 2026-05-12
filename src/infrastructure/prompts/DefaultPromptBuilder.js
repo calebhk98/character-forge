@@ -21,6 +21,7 @@ export class DefaultPromptBuilder extends IPromptBuilder {
         super();
     }
 
+    // eslint-disable-next-line jsdoc/require-returns-check
     /**
      * Build a generation request from a character description.
      *

@@ -11,6 +11,7 @@ import { ICardFormatter } from '../../application/ports/ICardFormatter.js';
  * @augments ICardFormatter
  */
 export class CardV3Formatter extends ICardFormatter {
+    // eslint-disable-next-line jsdoc/require-returns-check
     /**
      * Format a character and lorebook to V3 JSON.
      *
