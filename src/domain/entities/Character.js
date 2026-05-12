@@ -22,7 +22,12 @@ export class Character {
      * @param {string} [data.post_history_instructions] - optional post-history instructions
      */
     constructor(data) {
-        // TODO: validate required fields
+        const required = ['name', 'description', 'personality', 'scenario', 'first_mes', 'mes_example'];
+        for (const field of required) {
+            if (!data[field]) {
+                throw new Error(`Character.${field} is required`);
+            }
+        }
         Object.assign(this, data);
     }
 }
