@@ -95,7 +95,7 @@ See [DESIGN.md](./DESIGN.md#slice-plan) for the slice-by-slice plan. Headline it
 
 ## License
 
-TBD. A license file will land before the first public release.
+Character Forge is licensed under the MIT License. See [LICENSE](./LICENSE) for details.
 
 ## Acknowledgments
 
