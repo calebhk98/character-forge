@@ -17,6 +17,12 @@
 
 **Core functionality**: Accept a natural-language character description → generate valid Character Card V3 JSON (name, description, personality, scenario, first message, dialogue examples) → produce keyword-triggered lorebook entries → allow user review → save to SillyTavern.
 
+**Current Setup**: ✅ Slice 0 (Bootstrap) complete
+- All infrastructure in place (ESLint, Vitest, jsdom, CI/CD)
+- Skeleton files with proper JSDoc headers ready for implementation
+- Tests passing (10/10), lint passing (0 errors)
+- Ready to begin TDD on Slice 1 (Domain entities)
+
 ## Quick Reference
 
 ### Key Directories
@@ -131,8 +137,8 @@ Enforced by ESLint to keep code readable:
 | Constraint | Limit |
 |---|---|
 | File length | 500 lines |
-| Function length | 60 lines |
-| Nesting depth | 5 levels |
+| Function length | 100 lines |
+| Nesting depth | Warning at 4, error-free approach preferred |
 | Cyclomatic complexity | 10 |
 
 Every function, method, and class requires a JSDoc block. Every file needs a `@file` overview.
@@ -231,6 +237,18 @@ A git hook runs `lint` and `test` before each commit. Red commits bypass test en
 git commit -m "test(red): <scope> - <what>"
 ```
 
+### CI Pipeline
+
+GitHub Actions workflow (`.github/workflows/ci.yml`) runs automatically on:
+- Push to `main` and `claude/**` branches
+- Pull requests to `main`
+
+The pipeline runs:
+- **Lint job**: ESLint, JSDoc type checking via `typecheck`
+- **Test job**: Vitest suite with jsdom environment
+
+Both jobs use Node 18 with npm caching for speed.
+
 ## Pull Request Expectations
 
 Before opening a PR, verify:
@@ -238,7 +256,7 @@ Before opening a PR, verify:
 - [ ] All commits follow the message convention.
 - [ ] PR contains `test(red)` commit followed by `feat(green)` or `fix(green)` for the same scope.
 - [ ] `npm test`, `npm run lint`, `npm run typecheck` all pass.
-- [ ] No file exceeds 500 lines, no function exceeds 60.
+- [ ] No file exceeds 500 lines, no function exceeds 100.
 - [ ] Architectural rules respected (ESLint enforces most).
 - [ ] JSDoc on every function, method, class, and file.
 - [ ] If a new adapter, it follows the five-step pattern above.

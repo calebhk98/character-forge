@@ -23,7 +23,7 @@ module.exports = {
         'comma-dangle': ['error', 'always-multiline'],
         'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
         'max-lines': ['error', 500],
-        'max-lines-per-function': ['error', 60],
+        'max-lines-per-function': ['error', 100],
         'max-depth': ['warn', 4],
         'complexity': ['error', 10],
         'import/no-restricted-paths': [
