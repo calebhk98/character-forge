@@ -17,6 +17,7 @@ async function setup() {
 }
 
 // Register the extension with SillyTavern
+// @ts-ignore - getContext is injected by SillyTavern at runtime
 if (typeof getContext !== 'undefined') {
     setup().catch(err => {
         console.error('[Character Forge] Setup error:', err);

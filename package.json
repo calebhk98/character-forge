@@ -9,7 +9,7 @@
     "test:watch": "vitest watch",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc -p jsconfig.json --noEmit",
     "prepare": "husky install 2>/dev/null || true"
   },
   "keywords": [
