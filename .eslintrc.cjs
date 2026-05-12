@@ -68,6 +68,8 @@ module.exports = {
         'jsdoc/require-file-overview': ['error'],
         'jsdoc/require-param': ['error'],
         'jsdoc/require-returns': ['error'],
+        'jsdoc/require-param-description': ['warn'],
+        'jsdoc/require-returns-description': ['warn'],
         'jsdoc/tag-lines': ['error', 'any', { startLines: 1 }],
         'no-multiple-empty-lines': ['error', { max: 1 }],
     },
