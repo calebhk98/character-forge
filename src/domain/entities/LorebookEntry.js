@@ -19,7 +19,9 @@ export class LorebookEntry {
      * @param {number} [data.insertion_order] - optional insertion order
      */
     constructor(data) {
-        // TODO: validate keys is non-empty array
+        if (!Array.isArray(data.keys) || data.keys.length === 0) {
+            throw new Error('LorebookEntry.keys must be a non-empty array');
+        }
         Object.assign(this, data);
     }
 }
