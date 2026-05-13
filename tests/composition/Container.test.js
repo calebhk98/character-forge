@@ -65,6 +65,7 @@ describe('Container - LLM provider wiring', () => {
             extensionSettings: {},
         };
         const config = {
+            llmProvider: 'silly-tavern',
             cardFormat: 'v3',
         };
 
@@ -96,6 +97,7 @@ describe('Container - formatter and prompt builder wiring', () => {
         };
         const config = {
             llmProvider: 'mock',
+            cardFormat: 'v3',
             mockResponses: [],
         };
 
