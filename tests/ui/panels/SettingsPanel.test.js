@@ -76,60 +76,78 @@ describe('SettingsPanel', () => {
             expect(select.value).toBe('default');
         });
     });
+});
 
-    describe('saving settings', () => {
-        it('should save promptTemplate on change', async () => {
-            let saved = {};
-            mockContainer.configStore.set = async (key, value) => {
-                saved = { key, value };
-            };
+describe('SettingsPanel - event listeners', () => {
+    let panel;
+    let mockContainer;
+    let mockElement;
 
-            panel.render(mockElement);
-            const select = /** @type {HTMLSelectElement} */ (
-                mockElement.querySelector('#prompt-template-select')
-            );
-            select.value = 'advanced';
-            select.dispatchEvent(new Event('change'));
+    beforeEach(() => {
+        mockContainer = createMockContainer();
+        mockElement = document.createElement('div');
+        document.body.appendChild(mockElement);
+        panel = new SettingsPanel(mockContainer);
+    });
 
-            await new Promise(resolve => setTimeout(resolve, 10));
-            expect(saved.key).toBe('promptTemplate');
-            expect(saved.value).toBe('advanced');
-        });
+    afterEach(() => {
+        if (mockElement.parentNode) {
+            mockElement.parentNode.removeChild(mockElement);
+        }
+    });
 
-        it('should save generationTemperature on slider change', async () => {
-            let saved = {};
-            mockContainer.configStore.set = async (key, value) => {
-                saved = { key, value };
-            };
+    it('should save promptTemplate on change', async () => {
+        let saved = {};
+        mockContainer.configStore.set = async (key, value) => {
+            saved = { key, value };
+            return Promise.resolve();
+        };
 
-            panel.render(mockElement);
-            const slider = /** @type {HTMLInputElement} */ (
-                mockElement.querySelector('#generation-temperature-slider')
-            );
-            slider.value = '0.75';
-            slider.dispatchEvent(new Event('change'));
+        panel.render(mockElement);
+        const select = /** @type {HTMLSelectElement} */ (
+            mockElement.querySelector('#prompt-template-select')
+        );
+        select.value = 'advanced';
+        select.dispatchEvent(new Event('change'));
 
-            await new Promise(resolve => setTimeout(resolve, 10));
-            expect(saved.key).toBe('generationTemperature');
-            expect(parseFloat(saved.value)).toBeCloseTo(0.75);
-        });
+        await new Promise(resolve => setTimeout(resolve, 50));
+        expect(saved.key).toBe('promptTemplate');
+        expect(saved.value).toBe('advanced');
+    });
 
-        it('should save autoSaveOnGenerate checkbox state', async () => {
-            let saved = {};
-            mockContainer.configStore.set = async (key, value) => {
-                saved = { key, value };
-            };
+    it('should save generationTemperature on slider change', async () => {
+        let saved = {};
+        mockContainer.configStore.set = async (key, value) => {
+            saved = { key, value };
+        };
 
-            panel.render(mockElement);
-            const checkbox = /** @type {HTMLInputElement} */ (
-                mockElement.querySelector('#auto-save-checkbox')
-            );
-            checkbox.checked = true;
-            checkbox.dispatchEvent(new Event('change'));
+        panel.render(mockElement);
+        const slider = /** @type {HTMLInputElement} */ (
+            mockElement.querySelector('#generation-temperature-slider')
+        );
+        slider.value = '0.75';
+        slider.dispatchEvent(new Event('change'));
 
-            await new Promise(resolve => setTimeout(resolve, 10));
-            expect(saved.key).toBe('autoSaveOnGenerate');
-            expect(saved.value).toBe(true);
-        });
+        await new Promise(resolve => setTimeout(resolve, 50));
+        expect(saved.key).toBe('generationTemperature');
+        expect(parseFloat(saved.value)).toBeCloseTo(0.75);
+    });
+
+    it('should save autoSaveOnGenerate on checkbox change', async () => {
+        let saved = {};
+        mockContainer.configStore.set = async (key, value) => {
+            saved = { key, value };
+        };
+
+        panel.render(mockElement);
+        const checkbox = /** @type {HTMLInputElement} */ (
+            mockElement.querySelector('#auto-save-checkbox')
+        );
+        checkbox.checked = true;
+        checkbox.dispatchEvent(new Event('change'));
+
+        await new Promise(resolve => setTimeout(resolve, 50));
+        expect(saved.key).toBe('autoSaveOnGenerate');
+        expect(saved.value).toBe(true);
     });
 });
