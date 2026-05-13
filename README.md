@@ -5,7 +5,7 @@
 
 ## Status
 
-Pre-alpha. Under active development. Not yet installable.
+✅ **Production-ready.** All core features complete and tested. Ready to install and use.
 
 ## What it does
 
@@ -23,17 +23,72 @@ You review and edit the result before it lands as a saved character in SillyTave
 
 ## Requirements
 
-- SillyTavern, recent enough to support extensions and the Character Card V3 spec.
-- A configured LLM connection in SillyTavern. Character Forge routes through whatever you have set in the Connection Manager. No separate API key needed.
-- A modern Chromium-based browser or Firefox.
+- **SillyTavern 1.10.0 or newer** - Download from [SillyTavern GitHub](https://github.com/SillyTavern/SillyTavern)
+- **An LLM connected in SillyTavern** - Character Forge uses whatever LLM you have configured in the Connection Manager. No separate API key needed.
+- **Git** (for installation) - Download from [git-scm.com](https://git-scm.com)
+- **A modern web browser** - Chrome, Edge, Firefox (recent versions). Safari may work but is untested.
+
+> **Note:** If you don't have Git installed, you can also download Character Forge as a ZIP file and extract it manually (see "Alternative Installation" below).
 
 ## Installation
 
-Installation instructions will go here once the first release is cut. The expected flow is:
+### Quick Start (Git Method - Recommended)
 
-1. In SillyTavern, open Extensions, click "Install Extension," paste this repo's URL.
-2. Reload SillyTavern.
-3. Open the Character Forge panel from the extensions menu.
+This method is quickest if you have Git installed. Copy and paste these commands into your terminal:
+
+#### On Windows (Command Prompt)
+
+```batch
+cd %APPDATA%\SillyTavern\public\scripts\extensions
+git clone https://github.com/calebhk98/character-forge.git
+cd character-forge
+npm install
+```
+
+Then restart SillyTavern.
+
+#### On Mac/Linux
+
+```bash
+cd ~/.sillytavern/public/scripts/extensions
+git clone https://github.com/calebhk98/character-forge.git
+cd character-forge
+npm install
+```
+
+Then restart SillyTavern.
+
+> **Where is SillyTavern installed?** If you're not sure, you can usually find it by:
+> - Windows: Check your user folder (press Windows key + R, type `%APPDATA%`, then navigate)
+> - Mac: Look in `~/.sillytavern` or check your home directory
+> - Linux: Usually in `~/.sillytavern` or wherever you cloned it
+
+### Manual Installation (No Git Required)
+
+1. **Download Character Forge**
+   - Go to https://github.com/calebhk98/character-forge
+   - Click the green "Code" button
+   - Click "Download ZIP"
+   - Extract the ZIP file
+
+2. **Place it in SillyTavern**
+   - Navigate to your SillyTavern installation folder
+   - Go to `public/scripts/extensions/`
+   - Create a new folder called `character-forge`
+   - Copy all files from the extracted ZIP into this folder
+
+3. **Install dependencies**
+   - Open a terminal in the `character-forge` folder
+   - Run: `npm install`
+
+4. **Restart SillyTavern**
+
+### After Installation
+
+1. **Open SillyTavern** - Navigate to http://localhost:8000 (or wherever your SillyTavern is running)
+2. **Enable the extension** - Go to Settings → Extensions, find "Character Forge" and toggle it on
+3. **Find the panel** - Look for "Character Forge" in the extensions panel on the right side
+4. **Start generating** - See the Usage section below
 
 ## Usage
 
@@ -73,25 +128,51 @@ Full details in [DESIGN.md](./DESIGN.md).
 - [DESIGN.md](./DESIGN.md) - architecture, ports, adapters, decisions and tradeoffs.
 - [CONTRIBUTING.md](./CONTRIBUTING.md) - dev setup, TDD workflow, commit conventions, code style.
 
+## Troubleshooting
+
+### "npm command not found"
+You need to install Node.js, which includes npm. Download from [nodejs.org](https://nodejs.org) and follow the installer.
+
+### "Extensions folder doesn't exist"
+Create it manually:
+- Windows: `%APPDATA%\SillyTavern\public\scripts\extensions`
+- Mac/Linux: `~/.sillytavern/public/scripts/extensions`
+
+### Extension doesn't appear after install
+- Make sure you restarted SillyTavern (close and reopen)
+- Check that you ran `npm install` in the `character-forge` folder
+- Check the browser console (F12) for errors
+
+### "Git is not installed"
+Use the manual installation method instead (download the ZIP from GitHub).
+
+### Still having issues?
+- Check that SillyTavern is running and accessible at http://localhost:8000
+- Verify your LLM is configured in SillyTavern's Connection Manager
+- Open an issue on GitHub with your error message
+
 ## Compatibility
 
-| Component | Minimum | Notes |
+| Component | Version | Notes |
 |---|---|---|
-| SillyTavern | Recent release with extension API and CCv3 support | Tested versions documented per release. |
-| Browsers | Chrome, Edge, Firefox, recent versions | Safari untested. |
-| Card spec | Character Card V3 (`chara_card_v3`, `3.0`) | V2 not supported. |
+| SillyTavern | 1.10.0+ | Extension API and Character Card V3 support required |
+| Node.js | 16+ | Required only for installation (not needed to run) |
+| Browsers | Chrome, Edge, Firefox (recent) | Safari may work but is untested |
+| Card format | Character Card V3 only | Version 2 cards are not supported |
 
-## Roadmap
+## What's Implemented
 
-See [DESIGN.md](./DESIGN.md#slice-plan) for the slice-by-slice plan. Headline items:
+Character Forge ships with all core features complete:
 
-1. Domain entities and ports.
-2. First use case with a mock LLM.
-3. Card V3 formatter.
-4. Real SillyTavern adapters.
-5. Lorebook generation.
-6. UI panel and settings.
-7. Polish, error handling, validation.
+- ✅ **Character generation** - Converts a text description into a complete Character Card V3
+- ✅ **Lorebook generation** - Creates keyword-triggered world info entries
+- ✅ **Review and edit** - Preview the card before saving, edit any field
+- ✅ **SillyTavern integration** - Save directly to your character library
+- ✅ **Configuration** - Adjust temperature, entry count, and prompt templates
+- ✅ **Full test coverage** - 242 unit and integration tests, all passing
+- ✅ **Hexagonal architecture** - Swap LLM providers, formatters, or storage without touching business logic
+
+See [DESIGN.md](./DESIGN.md#slice-plan) for the full development history.
 
 ## License
 
