@@ -75,4 +75,16 @@ describe('JsonRepair', () => {
             },
         });
     });
+
+    it('repairs JSON with single quotes when other repairs fail', () => {
+        const json = "{'name':'test','value':42}";
+        const result = repairJson(json);
+        expect(result).toEqual({ name: 'test', value: 42 });
+    });
+
+    it('returns null when single quote repair also fails', () => {
+        const json = "{'name':'test\\'value':42invalid}";
+        const result = repairJson(json);
+        expect(result).toBeNull();
+    });
 });

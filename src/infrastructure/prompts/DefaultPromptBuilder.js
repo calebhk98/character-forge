@@ -95,21 +95,16 @@ Return ONLY a valid JSON object. No additional text before or after.`;
     }
 
     /**
-     * Build the user prompt with the character description and options.
+     * Build the user prompt with the character description.
      *
      * @private
      * @param {string} description - character concept
-     * @param {object} options - generation options
+     * @param {object} [_options] - unused
      * @returns {string} user prompt text
      */
-    buildUserPrompt(description, options) {
+    buildUserPrompt(description, _options) {
         let prompt = `Create a detailed character for the following concept:\n\n"${description}"\n\n`;
         prompt += 'Generate a complete character profile with name, description, personality, scenario, first message, and example dialogue.\n\n';
-
-        if (options.entryCount) {
-            prompt += `Target creating approximately ${options.entryCount} lorebook entries for this character's knowledge base.\n\n`;
-        }
-
         prompt += 'Return only valid JSON with the character data. No markdown, no code blocks, just the JSON object.';
         return prompt;
     }

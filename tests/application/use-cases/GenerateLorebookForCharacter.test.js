@@ -251,3 +251,24 @@ describe('GenerateLorebookForCharacter - JSON Repair', () => {
         expect(lorebook.entries).toHaveLength(1);
     });
 });
+
+describe('GenerateLorebookForCharacter - Error Handling', () => {
+    /**
+     * Test validation error with invalid entries.
+     */
+    it('should throw and log when entries fail validation', async () => {
+        const promptBuilder = new FakePromptBuilder();
+        const invalidEntriesJson = JSON.stringify({
+            entries: [
+                { keys: [], content: 'Missing keys' },
+            ],
+        });
+        const llmProvider = new FakeLlmProvider(invalidEntriesJson);
+        const logger = new FakeLogger();
+        const useCase = new GenerateLorebookForCharacter(promptBuilder, llmProvider, logger);
+        await expect(useCase.execute('A brave knight')).rejects.toThrow('Lorebook data invalid');
+        const warnMessage = logger.messages.find((m) => m.level === 'warn');
+        expect(warnMessage).toBeDefined();
+        expect(warnMessage.message).toBe('Lorebook validation failed');
+    });
+});

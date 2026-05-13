@@ -91,4 +91,23 @@ describe('Character - validation', () => {
         delete data.mes_example;
         expect(() => new Character(data)).toThrow();
     });
+
+    it('should throw when a required field is not a string', () => {
+        const data = validCharacterData();
+        data.name = 123;
+        // @ts-expect-error intentionally passing invalid type
+        expect(() => new Character(data)).toThrow();
+    });
+
+    it('should throw when a required field is empty', () => {
+        const data = validCharacterData();
+        data.personality = '';
+        expect(() => new Character(data)).toThrow();
+    });
+
+    it('should throw when a required field is whitespace-only', () => {
+        const data = validCharacterData();
+        data.description = '   ';
+        expect(() => new Character(data)).toThrow();
+    });
 });
