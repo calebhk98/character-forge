@@ -142,4 +142,19 @@ describe('CharacterGeneratorPanel - Error Handling', () => {
         expect(container.notifier.error).toHaveBeenCalledWith('No character to save');
         expect(container.saveCharacter.execute).not.toHaveBeenCalled();
     });
+
+    it('prevents concurrent generation when already generating', async () => {
+        panel.render(targetElement);
+        const textarea = targetElement.querySelector('#character-description');
+        textarea.value = 'A mysterious wizard';
+
+        // Set the panel as already generating
+        panel.isGenerating = true;
+
+        // Call onGenerateClick while generating
+        await panel.onGenerateClick();
+
+        // Should not call execute while already generating
+        expect(container.generateCharacter.execute).not.toHaveBeenCalled();
+    });
 });

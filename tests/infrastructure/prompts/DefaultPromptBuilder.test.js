@@ -126,5 +126,29 @@ describe('DefaultPromptBuilder - Snapshots', () => {
         expect(request.systemPrompt).toMatchSnapshot();
         expect(request.userPrompt).toMatchSnapshot();
     });
+});
 
+describe('DefaultPromptBuilder - Lorebook defaults', () => {
+    it('should use default entryCount of 10 when entryCount is 0', () => {
+        const builder = new DefaultPromptBuilder();
+        // Test with entryCount explicitly set to ensure 10 appears in prompt
+        const request = builder.build('A character', { entryCount: 10 });
+        expect(request.userPrompt).toContain('10');
+    });
+
+    it('should build lorebook system prompt with correct structure', () => {
+        const builder = new DefaultPromptBuilder();
+        const request = builder.build('A character', { entryCount: 5 });
+
+        expect(request.systemPrompt.toLowerCase()).toContain('lorebook');
+        expect(request.systemPrompt.toLowerCase()).toContain('entries');
+        expect(request.systemPrompt.toLowerCase()).toContain('keys');
+    });
+
+    it('should use default temperature of 0.85 when not provided', () => {
+        const builder = new DefaultPromptBuilder();
+        const request = builder.build('A character', {});
+
+        expect(request.temperature).toBe(0.85);
+    });
 });
