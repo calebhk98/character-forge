@@ -23,48 +23,44 @@ export class ConsoleLogger extends ILogger {
     /**
      * Log a debug message.
      *
-     * @param {string} _message - debug message text
-     * @param {*} [_data] - optional context data to log
+     * @param {string} message - debug message text
+     * @param {*} [data] - optional context data to log
      * @returns {void}
      */
-    debug(_message, _data) {
-        // TODO: implement - console.debug with prefix
-        throw new Error('ConsoleLogger.debug not implemented');
+    debug(message, data) {
+        console.debug(`[${this.prefix}] ${message}`, data);
     }
 
     /**
      * Log an info message.
      *
-     * @param {string} _message - info message text
-     * @param {*} [_data] - optional context data to log
+     * @param {string} message - info message text
+     * @param {*} [data] - optional context data to log
      * @returns {void}
      */
-    info(_message, _data) {
-        // TODO: implement - console.info with prefix
-        throw new Error('ConsoleLogger.info not implemented');
+    info(message, data) {
+        console.info(`[${this.prefix}] ${message}`, data);
     }
 
     /**
      * Log a warning message.
      *
-     * @param {string} _message - warning message text
-     * @param {*} [_data] - optional context data to log
+     * @param {string} message - warning message text
+     * @param {*} [data] - optional context data to log
      * @returns {void}
      */
-    warn(_message, _data) {
-        // TODO: implement - console.warn with prefix
-        throw new Error('ConsoleLogger.warn not implemented');
+    warn(message, data) {
+        console.warn(`[${this.prefix}] ${message}`, data);
     }
 
     /**
      * Log an error message.
      *
-     * @param {string} _message - error message text
-     * @param {*} [_data] - optional context data to log
+     * @param {string} message - error message text
+     * @param {*} [data] - optional context data to log
      * @returns {void}
      */
-    error(_message, _data) {
-        // TODO: implement - console.error with prefix
-        throw new Error('ConsoleLogger.error not implemented');
+    error(message, data) {
+        console.error(`[${this.prefix}] ${message}`, data);
     }
 }

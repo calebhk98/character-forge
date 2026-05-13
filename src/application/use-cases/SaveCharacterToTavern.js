@@ -25,12 +25,26 @@ export class SaveCharacterToTavern {
     /**
      * Execute the use case.
      *
-     * @param {import('../../domain/entities/Character.js').Character} _character - character to save
-     * @param {import('../../domain/entities/Lorebook.js').Lorebook} [_lorebook] - optional embedded lorebook
+     * @param {import('../../domain/entities/Character.js').Character} character - character to save
+     * @param {import('../../domain/entities/Lorebook.js').Lorebook} [lorebook] - optional embedded lorebook
      * @returns {Promise<string>} identifier of saved character
      */
-    async execute(_character, _lorebook) {
-        // TODO: implement
-        throw new Error('SaveCharacterToTavern.execute not implemented');
+    async execute(character, lorebook) {
+        try {
+            this.logger.info('Formatting character card');
+            const cardJson = this.cardFormatter.format(character, lorebook);
+
+            this.logger.info('Saving character to SillyTavern', { characterName: character.name });
+            const characterId = await this.characterRepository.save(cardJson);
+
+            this.logger.info('Character saved successfully', { characterId });
+            this.notifier.success(`Character "${character.name}" saved successfully!`);
+
+            return characterId;
+        } catch (error) {
+            this.logger.error('Failed to save character', error);
+            this.notifier.error(`Failed to save character: ${error.message}`);
+            throw error;
+        }
     }
 }
