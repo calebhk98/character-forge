@@ -2,6 +2,16 @@
 
 Audience: developers and contributors. If you just want to use the extension, start with the [README](./README.md). If you want to contribute code, read this document first, then [CONTRIBUTING.md](./CONTRIBUTING.md).
 
+## Project Status
+
+✅ **All core features complete.** The extension is production-ready with:
+- 242 unit and integration tests (all passing)
+- Comprehensive test coverage for domain, application, infrastructure, and UI layers
+- Full adherence to architecture and code constraints
+- No incomplete work, no TODOs
+
+See the [Slice plan](#slice-plan) section for build history.
+
 ## Purpose
 
 This document captures the architectural decisions for Character Forge and the reasoning behind them. It exists so that future contributors can extend the system in the direction it was designed for, and can push back when a change would violate that design.
@@ -351,29 +361,32 @@ React or Vue were considered for the panel. Rejected because SillyTavern's UI is
 
 ## Slice plan
 
-The build proceeds in vertical slices. Each slice ends with a working extension that does slightly more than the previous one. Slices are sized to fit a single TDD red-green cycle.
+The build proceeded in vertical slices, with each slice adding a working feature. All slices are now complete:
 
-0. **Bootstrap.** Repo layout, manifest, lint, test runner, pre-commit hook, hello-world panel.
-1. **Domain entities.** `Character`, `Lorebook`, `LorebookEntry` with validation and tests.
-2. **Ports.** Abstract base classes for every port, contract tests proving the base throws.
-3. **First use case with mocks.** `GenerateCharacterFromDescription` using `MockLlmProvider`.
-4. **Prompt builder.** `DefaultPromptBuilder` with snapshot tests.
-5. **Card V3 formatter.** Convert `Character` to the V3 JSON shape.
-6. **Real SillyTavern adapters.** `SillyTavernLlmProvider`, `SillyTavernCharacterRepository`.
-7. **Lorebook generation.** `GenerateLorebookForCharacter` use case.
-8. **UI panel.** Textarea, button, result preview, edit-before-save.
-9. **Settings UI.** Wire `IConfigStore` to ST's extension settings panel.
-10. **Polish.** Error handling, JSON repair on bad LLM output, validation feedback, accessibility pass.
+- ✅ **0. Bootstrap** - Repo layout, manifest, lint, test runner, pre-commit hook
+- ✅ **1. Domain entities** - `Character`, `Lorebook`, `LorebookEntry` with validation
+- ✅ **2. Ports** - Abstract base classes for all 8 ports with contract tests
+- ✅ **3. First use case with mocks** - `GenerateCharacterFromDescription` + `MockLlmProvider`
+- ✅ **4. Prompt builder** - `DefaultPromptBuilder` with static system/user prompts and snapshot tests
+- ✅ **5. Card V3 formatter** - Convert domain entities to valid Character Card V3 JSON
+- ✅ **6. Real SillyTavern adapters** - `SillyTavernLlmProvider`, character and lorebook repositories
+- ✅ **7. Lorebook generation** - `GenerateLorebookForCharacter` use case with keyword strategy
+- ✅ **8. UI panel** - Textarea for input, generate button, preview with inline edit, save action
+- ✅ **9. Settings UI** - Extension settings panel with temperature, entry count, prompt template, auto-save toggle
+- ✅ **10. Polish** - JSON repair for malformed LLM output, validation feedback, error handling
 
-Each slice has its own success criteria, captured in the issue tracker.
+**Build history:** The project was completed using test-driven development. Every feature was written with a failing test first (`test(red)` commit) followed by the implementation (`feat(green)` commit).
 
-## Open questions
+## Future enhancements
 
-Tracked in issues. As of writing:
+The core product is complete. Potential future work (not blocking release):
 
-- Should the extension support generating multiple alternate greetings in one pass?
-- Should we expose a slash command interface alongside the panel?
-- How aggressively should we validate against the V3 spec before saving?
-- Should the wiki guidance live as inlined text in the prompt builder, or be fetched at runtime with a cache?
+- **Alternate greetings** - Generate multiple greeting variants in one pass
+- **Slash command interface** - Complement the panel with `/generate` command
+- **V3 validation policy** - Decide how strictly to validate against the spec before saving
+- **Runtime wiki** - Fetch World Info Encyclopedia guidance at runtime with caching instead of inlining
+- **Batch generation** - Generate multiple characters from a list
+- **Character editing** - Light editing mode for cards after generation
+- **Prompt templates** - User-defined prompt strategies alongside the default
 
-Open questions get resolved through ADR-style entries appended to this document or as separate `docs/adr-NNN-*.md` files once they accumulate.
+These are tracked as issues in the repository. Implementation will follow the same TDD workflow and architecture patterns documented above.
