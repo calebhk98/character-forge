@@ -138,7 +138,7 @@ class FakeLogger extends ILogger {
     }
 }
 
-describe('GenerateCharacterFromDescription', () => {
+describe('GenerateCharacterFromDescription - Core Functionality', () => {
     /**
      * Test happy path generation.
      */
@@ -180,7 +180,6 @@ describe('GenerateCharacterFromDescription', () => {
         const invalidResponse = JSON.stringify({
             name: 'TestCharacter',
             description: 'A test character',
-            // missing personality, scenario, first_mes, mes_example
         });
         const llmProvider = new FakeLlmProvider(invalidResponse);
         const logger = new FakeLogger();
@@ -220,5 +219,55 @@ describe('GenerateCharacterFromDescription', () => {
         expect(llmProvider.lastRequest).toBeDefined();
         expect(llmProvider.lastRequest.systemPrompt).toBe('Generate a character');
         expect(llmProvider.lastRequest.userPrompt).toContain('A brave knight');
+    });
+});
+
+describe('GenerateCharacterFromDescription - JSON Repair', () => {
+    /**
+     * Test JSON repair for malformed markdown-wrapped JSON.
+     */
+    it('should repair malformed JSON with markdown code blocks', async () => {
+        const promptBuilder = new FakePromptBuilder();
+        const malformedJson = `\`\`\`json
+{
+    "name": "TestCharacter",
+    "description": "A test character",
+    "personality": "Cheerful",
+    "scenario": "In a test world",
+    "first_mes": "Hello from test!",
+    "mes_example": "This is a test message.",
+}
+\`\`\``;
+        const llmProvider = new FakeLlmProvider(malformedJson);
+        const logger = new FakeLogger();
+
+        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger);
+        const character = await useCase.execute('A brave knight');
+
+        expect(character).toBeInstanceOf(Character);
+        expect(character.name).toBe('TestCharacter');
+    });
+
+    /**
+     * Test JSON repair for trailing commas.
+     */
+    it('should repair JSON with trailing commas', async () => {
+        const promptBuilder = new FakePromptBuilder();
+        const jsonWithTrailingCommas = JSON.stringify({
+            name: 'TestCharacter',
+            description: 'A test character',
+            personality: 'Cheerful',
+            scenario: 'In a test world',
+            first_mes: 'Hello from test!',
+            mes_example: 'This is a test message.',
+        }).replace(/}$/, ',}');
+        const llmProvider = new FakeLlmProvider(jsonWithTrailingCommas);
+        const logger = new FakeLogger();
+
+        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger);
+        const character = await useCase.execute('A brave knight');
+
+        expect(character).toBeInstanceOf(Character);
+        expect(character.name).toBe('TestCharacter');
     });
 });

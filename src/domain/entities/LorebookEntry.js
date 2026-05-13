@@ -37,9 +37,24 @@ export class LorebookEntry {
      * @param {number} [data.insertion_order] - optional insertion order
      */
     constructor(data) {
+        const errors = [];
+
         if (!Array.isArray(data.keys) || data.keys.length === 0) {
-            throw new Error('LorebookEntry.keys must be a non-empty array');
+            errors.push('keys must be a non-empty array');
+        } else if (data.keys.some((k) => !k || typeof k !== 'string')) {
+            errors.push('all keys must be non-empty strings');
         }
+
+        if (!data.content || typeof data.content !== 'string') {
+            errors.push('content is required and must be a string');
+        } else if (data.content.trim().length === 0) {
+            errors.push('content cannot be empty');
+        }
+
+        if (errors.length > 0) {
+            throw new Error(`Invalid lorebook entry: ${errors.join('; ')}`);
+        }
+
         Object.assign(this, data);
     }
 }

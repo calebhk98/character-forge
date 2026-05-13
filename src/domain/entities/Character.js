@@ -50,11 +50,22 @@ export class Character {
      */
     constructor(data) {
         const required = ['name', 'description', 'personality', 'scenario', 'first_mes', 'mes_example'];
+        const errors = [];
+
         for (const field of required) {
             if (!data[field]) {
-                throw new Error(`Character.${field} is required`);
+                errors.push(`${field} is required`);
+            } else if (typeof data[field] !== 'string') {
+                errors.push(`${field} must be a string`);
+            } else if (data[field].trim().length === 0) {
+                errors.push(`${field} cannot be empty`);
             }
         }
+
+        if (errors.length > 0) {
+            throw new Error(`Invalid character data: ${errors.join('; ')}`);
+        }
+
         Object.assign(this, data);
     }
 }

@@ -155,6 +155,7 @@ export class CharacterGeneratorPanel {
 
     /**
      * Show the preview section with generated character and lorebook.
+     * Renders fields as editable inputs.
      */
     showPreview() {
         const previewSection = /** @type {HTMLElement} */ (
@@ -168,68 +169,229 @@ export class CharacterGeneratorPanel {
             return;
         }
 
-        const inputSection = /** @type {HTMLElement} */ (
-            this.element?.querySelector('.input-section')
-        );
-        const controlsSection = /** @type {HTMLElement} */ (
-            this.element?.querySelector('.controls-section')
-        );
+        this.hideInputSections();
 
-        if (inputSection) {
-            inputSection.style.display = 'none';
-        }
-        if (controlsSection) {
-            controlsSection.style.display = 'none';
-        }
+        const html = this.buildPreviewHtml();
+        previewContent.innerHTML = html;
+        previewSection.style.display = 'block';
 
-        // Render character fields
-        const characterHtml = `
-            <div class="preview-character">
-                <h4>${this.escapeHtml(this.generatedCharacter.name)}</h4>
-                <div class="preview-field">
-                    <strong>Description:</strong>
-                    <p>${this.escapeHtml(this.generatedCharacter.description)}</p>
-                </div>
-                <div class="preview-field">
-                    <strong>Personality:</strong>
-                    <p>${this.escapeHtml(this.generatedCharacter.personality)}</p>
-                </div>
-                <div class="preview-field">
-                    <strong>Scenario:</strong>
-                    <p>${this.escapeHtml(this.generatedCharacter.scenario)}</p>
-                </div>
-                <div class="preview-field">
-                    <strong>First Message:</strong>
-                    <p>${this.escapeHtml(this.generatedCharacter.first_mes)}</p>
-                </div>
-                <div class="preview-field">
-                    <strong>Example Dialogue:</strong>
-                    <p>${this.escapeHtml(this.generatedCharacter.mes_example)}</p>
-                </div>
-            </div>
-        `;
+        this.setCharacterFieldValues();
+        this.setLorebookEntryValues();
+        this.attachPreviewEditListeners();
+    }
 
-        // Render lorebook entries
-        let lorebookHtml = '<div class="preview-lorebook"><h4>Lorebook Entries</h4>';
-        if (this.generatedLorebook && this.generatedLorebook.entries.length > 0) {
-            lorebookHtml += '<ul class="lorebook-entries">';
-            for (const entry of this.generatedLorebook.entries) {
-                lorebookHtml += `
-                    <li class="lorebook-entry">
-                        <strong>${this.escapeHtml(entry.name || 'Untitled')}</strong>
-                        <p><em>Keys: ${this.escapeHtml(entry.keys.join(', '))}</em></p>
-                        <p>${this.escapeHtml(entry.content)}</p>
-                    </li>
+    /**
+     * Hide input and controls sections.
+     */
+    hideInputSections() {
+        const inputSection = /** @type {HTMLElement} */ (this.element?.querySelector('.input-section'));
+        const controlsSection = /** @type {HTMLElement} */ (this.element?.querySelector('.controls-section'));
+        if (inputSection) inputSection.style.display = 'none';
+        if (controlsSection) controlsSection.style.display = 'none';
+    }
+
+    /**
+     * Build preview form HTML.
+     *
+     * @returns {string} HTML string
+     */
+    buildPreviewHtml() {
+        const char = `<div class="preview-character">
+                <div class="preview-field"><label for="edit-name"><strong>Name:</strong></label>
+                    <input type="text" id="edit-name" class="edit-input" />
+                </div><div class="preview-field"><label for="edit-description"><strong>Description:</strong></label>
+                    <textarea id="edit-description" class="edit-textarea" rows="4"></textarea>
+                </div><div class="preview-field"><label for="edit-personality"><strong>Personality:</strong></label>
+                    <textarea id="edit-personality" class="edit-textarea" rows="3"></textarea>
+                </div><div class="preview-field"><label for="edit-scenario"><strong>Scenario:</strong></label>
+                    <textarea id="edit-scenario" class="edit-textarea" rows="3"></textarea>
+                </div><div class="preview-field"><label for="edit-first-mes"><strong>First Message:</strong></label>
+                    <textarea id="edit-first-mes" class="edit-textarea" rows="2"></textarea>
+                </div><div class="preview-field"><label for="edit-mes-example"><strong>Example Dialogue:</strong></label>
+                    <textarea id="edit-mes-example" class="edit-textarea" rows="3"></textarea></div></div>`;
+        return char + this.buildLorebookHtml();
+    }
+
+    /**
+     * Build HTML for editable lorebook entries.
+     *
+     * @returns {string} HTML string
+     */
+    buildLorebookHtml() {
+        let html = '<div class="preview-lorebook"><h4>Lorebook Entries</h4>';
+        if (!this.generatedLorebook?.entries?.length) {
+            html += '<p>No entries generated</p>';
+        } else {
+            html += '<div class="lorebook-entries">';
+            for (let i = 0; i < this.generatedLorebook.entries.length; i++) {
+                html += `
+                    <div class="lorebook-entry" data-index="${i}">
+                        <label for="edit-entry-name-${i}"><strong>Name:</strong></label>
+                        <input type="text" id="edit-entry-name-${i}" class="edit-input edit-entry-name" data-index="${i}" />
+                        <label for="edit-entry-keys-${i}"><strong>Keys (comma-separated):</strong></label>
+                        <input type="text" id="edit-entry-keys-${i}" class="edit-input edit-entry-keys" data-index="${i}" />
+                        <label for="edit-entry-content-${i}"><strong>Content:</strong></label>
+                        <textarea id="edit-entry-content-${i}" class="edit-textarea edit-entry-content" data-index="${i}" rows="3"></textarea>
+                    </div>
                 `;
             }
-            lorebookHtml += '</ul>';
-        } else {
-            lorebookHtml += '<p>No entries generated</p>';
+            html += '</div>';
         }
-        lorebookHtml += '</div>';
+        html += '</div>';
+        return html;
+    }
 
-        previewContent.innerHTML = characterHtml + lorebookHtml;
-        previewSection.style.display = 'block';
+    /**
+     * Set values for character editable fields.
+     */
+    setCharacterFieldValues() {
+        const fields = [
+            { id: '#edit-name', prop: 'name' },
+            { id: '#edit-description', prop: 'description' },
+            { id: '#edit-personality', prop: 'personality' },
+            { id: '#edit-scenario', prop: 'scenario' },
+            { id: '#edit-first-mes', prop: 'first_mes' },
+            { id: '#edit-mes-example', prop: 'mes_example' },
+        ];
+
+        for (const field of fields) {
+            const input = /** @type {HTMLInputElement|HTMLTextAreaElement} */ (
+                this.element?.querySelector(field.id)
+            );
+            if (input) {
+                input.value = this.generatedCharacter[field.prop];
+            }
+        }
+    }
+
+    /**
+     * Set values for lorebook entry editable fields.
+     */
+    setLorebookEntryValues() {
+        if (!this.generatedLorebook?.entries?.length) {
+            return;
+        }
+
+        for (let i = 0; i < this.generatedLorebook.entries.length; i++) {
+            const entry = this.generatedLorebook.entries[i];
+            const nameInput = /** @type {HTMLInputElement} */ (
+                this.element?.querySelector(`#edit-entry-name-${i}`)
+            );
+            if (nameInput) {
+                nameInput.value = entry.name || '';
+            }
+
+            const keysInput = /** @type {HTMLInputElement} */ (
+                this.element?.querySelector(`#edit-entry-keys-${i}`)
+            );
+            if (keysInput) {
+                keysInput.value = entry.keys.join(', ');
+            }
+
+            const contentInput = /** @type {HTMLTextAreaElement} */ (
+                this.element?.querySelector(`#edit-entry-content-${i}`)
+            );
+            if (contentInput) {
+                contentInput.value = entry.content;
+            }
+        }
+    }
+
+    /**
+     * Attach listeners to editable preview fields to track changes.
+     */
+    attachPreviewEditListeners() {
+        // Character field listeners
+        const nameInput = this.element?.querySelector('#edit-name');
+        if (nameInput) {
+            nameInput.addEventListener('change', (e) => {
+                const input = /** @type {HTMLInputElement} */ (e.target);
+                this.generatedCharacter.name = input.value;
+            });
+        }
+
+        const descriptionInput = this.element?.querySelector('#edit-description');
+        if (descriptionInput) {
+            descriptionInput.addEventListener('change', (e) => {
+                const input = /** @type {HTMLTextAreaElement} */ (e.target);
+                this.generatedCharacter.description = input.value;
+            });
+        }
+
+        const personalityInput = this.element?.querySelector('#edit-personality');
+        if (personalityInput) {
+            personalityInput.addEventListener('change', (e) => {
+                const input = /** @type {HTMLTextAreaElement} */ (e.target);
+                this.generatedCharacter.personality = input.value;
+            });
+        }
+
+        const scenarioInput = this.element?.querySelector('#edit-scenario');
+        if (scenarioInput) {
+            scenarioInput.addEventListener('change', (e) => {
+                const input = /** @type {HTMLTextAreaElement} */ (e.target);
+                this.generatedCharacter.scenario = input.value;
+            });
+        }
+
+        const firstMesInput = this.element?.querySelector('#edit-first-mes');
+        if (firstMesInput) {
+            firstMesInput.addEventListener('change', (e) => {
+                const input = /** @type {HTMLTextAreaElement} */ (e.target);
+                this.generatedCharacter.first_mes = input.value;
+            });
+        }
+
+        const mesExampleInput = this.element?.querySelector('#edit-mes-example');
+        if (mesExampleInput) {
+            mesExampleInput.addEventListener('change', (e) => {
+                const input = /** @type {HTMLTextAreaElement} */ (e.target);
+                this.generatedCharacter.mes_example = input.value;
+            });
+        }
+
+        // Lorebook entry listeners
+        const entryNameInputs = this.element?.querySelectorAll('.edit-entry-name');
+        if (entryNameInputs) {
+            entryNameInputs.forEach((input) => {
+                input.addEventListener('change', (e) => {
+                    const target = /** @type {HTMLInputElement} */ (e.target);
+                    const index = parseInt(target.dataset.index, 10);
+                    if (this.generatedLorebook?.entries[index]) {
+                        this.generatedLorebook.entries[index].name = target.value;
+                    }
+                });
+            });
+        }
+
+        const entryKeysInputs = this.element?.querySelectorAll('.edit-entry-keys');
+        if (entryKeysInputs) {
+            entryKeysInputs.forEach((input) => {
+                input.addEventListener('change', (e) => {
+                    const target = /** @type {HTMLInputElement} */ (e.target);
+                    const index = parseInt(target.dataset.index, 10);
+                    if (this.generatedLorebook?.entries[index]) {
+                        this.generatedLorebook.entries[index].keys = target.value
+                            .split(',')
+                            .map((k) => k.trim())
+                            .filter((k) => k.length > 0);
+                    }
+                });
+            });
+        }
+
+        const entryContentInputs = this.element?.querySelectorAll('.edit-entry-content');
+        if (entryContentInputs) {
+            entryContentInputs.forEach((input) => {
+                input.addEventListener('change', (e) => {
+                    const target = /** @type {HTMLTextAreaElement} */ (e.target);
+                    const index = parseInt(target.dataset.index, 10);
+                    if (this.generatedLorebook?.entries[index]) {
+                        this.generatedLorebook.entries[index].content = target.value;
+                    }
+                });
+            });
+        }
     }
 
     /**

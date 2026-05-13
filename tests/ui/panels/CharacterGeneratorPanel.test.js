@@ -226,13 +226,13 @@ describe('CharacterGeneratorPanel - Preview', () => {
         setup = setupTest();
     });
 
-    it('displays character name in preview', async () => {
+    it('displays character name in preview editable input', async () => {
         await generateAndShowPreview(setup);
-        const preview = setup.targetElement.querySelector('.preview-character');
-        expect(preview.textContent).toContain('Test Character');
+        const nameInput = setup.targetElement.querySelector('#edit-name');
+        expect(nameInput.value).toBe('Test Character');
     });
 
-    it('displays character fields in preview', async () => {
+    it('displays character fields in editable form', async () => {
         await generateAndShowPreview(setup);
         const preview = setup.targetElement.querySelector('.preview-character');
         expect(preview.textContent).toContain('Description');
@@ -240,14 +240,22 @@ describe('CharacterGeneratorPanel - Preview', () => {
         expect(preview.textContent).toContain('Scenario');
         expect(preview.textContent).toContain('First Message');
         expect(preview.textContent).toContain('Example Dialogue');
+
+        const descriptionInput = setup.targetElement.querySelector('#edit-description');
+        const personalityInput = setup.targetElement.querySelector('#edit-personality');
+        expect(descriptionInput.value).toBe('A test character');
+        expect(personalityInput.value).toBe('Friendly');
     });
 
-    it('displays lorebook entries in preview', async () => {
+    it('displays lorebook entries in editable form', async () => {
         await generateAndShowPreview(setup);
-        const lorebook = setup.targetElement.querySelector('.preview-lorebook');
-        expect(lorebook.textContent).toContain('Test Entry');
-        expect(lorebook.textContent).toContain('test');
-        expect(lorebook.textContent).toContain('Test content');
+        const nameInput = setup.targetElement.querySelector('#edit-entry-name-0');
+        const keysInput = setup.targetElement.querySelector('#edit-entry-keys-0');
+        const contentInput = setup.targetElement.querySelector('#edit-entry-content-0');
+
+        expect(nameInput.value).toBe('Test Entry');
+        expect(keysInput.value).toBe('test, entry');
+        expect(contentInput.value).toBe('Test content');
     });
 
     it('hides input section when preview is shown', async () => {
@@ -261,7 +269,7 @@ describe('CharacterGeneratorPanel - Preview', () => {
         expect(inputSection.style.display).toBe('none');
     });
 
-    it('escapes HTML in character preview', async () => {
+    it('safely handles HTML in character preview inputs', async () => {
         setup.container.generateCharacter.execute.mockResolvedValue(
             new Character({
                 name: '<script>alert("xss")</script>',
@@ -275,11 +283,14 @@ describe('CharacterGeneratorPanel - Preview', () => {
 
         await generateAndShowPreview(setup);
 
-        const preview = setup.targetElement.querySelector('.preview-character');
-        expect(preview.innerHTML).toContain('&lt;script&gt;');
-        expect(preview.innerHTML).toContain('&lt;img');
-        expect(preview.innerHTML).not.toContain('<script>');
-        expect(preview.innerHTML).not.toContain('<img');
+        const nameInput = setup.targetElement.querySelector('#edit-name');
+        const descriptionInput = setup.targetElement.querySelector('#edit-description');
+
+        // Input elements safely handle potentially malicious content as plain text
+        expect(nameInput.value).toBe('<script>alert("xss")</script>');
+        expect(descriptionInput.value).toBe('<img src=x onerror="alert(1)">');
+        // Ensure no actual script tags are in the DOM
+        expect(setup.targetElement.innerHTML).not.toContain('<script>');
     });
 
     it('handles empty lorebook gracefully', async () => {
@@ -394,5 +405,91 @@ describe('CharacterGeneratorPanel - Error Handling', () => {
 
         expect(container.notifier.error).toHaveBeenCalled();
         expect(container.logger.error).toHaveBeenCalled();
+    });
+});
+
+describe('CharacterGeneratorPanel - Editable Preview', () => {
+    let setup;
+
+    beforeEach(() => {
+        setup = setupTest();
+    });
+
+    it('allows editing character name in preview', async () => {
+        await generateAndShowPreview(setup);
+
+        const nameInput = setup.targetElement.querySelector('#edit-name');
+        nameInput.value = 'Modified Name';
+        nameInput.dispatchEvent(new Event('change'));
+
+        expect(setup.panel.generatedCharacter.name).toBe('Modified Name');
+    });
+
+    it('allows editing character description in preview', async () => {
+        await generateAndShowPreview(setup);
+
+        const descInput = setup.targetElement.querySelector('#edit-description');
+        descInput.value = 'Modified description';
+        descInput.dispatchEvent(new Event('change'));
+
+        expect(setup.panel.generatedCharacter.description).toBe('Modified description');
+    });
+
+    it('allows editing character personality in preview', async () => {
+        await generateAndShowPreview(setup);
+
+        const perInput = setup.targetElement.querySelector('#edit-personality');
+        perInput.value = 'Modified personality';
+        perInput.dispatchEvent(new Event('change'));
+
+        expect(setup.panel.generatedCharacter.personality).toBe('Modified personality');
+    });
+
+    it('allows editing lorebook entry content', async () => {
+        await generateAndShowPreview(setup);
+
+        const contentInput = setup.targetElement.querySelector('#edit-entry-content-0');
+        contentInput.value = 'Modified entry content';
+        contentInput.dispatchEvent(new Event('change'));
+
+        expect(setup.panel.generatedLorebook.entries[0].content).toBe('Modified entry content');
+    });
+
+    it('allows editing lorebook entry keys', async () => {
+        await generateAndShowPreview(setup);
+
+        const keysInput = setup.targetElement.querySelector('#edit-entry-keys-0');
+        keysInput.value = 'newkey1, newkey2, newkey3';
+        keysInput.dispatchEvent(new Event('change'));
+
+        expect(setup.panel.generatedLorebook.entries[0].keys).toEqual(['newkey1', 'newkey2', 'newkey3']);
+    });
+
+    it('saves edited character when save button clicked', async () => {
+        await generateAndShowPreview(setup);
+
+        const nameInput = setup.targetElement.querySelector('#edit-name');
+        nameInput.value = 'New Name';
+        nameInput.dispatchEvent(new Event('change'));
+
+        await setup.panel.onSaveClick();
+
+        expect(setup.container.saveCharacter.execute).toHaveBeenCalledWith(
+            expect.objectContaining({ name: 'New Name' }),
+            expect.anything(),
+        );
+    });
+
+    it('saves edited lorebook when save button clicked', async () => {
+        await generateAndShowPreview(setup);
+
+        const contentInput = setup.targetElement.querySelector('#edit-entry-content-0');
+        contentInput.value = 'Edited content';
+        contentInput.dispatchEvent(new Event('change'));
+
+        await setup.panel.onSaveClick();
+
+        const savedLorebook = setup.container.saveCharacter.execute.mock.calls[0][1];
+        expect(savedLorebook.entries[0].content).toBe('Edited content');
     });
 });
