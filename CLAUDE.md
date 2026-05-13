@@ -13,8 +13,6 @@
 
 **Character Forge** is an AI-assisted character generator extension for SillyTavern. It takes a one-sentence character concept and generates a complete Character Card V3 document with an embedded lorebook.
 
-**Status**: ✅ Production-ready. All core features complete, 242 tests passing, zero incomplete code.
-
 **Core functionality**: Accept a natural-language character description → generate valid Character Card V3 JSON (name, description, personality, scenario, first message, dialogue examples) → produce keyword-triggered lorebook entries → allow user review → save to SillyTavern.
 
 ## Quick Reference
