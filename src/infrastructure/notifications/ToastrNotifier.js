@@ -1,6 +1,12 @@
 /**
  * @file Notifier adapter that shows user-facing messages via Toastr
  * (SillyTavern's notification library).
+ *
+ * @typedef {object} Toastr
+ * @property {(message: string) => void} info - show info notification
+ * @property {(message: string) => void} success - show success notification
+ * @property {(message: string) => void} warning - show warning notification
+ * @property {(message: string) => void} error - show error notification
  */
 
 import { INotifier } from '../../application/ports/INotifier.js';
@@ -24,44 +30,44 @@ export class ToastrNotifier extends INotifier {
     /**
      * Show an info notification.
      *
-     * @param {string} _message - notification text
+     * @param {string} message - notification text
      * @returns {void}
      */
-    info(_message) {
-        // TODO: implement - call window.toastr.info or similar
-        throw new Error('ToastrNotifier.info not implemented');
+    info(message) {
+        // @ts-ignore - window.toastr is provided by SillyTavern at runtime
+        window.toastr.info(message);
     }
 
     /**
      * Show a success notification.
      *
-     * @param {string} _message - notification text
+     * @param {string} message - notification text
      * @returns {void}
      */
-    success(_message) {
-        // TODO: implement - call window.toastr.success or similar
-        throw new Error('ToastrNotifier.success not implemented');
+    success(message) {
+        // @ts-ignore - window.toastr is provided by SillyTavern at runtime
+        window.toastr.success(message);
     }
 
     /**
      * Show a warning notification.
      *
-     * @param {string} _message - notification text
+     * @param {string} message - notification text
      * @returns {void}
      */
-    warning(_message) {
-        // TODO: implement - call window.toastr.warning or similar
-        throw new Error('ToastrNotifier.warning not implemented');
+    warning(message) {
+        // @ts-ignore - window.toastr is provided by SillyTavern at runtime
+        window.toastr.warning(message);
     }
 
     /**
      * Show an error notification.
      *
-     * @param {string} _message - notification text
+     * @param {string} message - notification text
      * @returns {void}
      */
-    error(_message) {
-        // TODO: implement - call window.toastr.error or similar
-        throw new Error('ToastrNotifier.error not implemented');
+    error(message) {
+        // @ts-ignore - window.toastr is provided by SillyTavern at runtime
+        window.toastr.error(message);
     }
 }

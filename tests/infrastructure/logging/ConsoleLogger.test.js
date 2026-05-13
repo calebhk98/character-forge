@@ -2,11 +2,15 @@
  * @file Tests for console logger adapter.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ConsoleLogger } from '../../../src/infrastructure/logging/ConsoleLogger.js';
 import { ILogger } from '../../../src/application/ports/ILogger.js';
 
 describe('ConsoleLogger', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
+    });
+
     it('should construct with default prefix', () => {
         const logger = new ConsoleLogger();
 
@@ -26,51 +30,93 @@ describe('ConsoleLogger', () => {
         expect(logger).toBeInstanceOf(ILogger);
     });
 
-    it('should throw on debug call', () => {
-        const logger = new ConsoleLogger();
+    it('should call console.debug with prefix and message', () => {
+        const spyDebug = vi.spyOn(console, 'debug').mockImplementation(() => {});
+        const logger = new ConsoleLogger('Test');
 
-        expect(() => logger.debug('test message')).toThrow('ConsoleLogger.debug not implemented');
+        logger.debug('test message');
+
+        expect(spyDebug).toHaveBeenCalledWith('[Test] test message', undefined);
+        spyDebug.mockRestore();
     });
 
-    it('should throw on info call', () => {
-        const logger = new ConsoleLogger();
+    it('should call console.info with prefix and message', () => {
+        const spyInfo = vi.spyOn(console, 'info').mockImplementation(() => {});
+        const logger = new ConsoleLogger('Test');
 
-        expect(() => logger.info('test message')).toThrow('ConsoleLogger.info not implemented');
+        logger.info('test message');
+
+        expect(spyInfo).toHaveBeenCalledWith('[Test] test message', undefined);
+        spyInfo.mockRestore();
+    });
+});
+
+describe('ConsoleLogger warn and error', () => {
+    beforeEach(() => {
+        vi.clearAllMocks();
     });
 
-    it('should throw on warn call', () => {
-        const logger = new ConsoleLogger();
+    it('should call console.warn with prefix and message', () => {
+        const spyWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        const logger = new ConsoleLogger('Test');
 
-        expect(() => logger.warn('test message')).toThrow('ConsoleLogger.warn not implemented');
+        logger.warn('test message');
+
+        expect(spyWarn).toHaveBeenCalledWith('[Test] test message', undefined);
+        spyWarn.mockRestore();
     });
 
-    it('should throw on error call', () => {
-        const logger = new ConsoleLogger();
+    it('should call console.error with prefix and message', () => {
+        const spyError = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const logger = new ConsoleLogger('Test');
 
-        expect(() => logger.error('test message')).toThrow('ConsoleLogger.error not implemented');
+        logger.error('test message');
+
+        expect(spyError).toHaveBeenCalledWith('[Test] test message', undefined);
+        spyError.mockRestore();
     });
 
     it('should accept optional data parameter in debug', () => {
+        const spyDebug = vi.spyOn(console, 'debug').mockImplementation(() => {});
         const logger = new ConsoleLogger();
+        const data = { key: 'value' };
 
-        expect(() => logger.debug('test message', { key: 'value' })).toThrow();
+        logger.debug('test message', data);
+
+        expect(spyDebug).toHaveBeenCalledWith('[CharacterForge] test message', data);
+        spyDebug.mockRestore();
     });
 
     it('should accept optional data parameter in info', () => {
+        const spyInfo = vi.spyOn(console, 'info').mockImplementation(() => {});
         const logger = new ConsoleLogger();
+        const data = { key: 'value' };
 
-        expect(() => logger.info('test message', { key: 'value' })).toThrow();
+        logger.info('test message', data);
+
+        expect(spyInfo).toHaveBeenCalledWith('[CharacterForge] test message', data);
+        spyInfo.mockRestore();
     });
 
     it('should accept optional data parameter in warn', () => {
+        const spyWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
         const logger = new ConsoleLogger();
+        const data = { key: 'value' };
 
-        expect(() => logger.warn('test message', { key: 'value' })).toThrow();
+        logger.warn('test message', data);
+
+        expect(spyWarn).toHaveBeenCalledWith('[CharacterForge] test message', data);
+        spyWarn.mockRestore();
     });
 
     it('should accept optional data parameter in error', () => {
+        const spyError = vi.spyOn(console, 'error').mockImplementation(() => {});
         const logger = new ConsoleLogger();
+        const data = { key: 'value' };
 
-        expect(() => logger.error('test message', { key: 'value' })).toThrow();
+        logger.error('test message', data);
+
+        expect(spyError).toHaveBeenCalledWith('[CharacterForge] test message', data);
+        spyError.mockRestore();
     });
 });
