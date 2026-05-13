@@ -138,7 +138,7 @@ class FakeLogger extends ILogger {
     }
 }
 
-describe('GenerateLorebookForCharacter', () => {
+describe('GenerateLorebookForCharacter - Core Functionality', () => {
     /**
      * Test happy path generation.
      */
@@ -209,5 +209,45 @@ describe('GenerateLorebookForCharacter', () => {
         expect(promptBuilder.lastDescription).toBe('A brave knight');
         expect(llmProvider.lastRequest).toBeDefined();
         expect(llmProvider.lastRequest.systemPrompt).toContain('lorebook');
+    });
+});
+
+describe('GenerateLorebookForCharacter - JSON Repair', () => {
+    /**
+     * Test JSON repair for malformed markdown-wrapped JSON.
+     */
+    it('should repair malformed JSON with markdown code blocks', async () => {
+        const promptBuilder = new FakePromptBuilder();
+        const malformedJson = `\`\`\`json
+{
+    "entries": [
+        { "keys": ["kingdom"], "content": "Test kingdom", "name": "Kingdom" },
+    ]
+}
+\`\`\``;
+        const llmProvider = new FakeLlmProvider(malformedJson);
+        const logger = new FakeLogger();
+        const useCase = new GenerateLorebookForCharacter(promptBuilder, llmProvider, logger);
+        const lorebook = await useCase.execute('A brave knight');
+        expect(lorebook).toBeInstanceOf(Lorebook);
+        expect(lorebook.entries).toHaveLength(1);
+    });
+
+    /**
+     * Test JSON repair for trailing commas.
+     */
+    it('should repair JSON with trailing commas', async () => {
+        const promptBuilder = new FakePromptBuilder();
+        const jsonWithTrailingCommas = JSON.stringify({
+            entries: [
+                { keys: ['kingdom'], content: 'Test kingdom', name: 'Kingdom' },
+            ],
+        }).replace(/]/, ',]');
+        const llmProvider = new FakeLlmProvider(jsonWithTrailingCommas);
+        const logger = new FakeLogger();
+        const useCase = new GenerateLorebookForCharacter(promptBuilder, llmProvider, logger);
+        const lorebook = await useCase.execute('A brave knight');
+        expect(lorebook).toBeInstanceOf(Lorebook);
+        expect(lorebook.entries).toHaveLength(1);
     });
 });
