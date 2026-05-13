@@ -23,11 +23,26 @@ export class SillyTavernCharacterRepository extends ICharacterRepository {
     /**
      * Save a character card to SillyTavern.
      *
-     * @param {object} _cardJson - Character Card V3 JSON
+     * @param {object} cardJson - Character Card V3 JSON
      * @returns {Promise<string>} character filename or identifier
      */
-    async save(_cardJson) {
-        // TODO: implement - write cardJson to ST's character storage
-        throw new Error('SillyTavernCharacterRepository.save not implemented');
+    async save(cardJson) {
+        const characterName = cardJson.data?.name || 'UnnamedCharacter';
+        const sanitizedName = characterName.replace(/[^a-zA-Z0-9_-]/g, '_');
+
+        const response = await fetch('/api/characters/import', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(cardJson),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to save character: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        return result.filename || sanitizedName;
     }
 }
