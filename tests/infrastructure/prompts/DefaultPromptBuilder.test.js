@@ -126,4 +126,5 @@ describe('DefaultPromptBuilder - Snapshots', () => {
         expect(request.systemPrompt).toMatchSnapshot();
         expect(request.userPrompt).toMatchSnapshot();
     });
+
 });

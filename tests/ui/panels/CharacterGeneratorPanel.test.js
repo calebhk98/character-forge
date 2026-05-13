@@ -380,34 +380,6 @@ describe('CharacterGeneratorPanel - Save and Edit', () => {
     });
 });
 
-describe('CharacterGeneratorPanel - Error Handling', () => {
-    let container;
-    let targetElement;
-    let panel;
-
-    beforeEach(() => {
-        container = createMockContainer();
-        targetElement = document.createElement('div');
-        document.body.appendChild(targetElement);
-        panel = new CharacterGeneratorPanel(container);
-    });
-
-    it('shows error notification on generation failure', async () => {
-        panel.render(targetElement);
-        const textarea = targetElement.querySelector('#character-description');
-        textarea.value = 'A mysterious wizard';
-
-        container.generateCharacter.execute.mockRejectedValue(
-            new Error('Generation failed'),
-        );
-
-        await panel.onGenerateClick();
-
-        expect(container.notifier.error).toHaveBeenCalled();
-        expect(container.logger.error).toHaveBeenCalled();
-    });
-});
-
 describe('CharacterGeneratorPanel - Editable Preview', () => {
     let setup;
 

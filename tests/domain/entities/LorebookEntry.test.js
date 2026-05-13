@@ -70,4 +70,46 @@ describe('LorebookEntry - validation', () => {
         // @ts-expect-error intentionally passing invalid data
         expect(() => new LorebookEntry(data)).toThrow();
     });
+
+    it('should throw when keys contains non-string elements', () => {
+        const data = {
+            keys: ['magic', 123],
+            content: 'Magic is powerful',
+        };
+        // @ts-expect-error intentionally passing invalid data
+        expect(() => new LorebookEntry(data)).toThrow('all keys must be non-empty strings');
+    });
+
+    it('should throw when keys contains empty strings', () => {
+        const data = {
+            keys: ['magic', ''],
+            content: 'Magic is powerful',
+        };
+        expect(() => new LorebookEntry(data)).toThrow('all keys must be non-empty strings');
+    });
+
+    it('should throw when content is missing', () => {
+        const data = {
+            keys: ['magic'],
+        };
+        // @ts-expect-error intentionally passing invalid data
+        expect(() => new LorebookEntry(data)).toThrow();
+    });
+
+    it('should throw when content is not a string', () => {
+        const data = {
+            keys: ['magic'],
+            content: 123,
+        };
+        // @ts-expect-error intentionally passing invalid data
+        expect(() => new LorebookEntry(data)).toThrow();
+    });
+
+    it('should throw when content is an empty or whitespace-only string', () => {
+        const data = {
+            keys: ['magic'],
+            content: '   ',
+        };
+        expect(() => new LorebookEntry(data)).toThrow('content cannot be empty');
+    });
 });

@@ -79,5 +79,20 @@ describe('ExtensionSettingsConfigStore', () => {
             await store.set('autoSaveOnGenerate', true);
             expect(mockContext.extension_settings['character-forge'].autoSaveOnGenerate).toBe(true);
         });
+
+        it('should throw when context is not available', async () => {
+            const storeNoContext = new ExtensionSettingsConfigStore('character-forge', null);
+            await expect(storeNoContext.set('promptTemplate', 'advanced')).rejects.toThrow(
+                'SillyTavern context not available',
+            );
+        });
+
+        it('should throw when extension_settings is not available on context', async () => {
+            const contextWithoutSettings = { saveSettings: () => Promise.resolve() };
+            const storeNoSettings = new ExtensionSettingsConfigStore('character-forge', contextWithoutSettings);
+            await expect(storeNoSettings.set('promptTemplate', 'advanced')).rejects.toThrow(
+                'SillyTavern context not available',
+            );
+        });
     });
 });
