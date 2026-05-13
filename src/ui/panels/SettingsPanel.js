@@ -139,12 +139,13 @@ export class SettingsPanel {
     /**
      * Update the temperature display value.
      *
-     * @param {number} value temperature value
+     * @param {number|string} value temperature value
      */
     updateTemperatureDisplay(value) {
         const display = this.element?.querySelector('#temperature-value-display');
         if (display) {
-            display.textContent = parseFloat(value).toFixed(2);
+            const numValue = parseFloat(/** @type {string} */ (value));
+            display.textContent = numValue.toFixed(2);
         }
     }
 

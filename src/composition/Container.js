@@ -43,14 +43,13 @@ const FORMATTER_FACTORIES = {
 /**
  * Build and wire all application services from config.
  *
- * @param {object} config configuration object
+ * @param {object} config configuration object with defaults applied
  * @param {string} config.llmProvider which LLM adapter to use
  * @param {string} config.cardFormat which card formatter to use
  * @param {object} stContext SillyTavern context object from getContext()
  * @returns {object} container with all wired services
  */
 export function buildContainer(config, stContext) {
-    // TODO: apply defaults to config
     // @ts-ignore - factory return types match port contracts
     const llm = LLM_FACTORIES[config.llmProvider || 'silly-tavern'](config, stContext);
     // @ts-ignore - factory return type matches port contract

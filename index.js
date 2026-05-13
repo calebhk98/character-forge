@@ -8,7 +8,9 @@
 // @ts-check
 
 import { CharacterGeneratorPanel } from './src/ui/panels/CharacterGeneratorPanel.js';
+import { SettingsPanel } from './src/ui/panels/SettingsPanel.js';
 import { buildContainer } from './src/composition/Container.js';
+import { ExtensionSettingsConfigStore } from './src/infrastructure/config/ExtensionSettingsConfigStore.js';
 
 /**
  * Extension entry point. Called by SillyTavern on extension load.
@@ -22,21 +24,37 @@ async function setup() {
         console.warn('[Character Forge] SillyTavern context not available, using defaults');
     }
 
-    // Build application container
-    const container = buildContainer({
-        llmProvider: 'silly-tavern',
-        cardFormat: 'v3',
-    }, stContext);
+    // Create config store to load persisted settings
+    const configStore = new ExtensionSettingsConfigStore('character-forge', stContext);
+
+    // Load user config with defaults
+    const userConfig = {
+        llmProvider: configStore.get('llmProvider', 'silly-tavern'),
+        cardFormat: configStore.get('cardFormat', 'v3'),
+        promptTemplate: configStore.get('promptTemplate', 'default'),
+        lorebookEntryCount: configStore.get('lorebookEntryCount', 'auto'),
+        generationTemperature: configStore.get('generationTemperature', 0.85),
+        autoSaveOnGenerate: configStore.get('autoSaveOnGenerate', false),
+        customSystemPromptOverride: configStore.get('customSystemPromptOverride', ''),
+    };
+
+    // Build application container with config
+    const container = buildContainer(userConfig, stContext);
 
     // Get or create the extension panel container
     const panelContainer = document.getElementById('character-forge-container')
         || createPanelContainer();
 
-    // Create and render the panel
-    const panel = new CharacterGeneratorPanel(container);
-    panel.render(panelContainer);
+    // Create and render the panels
+    const generatorPanel = new CharacterGeneratorPanel(container);
+    generatorPanel.render(panelContainer);
 
-    console.log('[Character Forge] Extension loaded and panel rendered');
+    const settingsPanel = new SettingsPanel(container);
+    const settingsPanelContainer = document.getElementById('character-forge-settings-container')
+        || createSettingsPanelContainer();
+    settingsPanel.render(settingsPanelContainer);
+
+    console.log('[Character Forge] Extension loaded with panels rendered');
 }
 
 /**
@@ -48,6 +66,19 @@ function createPanelContainer() {
     const container = document.createElement('div');
     container.id = 'character-forge-container';
     container.className = 'character-forge-container';
+    document.body.appendChild(container);
+    return container;
+}
+
+/**
+ * Create the settings panel container element if it doesn't exist.
+ *
+ * @returns {HTMLElement} the created container
+ */
+function createSettingsPanelContainer() {
+    const container = document.createElement('div');
+    container.id = 'character-forge-settings-container';
+    container.className = 'character-forge-settings-container';
     document.body.appendChild(container);
     return container;
 }
