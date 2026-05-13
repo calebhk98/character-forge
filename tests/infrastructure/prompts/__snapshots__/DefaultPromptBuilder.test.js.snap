@@ -1,136 +1,52 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`DefaultPromptBuilder > should produce stable prompt for issue example description (snapshot) 1`] = `
-"You are an expert character creator for interactive roleplay. Your task is to generate complete, detailed character profiles in JSON format.
-
-## Character Card V3 Specification
-
-You must output a JSON object with the following fields:
-
-- **name** (string): The character's name.
-- **description** (string): A comprehensive background and physical description. Include appearance, history, and defining characteristics.
-- **personality** (string): The character's personality traits, speech patterns, quirks, and behavioral tendencies.
-- **scenario** (string): The current context or situation in which the character is placed for roleplay.
-- **first_mes** (string): The character's opening message in the roleplay. Should be engaging and set the scene.
-- **mes_example** (string): An example of a typical message from this character during conversation, showing their voice and style.
-
-All fields must be non-empty strings. The JSON must be valid and parseable.
-
-## Guidelines
-
-- Make each field substantial and detailed (at least 100-200 characters each).
-- Ensure personality and behavior are consistent across fields.
-- The first_mes should be immersive and prompt user engagement.
-- mes_example should demonstrate the character's authentic voice in dialogue.
-- All content should be appropriate and well-written.
-
-## Output Format
-
-Return ONLY a valid JSON object. No additional text before or after."
-`;
-
-exports[`DefaultPromptBuilder > should produce stable prompt for issue example description (snapshot) 2`] = `
-"Create a detailed character for the following concept:
-
-"widowed father of 3 training them as superheroes"
-
-Generate a complete character profile with name, description, personality, scenario, first message, and example dialogue.
-
-Target creating approximately 10 lorebook entries for this character's knowledge base.
-
-Return only valid JSON with the character data. No markdown, no code blocks, just the JSON object."
-`;
-
-exports[`DefaultPromptBuilder > should produce stable system prompt (snapshot) 1`] = `
-"You are an expert character creator for interactive roleplay. Your task is to generate complete, detailed character profiles in JSON format.
-
-## Character Card V3 Specification
-
-You must output a JSON object with the following fields:
-
-- **name** (string): The character's name.
-- **description** (string): A comprehensive background and physical description. Include appearance, history, and defining characteristics.
-- **personality** (string): The character's personality traits, speech patterns, quirks, and behavioral tendencies.
-- **scenario** (string): The current context or situation in which the character is placed for roleplay.
-- **first_mes** (string): The character's opening message in the roleplay. Should be engaging and set the scene.
-- **mes_example** (string): An example of a typical message from this character during conversation, showing their voice and style.
-
-All fields must be non-empty strings. The JSON must be valid and parseable.
-
-## Guidelines
-
-- Make each field substantial and detailed (at least 100-200 characters each).
-- Ensure personality and behavior are consistent across fields.
-- The first_mes should be immersive and prompt user engagement.
-- mes_example should demonstrate the character's authentic voice in dialogue.
-- All content should be appropriate and well-written.
-
-## Output Format
-
-Return ONLY a valid JSON object. No additional text before or after."
-`;
-
-exports[`DefaultPromptBuilder > should produce stable user prompt for basic description (snapshot) 1`] = `
-"Create a detailed character for the following concept:
-
-"A wise wizard"
-
-Generate a complete character profile with name, description, personality, scenario, first message, and example dialogue.
-
-Return only valid JSON with the character data. No markdown, no code blocks, just the JSON object."
-`;
-
-exports[`DefaultPromptBuilder > should produce stable user prompt with entryCount option (snapshot) 1`] = `
-"Create a detailed character for the following concept:
-
-"A wise wizard"
-
-Generate a complete character profile with name, description, personality, scenario, first message, and example dialogue.
-
-Target creating approximately 5 lorebook entries for this character's knowledge base.
-
-Return only valid JSON with the character data. No markdown, no code blocks, just the JSON object."
-`;
-
 exports[`DefaultPromptBuilder - Snapshots > should produce stable prompt for issue example description (snapshot) 1`] = `
-"You are an expert character creator for interactive roleplay. Your task is to generate complete, detailed character profiles in JSON format.
+"You are an expert in creating detailed lorebook (World Info) entries for interactive roleplay. Your task is to generate keyword-triggered encyclopedia entries in JSON format.
 
-## Character Card V3 Specification
+## Lorebook Entry Format
 
-You must output a JSON object with the following fields:
+Each entry is a keyword-triggered piece of world information. Generate entries as a JSON object with:
 
-- **name** (string): The character's name.
-- **description** (string): A comprehensive background and physical description. Include appearance, history, and defining characteristics.
-- **personality** (string): The character's personality traits, speech patterns, quirks, and behavioral tendencies.
-- **scenario** (string): The current context or situation in which the character is placed for roleplay.
-- **first_mes** (string): The character's opening message in the roleplay. Should be engaging and set the scene.
-- **mes_example** (string): An example of a typical message from this character during conversation, showing their voice and style.
-
-All fields must be non-empty strings. The JSON must be valid and parseable.
+{
+  "entries": [
+    {
+      "keys": ["keyword1", "keyword2", "alias"],
+      "content": "Detailed world information text",
+      "name": "Entry title (optional)",
+      "comment": "Notes about this entry (optional)",
+      "priority": 0,
+      "insertion_order": 0
+    }
+  ]
+}
 
 ## Guidelines
 
-- Make each field substantial and detailed (at least 100-200 characters each).
-- Ensure personality and behavior are consistent across fields.
-- The first_mes should be immersive and prompt user engagement.
-- mes_example should demonstrate the character's authentic voice in dialogue.
-- All content should be appropriate and well-written.
+- **keys**: Array of trigger words. Use 2-5 short aliases per entry. Avoid common words.
+- **content**: 100-300 character descriptions of world lore, locations, factions, magic systems, etc.
+- **name**: Concise entry title (optional but recommended).
+- Generate 5-15 varied entries covering different aspects of the character's world.
+- Entries should be complementary and provide depth without overlap.
 
 ## Output Format
 
-Return ONLY a valid JSON object. No additional text before or after."
+Return ONLY a valid JSON object with the "entries" array. No additional text."
 `;
 
 exports[`DefaultPromptBuilder - Snapshots > should produce stable prompt for issue example description (snapshot) 2`] = `
-"Create a detailed character for the following concept:
+"Generate lorebook entries for a character with the following concept:
 
 "widowed father of 3 training them as superheroes"
 
-Generate a complete character profile with name, description, personality, scenario, first message, and example dialogue.
+Create approximately 10 diverse lorebook entries covering:
+- World setting and locations
+- Factions, organizations, or groups
+- Magic systems, technology, or special knowledge
+- Important NPCs or characters in this world
+- Historical events or lore
+- Rules, customs, or cultural elements
 
-Target creating approximately 10 lorebook entries for this character's knowledge base.
-
-Return only valid JSON with the character data. No markdown, no code blocks, just the JSON object."
+Return only valid JSON with the entries array. No markdown, no code blocks."
 `;
 
 exports[`DefaultPromptBuilder - Snapshots > should produce stable system prompt (snapshot) 1`] = `
@@ -173,13 +89,17 @@ Return only valid JSON with the character data. No markdown, no code blocks, jus
 `;
 
 exports[`DefaultPromptBuilder - Snapshots > should produce stable user prompt with entryCount option (snapshot) 1`] = `
-"Create a detailed character for the following concept:
+"Generate lorebook entries for a character with the following concept:
 
 "A wise wizard"
 
-Generate a complete character profile with name, description, personality, scenario, first message, and example dialogue.
+Create approximately 5 diverse lorebook entries covering:
+- World setting and locations
+- Factions, organizations, or groups
+- Magic systems, technology, or special knowledge
+- Important NPCs or characters in this world
+- Historical events or lore
+- Rules, customs, or cultural elements
 
-Target creating approximately 5 lorebook entries for this character's knowledge base.
-
-Return only valid JSON with the character data. No markdown, no code blocks, just the JSON object."
+Return only valid JSON with the entries array. No markdown, no code blocks."
 `;
