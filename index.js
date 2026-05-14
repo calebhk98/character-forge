@@ -45,98 +45,64 @@ async function setup() {
 
     const container = buildContainer(userConfig, stContext);
 
-    const modal = createModal();
-    const generatorPanel = new CharacterGeneratorPanel(container);
-    generatorPanel.render(modal.content);
-    modal.closeBtn.addEventListener('click', () => hideModal(modal.overlay));
-    modal.overlay.addEventListener('click', (e) => {
-        if (e.target === modal.overlay) {
-            hideModal(modal.overlay);
-        }
-    });
-
     // ST's extension settings drawer is #extensions_settings2 (defined in
-    // public/index.html). Appending here is where every extension's settings UI
-    // belongs — it's what the "Extensions" panel in the sidebar renders.
-    // The generator panel is too large for the settings drawer, so it lives in a
-    // modal overlay and is opened via a button appended at the top of this section.
+    // public/index.html). Each extension appends an inline_drawer section here,
+    // which is the standard ST pattern for collapsible extension panels.
     const settingsRoot = document.getElementById('extensions_settings2');
     if (settingsRoot) {
-        const settingsWrapper = document.createElement('div');
-        settingsWrapper.id = 'character-forge-settings-container';
-        settingsWrapper.className = 'character-forge-settings-section';
-
-        const launchBtn = document.createElement('button');
-        launchBtn.className = 'btn btn-primary character-forge-launch-btn';
-        launchBtn.textContent = 'Open Character Forge';
-        launchBtn.addEventListener('click', () => showModal(modal.overlay));
-
-        settingsWrapper.appendChild(launchBtn);
-        settingsRoot.appendChild(settingsWrapper);
-
-        const settingsPanel = new SettingsPanel(container);
-        settingsPanel.render(settingsWrapper);
+        const drawer = buildInlineDrawer(container);
+        settingsRoot.appendChild(drawer);
     }
 
     console.log('[Character Forge] Extension loaded');
 }
 
 /**
- * Create the full-screen modal overlay that houses the generator panel.
+ * Build a collapsible inline-drawer section following ST's extension panel
+ * convention. The drawer contains both the settings panel and the generator
+ * panel so the entire extension lives in one collapsible entry alongside all
+ * other installed extensions.
  *
- * @returns {{ overlay: HTMLElement, content: HTMLElement, closeBtn: HTMLElement }} modal parts
+ * @param {object} container - wired DI container
+ * @returns {HTMLElement} the drawer root element
  */
-function createModal() {
-    const overlay = document.createElement('div');
-    overlay.id = 'character-forge-modal-overlay';
-    overlay.className = 'character-forge-modal-overlay';
-    overlay.style.display = 'none';
+function buildInlineDrawer(container) {
+    const drawer = document.createElement('div');
+    drawer.id = 'character-forge-extension-drawer';
+    drawer.className = 'inline_drawer';
 
-    const dialog = document.createElement('div');
-    dialog.className = 'character-forge-modal-dialog';
-
-    const header = document.createElement('div');
-    header.className = 'character-forge-modal-header';
-
-    const title = document.createElement('span');
-    title.className = 'character-forge-modal-title';
-    title.textContent = 'Character Forge';
-
-    const closeBtn = document.createElement('button');
-    closeBtn.className = 'character-forge-modal-close';
-    closeBtn.innerHTML = '&times;';
-    closeBtn.setAttribute('aria-label', 'Close Character Forge');
-
-    header.appendChild(title);
-    header.appendChild(closeBtn);
+    const toggle = document.createElement('div');
+    toggle.className = 'inline_drawer_toggle inline_drawer_header';
+    toggle.innerHTML = `
+        <b>Character Forge</b>
+        <div class="inline_drawer_icon fa-solid fa-circle-chevron-down"></div>
+    `;
 
     const content = document.createElement('div');
-    content.className = 'character-forge-modal-content';
+    content.className = 'inline_drawer_content';
+    content.style.display = 'none';
 
-    dialog.appendChild(header);
-    dialog.appendChild(content);
-    overlay.appendChild(dialog);
-    document.body.appendChild(overlay);
+    toggle.addEventListener('click', () => {
+        const isOpen = content.style.display !== 'none';
+        content.style.display = isOpen ? 'none' : 'block';
+        const icon = toggle.querySelector('.inline_drawer_icon');
+        if (icon) {
+            icon.className = isOpen
+                ? 'inline_drawer_icon fa-solid fa-circle-chevron-down'
+                : 'inline_drawer_icon fa-solid fa-circle-chevron-up';
+        }
+    });
 
-    return { overlay, content, closeBtn };
-}
+    const settingsPanel = new SettingsPanel(container);
+    settingsPanel.render(content);
 
-/**
- * Show the modal overlay.
- *
- * @param {HTMLElement} overlay the overlay element to show
- */
-function showModal(overlay) {
-    overlay.style.display = 'flex';
-}
+    const generatorPanel = new CharacterGeneratorPanel(container);
+    generatorPanel.render(content);
 
-/**
- * Hide the modal overlay.
- *
- * @param {HTMLElement} overlay the overlay element to hide
- */
-function hideModal(overlay) {
-    overlay.style.display = 'none';
+    drawer.appendChild(toggle);
+    drawer.appendChild(content);
+
+    return drawer;
 }
 
 // ST loads extensions by injecting a <script type="module"> tag pointing at the

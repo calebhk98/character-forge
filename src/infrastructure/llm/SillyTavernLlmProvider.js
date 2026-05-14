@@ -33,12 +33,13 @@ export class SillyTavernLlmProvider extends ILlmProvider {
      * @returns {Promise<string>} generated text response
      */
     async generate(request) {
-        const { generateRaw } = this.ctx;
+        // ST may expose generateRaw on the context object or as a window global
+        // depending on version; try both before giving up.
+        const generateRaw = this.ctx?.generateRaw ?? globalThis.generateRaw;
+        if (typeof generateRaw !== 'function') {
+            throw new Error('generateRaw is not available — ensure a connection is configured in SillyTavern');
+        }
 
-        // generateRaw (from st-context.js) accepts systemPrompt and responseLength.
-        // generateQuietPrompt looks similar but silently drops systemPrompt — it only
-        // appends a quiet post-history instruction and has no system prompt parameter.
-        // Neither function accepts a temperature: that is a global ST setting only.
         const response = await generateRaw({
             prompt: request.userPrompt,
             systemPrompt: request.systemPrompt || '',
