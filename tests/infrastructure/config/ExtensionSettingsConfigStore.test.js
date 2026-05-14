@@ -12,7 +12,7 @@ describe('ExtensionSettingsConfigStore', () => {
     beforeEach(() => {
         mockContext = {
             extension_settings: {},
-            saveSettings: () => Promise.resolve(),
+            saveSettingsDebounced: () => Promise.resolve(),
         };
         store = new ExtensionSettingsConfigStore('character-forge', mockContext);
     });
@@ -56,16 +56,16 @@ describe('ExtensionSettingsConfigStore', () => {
             expect(mockContext.extension_settings['character-forge'].promptTemplate).toBe('advanced');
         });
 
-        it('should call saveSettings after setting value', async () => {
-            let saveSettingsCalled = false;
-            mockContext.saveSettings = () => {
-                saveSettingsCalled = true;
+        it('should call saveSettingsDebounced after setting value', async () => {
+            let saveSettingsDebouncedCalled = false;
+            mockContext.saveSettingsDebounced = () => {
+                saveSettingsDebouncedCalled = true;
                 return Promise.resolve();
             };
             mockContext.extension_settings['character-forge'] = {};
 
             await store.set('promptTemplate', 'advanced');
-            expect(saveSettingsCalled).toBe(true);
+            expect(saveSettingsDebouncedCalled).toBe(true);
         });
 
         it('should handle numeric values', async () => {
@@ -88,7 +88,7 @@ describe('ExtensionSettingsConfigStore', () => {
         });
 
         it('should throw when extension_settings is not available on context', async () => {
-            const contextWithoutSettings = { saveSettings: () => Promise.resolve() };
+            const contextWithoutSettings = { saveSettingsDebounced: () => Promise.resolve() };
             const storeNoSettings = new ExtensionSettingsConfigStore('character-forge', contextWithoutSettings);
             await expect(storeNoSettings.set('promptTemplate', 'advanced')).rejects.toThrow(
                 'SillyTavern context not available',

@@ -54,6 +54,6 @@ export class ExtensionSettingsConfigStore extends IConfigStore {
             this.ctx.extension_settings[this.moduleName] = {};
         }
         this.ctx.extension_settings[this.moduleName][key] = value;
-        await this.ctx.saveSettings?.();
+        await this.ctx.saveSettingsDebounced?.();
     }
 }
