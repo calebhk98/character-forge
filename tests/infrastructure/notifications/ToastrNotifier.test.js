@@ -6,90 +6,106 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { ToastrNotifier } from '../../../src/infrastructure/notifications/ToastrNotifier.js';
 import { INotifier } from '../../../src/application/ports/INotifier.js';
 
-describe('ToastrNotifier', () => {
+/** @returns {object} a fake jQuery-like toast element */
+function makeFakeToast() {
+    const textSpy = vi.fn();
+    return { element: { find: vi.fn().mockReturnValue({ text: textSpy }) }, textSpy };
+}
+
+describe('ToastrNotifier - basic notifications', () => {
     beforeEach(() => {
         globalThis.window = {
-            // @ts-ignore - adding toastr to window for test
-            toastr: {
-                info: vi.fn(),
-                success: vi.fn(),
-                warning: vi.fn(),
-                error: vi.fn(),
-            },
+            // @ts-ignore
+            toastr: { info: vi.fn(), success: vi.fn(), warning: vi.fn(), error: vi.fn() },
         };
     });
 
-    afterEach(() => {
-        delete globalThis.window;
-    });
+    afterEach(() => { delete globalThis.window; });
 
-    it('should construct with context', () => {
-        const mockContext = { name: 'test' };
-        const notifier = new ToastrNotifier(mockContext);
-
+    it('should be an instance of INotifier with stored context', () => {
+        const ctx = { name: 'test' };
+        const notifier = new ToastrNotifier(ctx);
         expect(notifier).toBeInstanceOf(INotifier);
-        expect(notifier.ctx).toBe(mockContext);
+        expect(notifier.ctx).toBe(ctx);
     });
 
-    it('should be instance of INotifier', () => {
-        const mockContext = {};
-        const notifier = new ToastrNotifier(mockContext);
-
-        expect(notifier).toBeInstanceOf(INotifier);
+    it('should delegate info/success/warning to toastr', () => {
+        const notifier = new ToastrNotifier({});
+        notifier.info('i');
+        notifier.success('s');
+        notifier.warning('w');
+        // @ts-ignore
+        expect(window.toastr.info).toHaveBeenCalledWith('i');
+        // @ts-ignore
+        expect(window.toastr.success).toHaveBeenCalledWith('s');
+        // @ts-ignore
+        expect(window.toastr.warning).toHaveBeenCalledWith('w');
     });
 
-    it('should call window.toastr.info on info call', () => {
-        const mockContext = {};
-        const notifier = new ToastrNotifier(mockContext);
-
-        notifier.info('test message');
-
-        // @ts-ignore - window.toastr is mocked in beforeEach
-        expect(window.toastr.info).toHaveBeenCalledWith('test message');
-    });
-
-    it('should call window.toastr.success on success call', () => {
-        const mockContext = {};
-        const notifier = new ToastrNotifier(mockContext);
-
-        notifier.success('test message');
-
-        // @ts-ignore - window.toastr is mocked in beforeEach
-        expect(window.toastr.success).toHaveBeenCalledWith('test message');
-    });
-
-    it('should call window.toastr.warning on warning call', () => {
-        const mockContext = {};
-        const notifier = new ToastrNotifier(mockContext);
-
-        notifier.warning('test message');
-
-        // @ts-ignore - window.toastr is mocked in beforeEach
-        expect(window.toastr.warning).toHaveBeenCalledWith('test message');
-    });
-
-    it('should call window.toastr.error on error call', () => {
-        const mockContext = {};
-        const notifier = new ToastrNotifier(mockContext);
-
+    it('should open a sticky closeable toast on first error', () => {
+        const notifier = new ToastrNotifier({});
         notifier.error('test message');
-
-        // @ts-ignore - window.toastr is mocked in beforeEach
+        // @ts-ignore
+        expect(window.toastr.error).toHaveBeenCalledTimes(1);
+        // @ts-ignore
         expect(window.toastr.error).toHaveBeenCalledWith(
             'test message',
             'Character Forge',
-            { timeOut: 0, extendedTimeOut: 0, closeButton: true },
+            expect.objectContaining({ timeOut: 0, closeButton: true }),
         );
     });
 
-    it('should store context for use in implementation', () => {
-        const mockContext = {
-            name: 'test context',
-            data: { key: 'value' },
-        };
-        const notifier = new ToastrNotifier(mockContext);
+    it('should open separate toasts for different messages', () => {
+        const notifier = new ToastrNotifier({});
+        notifier.error('alpha');
+        notifier.error('beta');
+        // @ts-ignore
+        expect(window.toastr.error).toHaveBeenCalledTimes(2);
+    });
+});
 
-        expect(notifier.ctx).toEqual(mockContext);
-        expect(notifier.ctx.name).toBe('test context');
+describe('ToastrNotifier - error deduplication', () => {
+    beforeEach(() => {
+        globalThis.window = {
+            // @ts-ignore
+            toastr: { error: vi.fn() },
+        };
+    });
+
+    afterEach(() => { delete globalThis.window; });
+
+    it('should update existing toast text on duplicate instead of opening another', () => {
+        const { element: fakeToast, textSpy } = makeFakeToast();
+        // @ts-ignore
+        window.toastr.error = vi.fn().mockReturnValue(fakeToast);
+
+        const notifier = new ToastrNotifier({});
+        notifier.error('boom');
+        notifier.error('boom');
+        notifier.error('boom');
+
+        // @ts-ignore
+        expect(window.toastr.error).toHaveBeenCalledTimes(1);
+        expect(fakeToast.find).toHaveBeenCalledWith('.toast-message');
+        expect(textSpy).toHaveBeenNthCalledWith(1, 'boom ×2');
+        expect(textSpy).toHaveBeenNthCalledWith(2, 'boom ×3');
+    });
+
+    it('should reset after toast is dismissed and open a fresh one', () => {
+        let onHidden;
+        const { element: fakeToast } = makeFakeToast();
+        // @ts-ignore
+        window.toastr.error = vi.fn().mockImplementation((_msg, _title, opts) => {
+            onHidden = opts.onHidden;
+            return fakeToast;
+        });
+
+        const notifier = new ToastrNotifier({});
+        notifier.error('oops');
+        onHidden();
+        notifier.error('oops');
+
+        // @ts-ignore
+        expect(window.toastr.error).toHaveBeenCalledTimes(2);
     });
 });
