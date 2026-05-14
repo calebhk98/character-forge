@@ -32,9 +32,24 @@ You review and edit the result before it lands as a saved character in SillyTave
 
 ## Installation
 
-### Quick Start (Git Method - Recommended)
+### Easiest Method (SillyTavern Extension Manager)
 
-This method is quickest if you have Git installed. Copy and paste these commands into your terminal:
+The simplest way to install Character Forge is through SillyTavern's built-in extension manager:
+
+1. **Open SillyTavern** - Navigate to http://localhost:8000 (or wherever your SillyTavern is running)
+2. **Go to Extensions** - Click Extensions in the UI
+3. **Click "Install Extension"**
+4. **Paste the repository URL**: `https://github.com/calebhk98/character-forge.git`
+5. **(Optional)** Specify a branch if you want something other than the default
+6. **Click Install** - SillyTavern will clone the repo and install dependencies automatically
+7. **Reload SillyTavern** - Refresh the browser
+8. **Enable the extension** - Go to Settings → Extensions, find "Character Forge" and toggle it on
+
+> **Note:** Git must be installed on your system for this method to work. If you don't have Git, use one of the manual methods below.
+
+### Git Method (For Developers)
+
+If you prefer to clone the repository manually:
 
 #### On Windows (Command Prompt)
 
