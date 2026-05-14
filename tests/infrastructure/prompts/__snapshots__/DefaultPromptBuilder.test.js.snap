@@ -42,6 +42,8 @@ exports[`DefaultPromptBuilder - Snapshots > should produce stable prompt for iss
 "widowed father of 3 training them as superheroes"
 
 Create approximately 10 diverse lorebook entries covering:
+- Character persona: the character's own appearance, identity, and distinctive features
+- Behavioral rules: speech patterns, emotional tells, habits, and quirks (highest impact — this is what makes the character feel consistent and alive)
 - World setting and locations
 - Factions, organizations, or groups
 - Magic systems, technology, or special knowledge
@@ -118,6 +120,8 @@ exports[`DefaultPromptBuilder - Snapshots > should produce stable user prompt wi
 "A wise wizard"
 
 Create approximately 5 diverse lorebook entries covering:
+- Character persona: the character's own appearance, identity, and distinctive features
+- Behavioral rules: speech patterns, emotional tells, habits, and quirks (highest impact — this is what makes the character feel consistent and alive)
 - World setting and locations
 - Factions, organizations, or groups
 - Magic systems, technology, or special knowledge

@@ -184,6 +184,8 @@ Return ONLY a valid JSON object with the "entries" array. No additional text.`;
         let prompt = `Generate lorebook entries for a character with the following concept:\n\n"${description}"\n\n`;
         const targetCount = options.entryCount || 10;
         prompt += `Create approximately ${targetCount} diverse lorebook entries covering:\n`;
+        prompt += '- Character persona: the character\'s own appearance, identity, and distinctive features\n';
+        prompt += '- Behavioral rules: speech patterns, emotional tells, habits, and quirks (highest impact — this is what makes the character feel consistent and alive)\n';
         prompt += '- World setting and locations\n';
         prompt += '- Factions, organizations, or groups\n';
         prompt += '- Magic systems, technology, or special knowledge\n';
