@@ -23,7 +23,7 @@ describe('index.js entry point', () => {
 
     it('should handle missing DOM gracefully', async () => {
         // Create minimal DOM for the entry point
-        globalThis.document = {
+        globalThis.document = /** @type {any} */ ({
             getElementById: vi.fn().mockReturnValue(null),
             createElement: vi.fn((_tag) => ({
                 id: '',
@@ -33,7 +33,7 @@ describe('index.js entry point', () => {
             body: {
                 appendChild: vi.fn(),
             },
-        };
+        });
 
         // Module should still load
         const module = await import('../index.js');
@@ -55,13 +55,13 @@ describe('index.js entry point', () => {
             appendChild: vi.fn(),
         };
 
-        globalThis.document = {
+        globalThis.document = /** @type {any} */ ({
             getElementById: vi.fn().mockReturnValue(mockElement),
             createElement: vi.fn(() => mockElement),
             body: {
                 appendChild: vi.fn(),
             },
-        };
+        });
 
         // Module should handle DOM being available
         expect(globalThis.document.getElementById).toBeDefined();

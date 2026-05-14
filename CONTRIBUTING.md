@@ -1,6 +1,13 @@
 # Contributing to Character Forge
 
-Thanks for considering a contribution. Before writing code, please skim [DESIGN.md](./DESIGN.md). The architectural rules in this project are deliberate, and most code review feedback traces back to them.
+Thanks for considering a contribution! Character Forge is production-ready with all core features complete. Contributions now focus on:
+
+- Bug fixes
+- Performance improvements
+- New adapters (alternative LLM providers, formatters, etc.)
+- Enhanced features listed in [DESIGN.md](./DESIGN.md#future-enhancements)
+
+Before writing code, please read [DESIGN.md](./DESIGN.md). The architectural rules in this project are deliberate, and most code review feedback traces back to them.
 
 ## Scope of this document
 
@@ -38,8 +45,9 @@ npm run prepare   # installs the git hooks
 After install, verify the toolchain:
 
 ```bash
-npm test          # should pass with the bootstrap dummy test
+npm test          # should pass all 242 tests
 npm run lint      # should pass with no warnings
+npm run typecheck # should pass with no type errors
 ```
 
 ### Running against a live SillyTavern
@@ -360,3 +368,14 @@ Reviewers do not gatekeep on style preferences that are not enforced by ESLint. 
 ## Where to ask questions
 
 Open a discussion before opening a large PR. Open an issue for bugs or feature ideas. For design questions, propose an ADR-style entry under `docs/adr-NNN-*.md` and link it from the issue.
+
+## Current development state
+
+The project is production-ready with comprehensive test coverage. The codebase is stable and follows the patterns documented above strictly. When you contribute:
+
+- **Respect the architecture.** The layering and dependency rules are enforced by ESLint and exist for good reasons documented in DESIGN.md.
+- **Write tests first.** Red commits are the norm here. A feature without a failing test first will be sent back.
+- **Keep code simple.** The complexity and line-length constraints are not bureaucracy; they make code easier to understand and maintain.
+- **Document as you go.** JSDoc and commit messages are part of the code, not afterthoughts.
+
+The TDD discipline and architectural boundaries have served this project well. Changes that violate them should come with strong justification and discussion first.

@@ -94,9 +94,10 @@ describe('Character - validation', () => {
 
     it('should throw when a required field is not a string', () => {
         const data = validCharacterData();
-        data.name = 123;
-        // @ts-expect-error intentionally passing invalid type
-        expect(() => new Character(data)).toThrow();
+        /** @type {any} */
+        const invalidData = data;
+        invalidData.name = 123;
+        expect(() => new Character(invalidData)).toThrow();
     });
 
     it('should throw when a required field is empty', () => {
