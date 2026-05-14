@@ -1,7 +1,7 @@
 /**
  * @file Entry point and composition root for Character Forge. Registers
  * the extension with SillyTavern, wires up the DI container, and hooks
- * into ST's lifecycle events. Only file that imports from both ui/ and
+ * into ST's lifecycle. Only file that imports from both ui/ and
  * infrastructure/.
  */
 
@@ -12,22 +12,27 @@ import { SettingsPanel } from './src/ui/panels/SettingsPanel.js';
 import { buildContainer } from './src/composition/Container.js';
 import { ExtensionSettingsConfigStore } from './src/infrastructure/config/ExtensionSettingsConfigStore.js';
 
+const MODULE_NAME = 'character-forge';
+
 /**
- * Extension entry point. Called by SillyTavern on extension load.
- * The name is part of SillyTavern's extension API contract.
+ * Extension entry point. Self-executes when ST injects the module script tag.
+ * ST exposes its API exclusively via the `SillyTavern` global (set on globalThis
+ * in script.js); there is no bare `getContext` global.
+ *
+ * @returns {Promise<void>}
  */
 async function setup() {
-    // @ts-ignore - getContext is injected by SillyTavern at runtime
-    // eslint-disable-next-line no-undef
-    const stContext = getContext?.();
+    // ST puts exactly one thing on globalThis: the SillyTavern namespace object
+    // (see public/script.js: `globalThis.SillyTavern = { libs, getContext }`).
+    // There is no bare `getContext` global — calling it directly throws ReferenceError.
+    // @ts-ignore - SillyTavern global is injected at runtime
+    const stContext = globalThis.SillyTavern?.getContext?.();
     if (!stContext) {
         console.warn('[Character Forge] SillyTavern context not available, using defaults');
     }
 
-    // Create config store to load persisted settings
-    const configStore = new ExtensionSettingsConfigStore('character-forge', stContext);
+    const configStore = new ExtensionSettingsConfigStore(MODULE_NAME, stContext);
 
-    // Load user config with defaults
     const userConfig = {
         llmProvider: configStore.get('llmProvider', 'silly-tavern'),
         cardFormat: configStore.get('cardFormat', 'v3'),
@@ -38,54 +43,108 @@ async function setup() {
         customSystemPromptOverride: configStore.get('customSystemPromptOverride', ''),
     };
 
-    // Build application container with config
     const container = buildContainer(userConfig, stContext);
 
-    // Get or create the extension panel container
-    const panelContainer = document.getElementById('character-forge-container')
-        || createPanelContainer();
-
-    // Create and render the panels
+    const modal = createModal();
     const generatorPanel = new CharacterGeneratorPanel(container);
-    generatorPanel.render(panelContainer);
+    generatorPanel.render(modal.content);
+    modal.closeBtn.addEventListener('click', () => hideModal(modal.overlay));
+    modal.overlay.addEventListener('click', (e) => {
+        if (e.target === modal.overlay) {
+            hideModal(modal.overlay);
+        }
+    });
 
-    const settingsPanel = new SettingsPanel(container);
-    const settingsPanelContainer = document.getElementById('character-forge-settings-container')
-        || createSettingsPanelContainer();
-    settingsPanel.render(settingsPanelContainer);
+    // ST's extension settings drawer is #extensions_settings2 (defined in
+    // public/index.html). Appending here is where every extension's settings UI
+    // belongs — it's what the "Extensions" panel in the sidebar renders.
+    // The generator panel is too large for the settings drawer, so it lives in a
+    // modal overlay and is opened via a button appended at the top of this section.
+    const settingsRoot = document.getElementById('extensions_settings2');
+    if (settingsRoot) {
+        const settingsWrapper = document.createElement('div');
+        settingsWrapper.id = 'character-forge-settings-container';
+        settingsWrapper.className = 'character-forge-settings-section';
 
-    console.log('[Character Forge] Extension loaded with panels rendered');
+        const launchBtn = document.createElement('button');
+        launchBtn.className = 'btn btn-primary character-forge-launch-btn';
+        launchBtn.textContent = 'Open Character Forge';
+        launchBtn.addEventListener('click', () => showModal(modal.overlay));
+
+        settingsWrapper.appendChild(launchBtn);
+        settingsRoot.appendChild(settingsWrapper);
+
+        const settingsPanel = new SettingsPanel(container);
+        settingsPanel.render(settingsWrapper);
+    }
+
+    console.log('[Character Forge] Extension loaded');
 }
 
 /**
- * Create the panel container element if it doesn't exist.
+ * Create the full-screen modal overlay that houses the generator panel.
  *
- * @returns {HTMLElement} the created container
+ * @returns {{ overlay: HTMLElement, content: HTMLElement, closeBtn: HTMLElement }} modal parts
  */
-function createPanelContainer() {
-    const container = document.createElement('div');
-    container.id = 'character-forge-container';
-    container.className = 'character-forge-container';
-    document.body.appendChild(container);
-    return container;
+function createModal() {
+    const overlay = document.createElement('div');
+    overlay.id = 'character-forge-modal-overlay';
+    overlay.className = 'character-forge-modal-overlay';
+    overlay.style.display = 'none';
+
+    const dialog = document.createElement('div');
+    dialog.className = 'character-forge-modal-dialog';
+
+    const header = document.createElement('div');
+    header.className = 'character-forge-modal-header';
+
+    const title = document.createElement('span');
+    title.className = 'character-forge-modal-title';
+    title.textContent = 'Character Forge';
+
+    const closeBtn = document.createElement('button');
+    closeBtn.className = 'character-forge-modal-close';
+    closeBtn.innerHTML = '&times;';
+    closeBtn.setAttribute('aria-label', 'Close Character Forge');
+
+    header.appendChild(title);
+    header.appendChild(closeBtn);
+
+    const content = document.createElement('div');
+    content.className = 'character-forge-modal-content';
+
+    dialog.appendChild(header);
+    dialog.appendChild(content);
+    overlay.appendChild(dialog);
+    document.body.appendChild(overlay);
+
+    return { overlay, content, closeBtn };
 }
 
 /**
- * Create the settings panel container element if it doesn't exist.
+ * Show the modal overlay.
  *
- * @returns {HTMLElement} the created container
+ * @param {HTMLElement} overlay the overlay element to show
  */
-function createSettingsPanelContainer() {
-    const container = document.createElement('div');
-    container.id = 'character-forge-settings-container';
-    container.className = 'character-forge-settings-container';
-    document.body.appendChild(container);
-    return container;
+function showModal(overlay) {
+    overlay.style.display = 'flex';
 }
 
-// Register the extension with SillyTavern
-// @ts-ignore - getContext is injected by SillyTavern at runtime
-if (typeof getContext !== 'undefined') {
+/**
+ * Hide the modal overlay.
+ *
+ * @param {HTMLElement} overlay the overlay element to hide
+ */
+function hideModal(overlay) {
+    overlay.style.display = 'none';
+}
+
+// ST loads extensions by injecting a <script type="module"> tag pointing at the
+// js field from manifest.json (see extensions.js: addExtensionScript). The module
+// runs its top-level code on load — there is no separate "activate" callback unless
+// hooks are declared in the manifest. The SillyTavern global being present is the
+// reliable signal that we're running inside ST rather than in a test runner.
+if (globalThis.SillyTavern) {
     setup().catch(err => {
         console.error('[Character Forge] Setup error:', err);
     });

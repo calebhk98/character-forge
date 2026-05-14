@@ -21,40 +21,44 @@ export class SillyTavernLorebookRepository extends ILorebookRepository {
     }
 
     /**
-     * Save a lorebook to SillyTavern.
+     * Save a lorebook to SillyTavern via the /api/worldinfo/edit endpoint.
+     *
+     * Uses /edit (not /import) because /import requires a multipart file upload.
+     * ST world info entries are keyed by numeric string index.
      *
      * @param {import('../../domain/entities/Lorebook.js').Lorebook} lorebook - lorebook to save
-     * @returns {Promise<string>} lorebook identifier
+     * @returns {Promise<string>} lorebook name used as identifier
      */
     async save(lorebook) {
+        const lorebookName = lorebook.name || 'Generated Lorebook';
+        const entries = (lorebook.entries || []).map((entry, i) => ({
+            uid: i,
+            key: entry.keys || [],
+            keysecondary: [],
+            comment: entry.name || '',
+            content: entry.content || '',
+            insertion_order: entry.insertion_order ?? i,
+            enabled: true,
+            extensions: {},
+        }));
+
+        // ST stores world info entries as an object keyed by numeric strings
+        // ("0", "1", …), not as an array. /api/worldinfo/edit validates that the
+        // payload has an `entries` key and writes it verbatim to disk.
         const worldInfoData = {
-            name: lorebook.name || 'Generated Lorebook',
-            description: lorebook.description,
-            entries: (lorebook.entries || []).map((entry) => ({
-                key: entry.keys || [],
-                content: entry.content,
-                name: entry.name,
-                comment: entry.comment,
-                insertion_order: entry.insertion_order,
-            })),
-            scan_depth: lorebook.scan_depth,
-            token_budget: lorebook.token_budget,
-            recursive_scanning: lorebook.recursive_scanning,
+            entries: Object.fromEntries(entries.map((e, i) => [String(i), e])),
         };
 
-        const response = await fetch('/api/worldinfo/import', {
+        const response = await fetch('/api/worldinfo/edit', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(worldInfoData),
+            headers: this.ctx?.getRequestHeaders?.() ?? { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: lorebookName, data: worldInfoData }),
         });
 
         if (!response.ok) {
             throw new Error(`Failed to save lorebook: ${response.statusText}`);
         }
 
-        const result = await response.json();
-        return result.id || result.name || lorebook.name || 'generated-lorebook';
+        return lorebookName;
     }
 }

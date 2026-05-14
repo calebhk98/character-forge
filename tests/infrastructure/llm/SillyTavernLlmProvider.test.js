@@ -12,7 +12,7 @@ describe('SillyTavernLlmProvider', () => {
 
     beforeEach(() => {
         mockContext = {
-            generateQuietPrompt: vi.fn(),
+            generateRaw: vi.fn(),
         };
     });
 
@@ -25,11 +25,11 @@ describe('SillyTavernLlmProvider', () => {
     });
 
     /**
-     * Test that generateQuietPrompt is called with correct parameters.
+     * Test that generateRaw is called with prompt, systemPrompt, and responseLength.
      */
-    it('should call generateQuietPrompt with user and system prompts', async () => {
+    it('should call generateRaw with prompt, systemPrompt, and responseLength', async () => {
         const expectedResponse = 'Generated response text';
-        mockContext.generateQuietPrompt.mockResolvedValue(expectedResponse);
+        mockContext.generateRaw.mockResolvedValue(expectedResponse);
 
         const provider = new SillyTavernLlmProvider(mockContext);
         const request = new GenerationRequest({
@@ -41,11 +41,10 @@ describe('SillyTavernLlmProvider', () => {
 
         const response = await provider.generate(request);
 
-        expect(mockContext.generateQuietPrompt).toHaveBeenCalledWith({
-            quietPrompt: 'Create a character.',
+        expect(mockContext.generateRaw).toHaveBeenCalledWith({
+            prompt: 'Create a character.',
             systemPrompt: 'You are a character creator.',
-            temperature: 0.85,
-            maxTokens: 2048,
+            responseLength: 2048,
         });
         expect(response).toBe(expectedResponse);
     });
@@ -53,9 +52,9 @@ describe('SillyTavernLlmProvider', () => {
     /**
      * Test that the provider returns the response as-is.
      */
-    it('should return response from generateQuietPrompt', async () => {
+    it('should return response from generateRaw', async () => {
         const responseText = 'JSON character data';
-        mockContext.generateQuietPrompt.mockResolvedValue(responseText);
+        mockContext.generateRaw.mockResolvedValue(responseText);
 
         const provider = new SillyTavernLlmProvider(mockContext);
         const request = new GenerationRequest({
@@ -68,11 +67,11 @@ describe('SillyTavernLlmProvider', () => {
     });
 
     /**
-     * Test that errors from generateQuietPrompt are propagated.
+     * Test that errors from generateRaw are propagated.
      */
-    it('should propagate errors from generateQuietPrompt', async () => {
+    it('should propagate errors from generateRaw', async () => {
         const testError = new Error('Connection failed');
-        mockContext.generateQuietPrompt.mockRejectedValue(testError);
+        mockContext.generateRaw.mockRejectedValue(testError);
 
         const provider = new SillyTavernLlmProvider(mockContext);
         const request = new GenerationRequest({
@@ -84,24 +83,24 @@ describe('SillyTavernLlmProvider', () => {
     });
 
     /**
-     * Test that optional parameters are passed through.
+     * Test that undefined systemPrompt is coerced to empty string, and
+     * undefined maxTokens is passed through as responseLength.
      */
-    it('should handle requests without optional temperature and maxTokens', async () => {
-        mockContext.generateQuietPrompt.mockResolvedValue('Response');
+    it('should coerce missing systemPrompt to empty string', async () => {
+        mockContext.generateRaw.mockResolvedValue('Response');
 
         const provider = new SillyTavernLlmProvider(mockContext);
         const request = new GenerationRequest({
-            systemPrompt: 'System',
+            systemPrompt: '',
             userPrompt: 'User',
         });
 
         await provider.generate(request);
 
-        expect(mockContext.generateQuietPrompt).toHaveBeenCalledWith({
-            quietPrompt: 'User',
-            systemPrompt: 'System',
-            temperature: undefined,
-            maxTokens: undefined,
+        expect(mockContext.generateRaw).toHaveBeenCalledWith({
+            prompt: 'User',
+            systemPrompt: '',
+            responseLength: undefined,
         });
     });
 });

@@ -24,17 +24,25 @@ export class SillyTavernLlmProvider extends ILlmProvider {
     /**
      * Generate text via SillyTavern's active connection.
      *
+     * Uses generateRaw (exposed on the context from st-context.js) because it
+     * accepts a systemPrompt parameter. generateQuietPrompt does not support
+     * per-call system prompts. Temperature is controlled by ST's global
+     * settings and cannot be overridden per-call through this API.
+     *
      * @param {import('../../application/ports/ILlmProvider.js').GenerationRequest} request - generation parameters
      * @returns {Promise<string>} generated text response
      */
     async generate(request) {
-        const { generateQuietPrompt } = this.ctx;
+        const { generateRaw } = this.ctx;
 
-        const response = await generateQuietPrompt({
-            quietPrompt: request.userPrompt,
-            systemPrompt: request.systemPrompt,
-            temperature: request.temperature,
-            maxTokens: request.maxTokens,
+        // generateRaw (from st-context.js) accepts systemPrompt and responseLength.
+        // generateQuietPrompt looks similar but silently drops systemPrompt — it only
+        // appends a quiet post-history instruction and has no system prompt parameter.
+        // Neither function accepts a temperature: that is a global ST setting only.
+        const response = await generateRaw({
+            prompt: request.userPrompt,
+            systemPrompt: request.systemPrompt || '',
+            responseLength: request.maxTokens,
         });
 
         return response;
