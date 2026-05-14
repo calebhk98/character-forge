@@ -73,24 +73,36 @@ export class DefaultPromptBuilder extends IPromptBuilder {
 Output a JSON object with these fields:
 
 - **name** (string): The character's name.
-- **description** (string): Physical appearance, backstory, and defining characteristics. Keep world-building lore minimal here — that belongs in the lorebook, not the card description.
-- **personality** (string): A concise distillation of key personality traits, speech patterns, quirks, and behavioral tendencies. This is a punchy summary, not a full character study.
+
+- **description** (string): Physical appearance, backstory, and defining characteristics. Keep world-building lore minimal — that belongs in the lorebook. Prioritise behavioral patterns over bare facts: ask yourself "does this sentence tell the model *how to act*, or just *what exists*?" Sentences that shape behavior are worth more than sentences that only describe.
+
+- **personality** (string): A tight behavioral brief — NOT a list of adjectives. Never write "kind, mysterious, loyal." Instead write the *why*, *when*, and *how* behind each trait. Example: "She deflects emotional moments with cutting jokes — not because she doesn't care, but because sincerity makes her uncomfortable. Around strangers she's prickly; around people she trusts, the jokes get softer and the silences longer." Test: could an actor nail this voice in 10 different scenes from this description alone?
+
 - **scenario** (string): The circumstances and context in which the roleplay begins. Frames the opening situation.
-- **first_mes** (string): The character's opening message — THE most important field. The AI will mirror its tone, style, and length throughout the entire conversation. Write it as a narrative scene: 150-300 words, in-character and immersive, with action descriptions (*she sets down her cup and looks up*) woven with natural dialogue. End with something that invites the user to engage.
-- **mes_example** (string): One or more example exchanges that demonstrate the character's authentic voice. Use this EXACT format with no variation:
+
+- **first_mes** (string): The character's opening message — THE most important field. The AI mirrors its tone, style, and length throughout the entire conversation, so the length here calibrates the length of every future reply. Write it as a narrative scene: 150-300 words, in-character and immersive, with action descriptions (*she sets down her cup and looks up*) woven with natural dialogue. End with something that invites the user to engage.
+
+- **mes_example** (string): 2-3 short example exchanges (5-6 lines each) demonstrating the character's authentic voice. Use this EXACT format:
   <START>
-  {{char}}: [character message — mix actions and dialogue]
-  {{user}}: [a plausible user reply]
-  {{char}}: [character follow-up]
+  {{char}}: *action in asterisks* "spoken dialogue"
+  {{user}}: [a short, open-ended prompt — e.g. "Tell me about yourself." or "What do you want?"]
+  {{char}}: *different action* "follow-up dialogue"
+
+  Rules for mes_example (the AI internalises these patterns, so they matter):
+  • Never use the same action verb twice across all examples — use synonyms. Repeating a verb makes the AI echo it obsessively.
+  • Reserve quotation marks for spoken dialogue only — never wrap thoughts or internal states in quotes.
+  • Keep each exchange open-ended — no definitive resolutions, leave room for the user.
+  • Mention {{char}}'s name at least once per block to reinforce who is speaking.
+  • Always use {{char}} and {{user}} as placeholders — never substitute real names.
 
 All fields must be non-empty strings. The JSON must be valid and parseable.
 
 ## Guidelines
 
-- **first_mes is critical.** The model anchors its style and response length to it more than any other field. Make it count.
-- Keep **description** lean. The lorebook handles world-building; the card description handles the character.
-- Use \`{{char}}\` and \`{{user}}\` as placeholders in mes_example — never use real names there.
-- Ensure tone, vocabulary, and personality are consistent across all fields.
+- **Personality is behavioral, not descriptive.** Never list adjectives. Explain the behavior, the exceptions, and the contradictions.
+- **first_mes calibrates reply length.** A longer, richer opener trains the AI to give longer replies throughout the chat.
+- **description** should answer "how does this character act?" as much as "what do they look like?"
+- Ensure tone, vocabulary, and personality are consistent across every field.
 
 ## Output Format
 
@@ -108,9 +120,12 @@ Return ONLY a valid JSON object. No markdown, no code blocks, no extra text.`;
     buildUserPrompt(description, _options) {
         let prompt = `Create a detailed character for the following concept:\n\n"${description}"\n\n`;
         prompt += 'Generate a complete character profile including:\n';
-        prompt += '- name, description, personality, scenario\n';
-        prompt += '- first_mes: a rich narrative opening scene (150-300 words) that establishes tone and ends with an invitation for the user to engage\n';
-        prompt += '- mes_example: at least one exchange using the exact <START> / {{char}}: / {{user}}: format\n\n';
+        prompt += '- name\n';
+        prompt += '- description: focus on behavioral patterns — how the character acts, not just what they look like\n';
+        prompt += '- personality: a behavioral brief (no adjective lists — explain the why and when behind each trait)\n';
+        prompt += '- scenario\n';
+        prompt += '- first_mes: a rich narrative opening scene (150-300 words) — its length calibrates how long AI replies will be throughout the conversation\n';
+        prompt += '- mes_example: 2-3 short exchanges (5-6 lines each) in <START> / {{char}}: / {{user}}: format. Vary action verbs across all examples — never repeat the same one. Quotes for dialogue only.\n\n';
         prompt += 'Return only valid JSON with the character data. No markdown, no code blocks, just the JSON object.';
         return prompt;
     }
