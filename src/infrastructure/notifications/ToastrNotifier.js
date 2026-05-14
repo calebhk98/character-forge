@@ -67,7 +67,9 @@ export class ToastrNotifier extends INotifier {
      * @returns {void}
      */
     error(message) {
+        // timeOut: 0 keeps the toast until the user explicitly dismisses it,
+        // so they can read the full error before it vanishes.
         // @ts-ignore - window.toastr is provided by SillyTavern at runtime
-        window.toastr.error(message);
+        window.toastr.error(message, 'Character Forge', { timeOut: 0, extendedTimeOut: 0, closeButton: true });
     }
 }

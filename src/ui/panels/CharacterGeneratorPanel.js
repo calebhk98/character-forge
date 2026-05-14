@@ -113,6 +113,7 @@ export class CharacterGeneratorPanel {
         }
 
         this.isGenerating = true;
+        this.clearStatus();
         const generateBtn = /** @type {HTMLButtonElement} */ (
             this.element?.querySelector('#generate-button')
         );
@@ -145,6 +146,7 @@ export class CharacterGeneratorPanel {
         } catch (error) {
             this.container?.logger?.error('Generation failed', { error: error.message });
             this.container?.notifier?.error(`Generation failed: ${error.message}`);
+            this.showStatus(`Generation failed: ${error.message}`, 'error');
         } finally {
             this.isGenerating = false;
             if (generateBtn) {
@@ -301,97 +303,53 @@ export class CharacterGeneratorPanel {
      * Attach listeners to editable preview fields to track changes.
      */
     attachPreviewEditListeners() {
-        // Character field listeners
-        const nameInput = this.element?.querySelector('#edit-name');
-        if (nameInput) {
-            nameInput.addEventListener('change', (e) => {
-                const input = /** @type {HTMLInputElement} */ (e.target);
-                this.generatedCharacter.name = input.value;
-            });
-        }
-
-        const descriptionInput = this.element?.querySelector('#edit-description');
-        if (descriptionInput) {
-            descriptionInput.addEventListener('change', (e) => {
-                const input = /** @type {HTMLTextAreaElement} */ (e.target);
-                this.generatedCharacter.description = input.value;
-            });
-        }
-
-        const personalityInput = this.element?.querySelector('#edit-personality');
-        if (personalityInput) {
-            personalityInput.addEventListener('change', (e) => {
-                const input = /** @type {HTMLTextAreaElement} */ (e.target);
-                this.generatedCharacter.personality = input.value;
-            });
-        }
-
-        const scenarioInput = this.element?.querySelector('#edit-scenario');
-        if (scenarioInput) {
-            scenarioInput.addEventListener('change', (e) => {
-                const input = /** @type {HTMLTextAreaElement} */ (e.target);
-                this.generatedCharacter.scenario = input.value;
-            });
-        }
-
-        const firstMesInput = this.element?.querySelector('#edit-first-mes');
-        if (firstMesInput) {
-            firstMesInput.addEventListener('change', (e) => {
-                const input = /** @type {HTMLTextAreaElement} */ (e.target);
-                this.generatedCharacter.first_mes = input.value;
-            });
-        }
-
-        const mesExampleInput = this.element?.querySelector('#edit-mes-example');
-        if (mesExampleInput) {
-            mesExampleInput.addEventListener('change', (e) => {
-                const input = /** @type {HTMLTextAreaElement} */ (e.target);
-                this.generatedCharacter.mes_example = input.value;
-            });
-        }
-
-        // Lorebook entry listeners
-        const entryNameInputs = this.element?.querySelectorAll('.edit-entry-name');
-        if (entryNameInputs) {
-            entryNameInputs.forEach((input) => {
-                input.addEventListener('change', (e) => {
-                    const target = /** @type {HTMLInputElement} */ (e.target);
-                    const index = parseInt(target.dataset.index, 10);
-                    if (this.generatedLorebook?.entries[index]) {
-                        this.generatedLorebook.entries[index].name = target.value;
-                    }
+        const charFields = [
+            { id: '#edit-name', prop: 'name' },
+            { id: '#edit-description', prop: 'description' },
+            { id: '#edit-personality', prop: 'personality' },
+            { id: '#edit-scenario', prop: 'scenario' },
+            { id: '#edit-first-mes', prop: 'first_mes' },
+            { id: '#edit-mes-example', prop: 'mes_example' },
+        ];
+        for (const { id, prop } of charFields) {
+            const el = this.element?.querySelector(id);
+            if (el) {
+                el.addEventListener('change', (e) => {
+                    this.generatedCharacter[prop] = /** @type {HTMLInputElement} */ (e.target).value;
                 });
-            });
+            }
         }
 
-        const entryKeysInputs = this.element?.querySelectorAll('.edit-entry-keys');
-        if (entryKeysInputs) {
-            entryKeysInputs.forEach((input) => {
-                input.addEventListener('change', (e) => {
-                    const target = /** @type {HTMLInputElement} */ (e.target);
-                    const index = parseInt(target.dataset.index, 10);
-                    if (this.generatedLorebook?.entries[index]) {
-                        this.generatedLorebook.entries[index].keys = target.value
-                            .split(',')
-                            .map((k) => k.trim())
-                            .filter((k) => k.length > 0);
-                    }
-                });
+        this.element?.querySelectorAll('.edit-entry-name').forEach((input) => {
+            input.addEventListener('change', (e) => {
+                const target = /** @type {HTMLInputElement} */ (e.target);
+                const idx = parseInt(target.dataset.index, 10);
+                if (this.generatedLorebook?.entries[idx]) {
+                    this.generatedLorebook.entries[idx].name = target.value;
+                }
             });
-        }
+        });
 
-        const entryContentInputs = this.element?.querySelectorAll('.edit-entry-content');
-        if (entryContentInputs) {
-            entryContentInputs.forEach((input) => {
-                input.addEventListener('change', (e) => {
-                    const target = /** @type {HTMLTextAreaElement} */ (e.target);
-                    const index = parseInt(target.dataset.index, 10);
-                    if (this.generatedLorebook?.entries[index]) {
-                        this.generatedLorebook.entries[index].content = target.value;
-                    }
-                });
+        this.element?.querySelectorAll('.edit-entry-keys').forEach((input) => {
+            input.addEventListener('change', (e) => {
+                const target = /** @type {HTMLInputElement} */ (e.target);
+                const idx = parseInt(target.dataset.index, 10);
+                if (this.generatedLorebook?.entries[idx]) {
+                    this.generatedLorebook.entries[idx].keys = target.value
+                        .split(',').map((k) => k.trim()).filter((k) => k.length > 0);
+                }
             });
-        }
+        });
+
+        this.element?.querySelectorAll('.edit-entry-content').forEach((input) => {
+            input.addEventListener('change', (e) => {
+                const target = /** @type {HTMLTextAreaElement} */ (e.target);
+                const idx = parseInt(target.dataset.index, 10);
+                if (this.generatedLorebook?.entries[idx]) {
+                    this.generatedLorebook.entries[idx].content = target.value;
+                }
+            });
+        });
     }
 
     /**
@@ -453,6 +411,7 @@ export class CharacterGeneratorPanel {
 
             this.container?.logger?.info('Character saved successfully');
             this.container?.notifier?.success('Character saved to SillyTavern');
+            this.showStatus('Character saved to SillyTavern', 'success');
 
             // Reset the panel
             this.generatedCharacter = null;
@@ -467,10 +426,43 @@ export class CharacterGeneratorPanel {
         } catch (error) {
             this.container?.logger?.error('Save failed', { error: error.message });
             this.container?.notifier?.error(`Save failed: ${error.message}`);
+            this.showStatus(`Save failed: ${error.message}`, 'error');
         } finally {
             if (saveBtn) {
                 saveBtn.disabled = false;
             }
+        }
+    }
+
+    /**
+     * Show a persistent status message in the status section.
+     *
+     * @param {string} message - text to display
+     * @param {'error'|'success'|'info'} [type] - visual style
+     */
+    showStatus(message, type = 'info') {
+        const section = /** @type {HTMLElement} */ (
+            this.element?.querySelector('#status-section')
+        );
+        if (!section) {
+            return;
+        }
+        section.innerHTML = '';
+        const msg = document.createElement('div');
+        msg.className = `status-message status-${type}`;
+        msg.textContent = message;
+        section.appendChild(msg);
+    }
+
+    /**
+     * Clear the status section.
+     */
+    clearStatus() {
+        const section = /** @type {HTMLElement} */ (
+            this.element?.querySelector('#status-section')
+        );
+        if (section) {
+            section.innerHTML = '';
         }
     }
 

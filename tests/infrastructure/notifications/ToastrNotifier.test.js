@@ -75,7 +75,11 @@ describe('ToastrNotifier', () => {
         notifier.error('test message');
 
         // @ts-ignore - window.toastr is mocked in beforeEach
-        expect(window.toastr.error).toHaveBeenCalledWith('test message');
+        expect(window.toastr.error).toHaveBeenCalledWith(
+            'test message',
+            'Character Forge',
+            { timeOut: 0, extendedTimeOut: 0, closeButton: true },
+        );
     });
 
     it('should store context for use in implementation', () => {
