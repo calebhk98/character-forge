@@ -42,6 +42,9 @@ export class SillyTavernLorebookRepository extends ILorebookRepository {
             extensions: {},
         }));
 
+        // ST stores world info entries as an object keyed by numeric strings
+        // ("0", "1", …), not as an array. /api/worldinfo/edit validates that the
+        // payload has an `entries` key and writes it verbatim to disk.
         const worldInfoData = {
             entries: Object.fromEntries(entries.map((e, i) => [String(i), e])),
         };

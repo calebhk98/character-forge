@@ -54,6 +54,9 @@ export class ExtensionSettingsConfigStore extends IConfigStore {
             this.ctx.extension_settings[this.moduleName] = {};
         }
         this.ctx.extension_settings[this.moduleName][key] = value;
+        // saveSettingsDebounced is the correct ST API for persisting extension settings
+        // (confirmed in st-context.js). There is no synchronous saveSettings exposed
+        // to extensions; the debounced version coalesces rapid writes into one disk flush.
         await this.ctx.saveSettingsDebounced?.();
     }
 }

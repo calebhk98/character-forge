@@ -35,6 +35,10 @@ export class SillyTavernLlmProvider extends ILlmProvider {
     async generate(request) {
         const { generateRaw } = this.ctx;
 
+        // generateRaw (from st-context.js) accepts systemPrompt and responseLength.
+        // generateQuietPrompt looks similar but silently drops systemPrompt — it only
+        // appends a quiet post-history instruction and has no system prompt parameter.
+        // Neither function accepts a temperature: that is a global ST setting only.
         const response = await generateRaw({
             prompt: request.userPrompt,
             systemPrompt: request.systemPrompt || '',

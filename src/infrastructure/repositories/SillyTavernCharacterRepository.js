@@ -39,7 +39,9 @@ export class SillyTavernCharacterRepository extends ICharacterRepository {
         formData.append('avatar', blob, `${sanitizedName}.json`);
         formData.append('file_type', 'json');
 
-        // omitContentType=true: browser sets Content-Type with boundary for FormData
+        // omitContentType=true so the browser can set Content-Type itself — it must
+        // include the multipart boundary string, which only the browser knows at this point.
+        // Passing Content-Type manually breaks the boundary and the server rejects the upload.
         const headers = this.ctx?.getRequestHeaders?.({ omitContentType: true }) ?? {};
 
         const response = await fetch('/api/characters/import', {
@@ -53,6 +55,7 @@ export class SillyTavernCharacterRepository extends ICharacterRepository {
         }
 
         const result = await response.json();
+        // The endpoint returns `{ file_name: "..." }` — note underscore, not camelCase.
         return result.file_name || sanitizedName;
     }
 }

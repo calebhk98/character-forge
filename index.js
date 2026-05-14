@@ -22,6 +22,9 @@ const MODULE_NAME = 'character-forge';
  * @returns {Promise<void>}
  */
 async function setup() {
+    // ST puts exactly one thing on globalThis: the SillyTavern namespace object
+    // (see public/script.js: `globalThis.SillyTavern = { libs, getContext }`).
+    // There is no bare `getContext` global — calling it directly throws ReferenceError.
     // @ts-ignore - SillyTavern global is injected at runtime
     const stContext = globalThis.SillyTavern?.getContext?.();
     if (!stContext) {
@@ -52,8 +55,11 @@ async function setup() {
         }
     });
 
-    // Settings go into ST's extension settings drawer (#extensions_settings2).
-    // A "Launch" button at the top gives users access to the generator panel.
+    // ST's extension settings drawer is #extensions_settings2 (defined in
+    // public/index.html). Appending here is where every extension's settings UI
+    // belongs — it's what the "Extensions" panel in the sidebar renders.
+    // The generator panel is too large for the settings drawer, so it lives in a
+    // modal overlay and is opened via a button appended at the top of this section.
     const settingsRoot = document.getElementById('extensions_settings2');
     if (settingsRoot) {
         const settingsWrapper = document.createElement('div');
@@ -133,8 +139,11 @@ function hideModal(overlay) {
     overlay.style.display = 'none';
 }
 
-// Self-execute when loaded inside SillyTavern. The SillyTavern global is set
-// on globalThis by script.js; its absence means we're in a test environment.
+// ST loads extensions by injecting a <script type="module"> tag pointing at the
+// js field from manifest.json (see extensions.js: addExtensionScript). The module
+// runs its top-level code on load — there is no separate "activate" callback unless
+// hooks are declared in the manifest. The SillyTavern global being present is the
+// reliable signal that we're running inside ST rather than in a test runner.
 if (globalThis.SillyTavern) {
     setup().catch(err => {
         console.error('[Character Forge] Setup error:', err);
