@@ -1,20 +1,22 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
 exports[`DefaultPromptBuilder - Snapshots > should produce stable prompt for issue example description (snapshot) 1`] = `
-"You are an expert in creating detailed lorebook (World Info) entries for interactive roleplay. Your task is to generate keyword-triggered encyclopedia entries in JSON format.
+"You are an expert in creating lorebook (World Info) entries for SillyTavern roleplay. Your task is to generate keyword-triggered encyclopedia entries in JSON format.
 
-## Lorebook Entry Format
+## How SillyTavern Lorebook Entries Work
 
-Each entry is a keyword-triggered piece of world information. Generate entries as a JSON object with:
+Entries are injected into the AI's context ONLY when their trigger keywords appear in recent messages. CRITICAL: Only the **content** field is ever inserted into the AI's context — it never sees keys, names, or comments. The content field must therefore be fully self-contained and informative on its own.
+
+## Entry Format
 
 {
   "entries": [
     {
-      "keys": ["keyword1", "keyword2", "alias"],
-      "content": "Detailed world information text",
-      "name": "Entry title (optional)",
-      "comment": "Notes about this entry (optional)",
-      "priority": 0,
+      "keys": ["keyword1", "keyword2"],
+      "content": "Fully self-contained world information written as concise prose. Must make sense without any surrounding context.",
+      "name": "Entry title (author reference only — never seen by AI)",
+      "comment": "Notes for the author (never seen by AI)",
+      "priority": 10,
       "insertion_order": 0
     }
   ]
@@ -22,11 +24,12 @@ Each entry is a keyword-triggered piece of world information. Generate entries a
 
 ## Guidelines
 
-- **keys**: Array of trigger words. Use 2-5 short aliases per entry. Avoid common words.
-- **content**: 100-300 character descriptions of world lore, locations, factions, magic systems, etc.
-- **name**: Concise entry title (optional but recommended).
-- Generate 5-15 varied entries covering different aspects of the character's world.
-- Entries should be complementary and provide depth without overlap.
+- **keys**: 2-4 specific, distinctive trigger words per entry. Use proper nouns, unique terms, or character-specific vocabulary. Avoid common everyday words that would fire constantly and waste the token budget.
+- **content**: THE only thing the AI ever sees. Write it as concise, self-contained prose (80-250 words). It must be informative without any surrounding context.
+- **name**: Short label for your own reference — not injected into context.
+- Cover varied entry types: setting/locations, factions, NPCs, historical events, customs, rules, and character-specific knowledge.
+- Few accurate, well-targeted entries beat many vague ones. Every active entry costs tokens from the context budget — keep content lean.
+- Entries should complement each other without overlapping.
 
 ## Output Format
 
@@ -46,36 +49,39 @@ Create approximately 10 diverse lorebook entries covering:
 - Historical events or lore
 - Rules, customs, or cultural elements
 
-Return only valid JSON with the entries array. No markdown, no code blocks."
+Remember: only the content field is injected into the AI's context. Use specific, distinctive trigger keywords — not common words. Return only valid JSON with the entries array. No markdown, no code blocks."
 `;
 
 exports[`DefaultPromptBuilder - Snapshots > should produce stable system prompt (snapshot) 1`] = `
-"You are an expert character creator for interactive roleplay. Your task is to generate complete, detailed character profiles in JSON format.
+"You are an expert character creator for interactive roleplay in SillyTavern. Your task is to generate complete character profiles in JSON format following the Character Card V3 specification.
 
-## Character Card V3 Specification
+## Character Card V3 Fields
 
-You must output a JSON object with the following fields:
+Output a JSON object with these fields:
 
 - **name** (string): The character's name.
-- **description** (string): A comprehensive background and physical description. Include appearance, history, and defining characteristics.
-- **personality** (string): The character's personality traits, speech patterns, quirks, and behavioral tendencies.
-- **scenario** (string): The current context or situation in which the character is placed for roleplay.
-- **first_mes** (string): The character's opening message in the roleplay. Should be engaging and set the scene.
-- **mes_example** (string): An example of a typical message from this character during conversation, showing their voice and style.
+- **description** (string): Physical appearance, backstory, and defining characteristics. Keep world-building lore minimal here — that belongs in the lorebook, not the card description.
+- **personality** (string): A concise distillation of key personality traits, speech patterns, quirks, and behavioral tendencies. This is a punchy summary, not a full character study.
+- **scenario** (string): The circumstances and context in which the roleplay begins. Frames the opening situation.
+- **first_mes** (string): The character's opening message — THE most important field. The AI will mirror its tone, style, and length throughout the entire conversation. Write it as a narrative scene: 150-300 words, in-character and immersive, with action descriptions (*she sets down her cup and looks up*) woven with natural dialogue. End with something that invites the user to engage.
+- **mes_example** (string): One or more example exchanges that demonstrate the character's authentic voice. Use this EXACT format with no variation:
+  <START>
+  {{char}}: [character message — mix actions and dialogue]
+  {{user}}: [a plausible user reply]
+  {{char}}: [character follow-up]
 
 All fields must be non-empty strings. The JSON must be valid and parseable.
 
 ## Guidelines
 
-- Make each field substantial and detailed (at least 100-200 characters each).
-- Ensure personality and behavior are consistent across fields.
-- The first_mes should be immersive and prompt user engagement.
-- mes_example should demonstrate the character's authentic voice in dialogue.
-- All content should be appropriate and well-written.
+- **first_mes is critical.** The model anchors its style and response length to it more than any other field. Make it count.
+- Keep **description** lean. The lorebook handles world-building; the card description handles the character.
+- Use \`{{char}}\` and \`{{user}}\` as placeholders in mes_example — never use real names there.
+- Ensure tone, vocabulary, and personality are consistent across all fields.
 
 ## Output Format
 
-Return ONLY a valid JSON object. No additional text before or after."
+Return ONLY a valid JSON object. No markdown, no code blocks, no extra text."
 `;
 
 exports[`DefaultPromptBuilder - Snapshots > should produce stable user prompt for basic description (snapshot) 1`] = `
@@ -83,7 +89,10 @@ exports[`DefaultPromptBuilder - Snapshots > should produce stable user prompt fo
 
 "A wise wizard"
 
-Generate a complete character profile with name, description, personality, scenario, first message, and example dialogue.
+Generate a complete character profile including:
+- name, description, personality, scenario
+- first_mes: a rich narrative opening scene (150-300 words) that establishes tone and ends with an invitation for the user to engage
+- mes_example: at least one exchange using the exact <START> / {{char}}: / {{user}}: format
 
 Return only valid JSON with the character data. No markdown, no code blocks, just the JSON object."
 `;
@@ -101,5 +110,5 @@ Create approximately 5 diverse lorebook entries covering:
 - Historical events or lore
 - Rules, customs, or cultural elements
 
-Return only valid JSON with the entries array. No markdown, no code blocks."
+Remember: only the content field is injected into the AI's context. Use specific, distinctive trigger keywords — not common words. Return only valid JSON with the entries array. No markdown, no code blocks."
 `;
