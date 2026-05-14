@@ -40,12 +40,12 @@ describe('index.js entry point', () => {
         expect(module).toBeDefined();
     });
 
-    it('should handle setup without getContext', () => {
-        // The index.js file checks for getContext and handles its absence
-        delete globalThis.getContext;
+    it('should handle setup without SillyTavern global', () => {
+        // index.js guards on globalThis.SillyTavern; its absence means test env
+        delete globalThis.SillyTavern;
 
-        // Module should load successfully even without getContext
-        expect(typeof globalThis.getContext).not.toBe('function');
+        // Module should load successfully even without the ST global
+        expect(typeof globalThis.SillyTavern).not.toBe('object');
     });
 
     it('should set up event handling when DOM is available', () => {

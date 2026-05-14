@@ -14,116 +14,102 @@ import { ICharacterRepository } from '../../../src/application/ports/ICharacterR
  * @returns {object} card JSON
  */
 function mockCard(name) {
-    return {
-        spec: 'chara_card_v3',
-        spec_version: '3.0',
-        data: name ? { name } : {},
-    };
+    return { spec: 'chara_card_v3', spec_version: '3.0', data: name ? { name } : {} };
 }
 
 /**
- * Create successful mock response.
+ * Create a mock context with getRequestHeaders.
  *
- * @param {string} [filename] - response filename
- * @returns {object} mock response
+ * @returns {object} mock context
  */
-function mockSuccessResponse(filename) {
-    return {
-        ok: true,
-        json: vi.fn().mockResolvedValue(filename ? { filename } : {}),
-    };
+function mockContext() {
+    return { getRequestHeaders: vi.fn().mockReturnValue({ 'X-CSRF-Token': 'test-token' }) };
+}
+
+/**
+ * Return a mock fetch success response.
+ *
+ * @param {string} [file_name] response file_name field
+ * @returns {object} fetch response mock
+ */
+function mockOkResponse(file_name) {
+    return { ok: true, json: vi.fn().mockResolvedValue(file_name ? { file_name } : {}) };
+}
+
+/**
+ * Return the options object from the first fetch call.
+ *
+ * @returns {object} fetch options
+ */
+function lastFetchOptions() {
+    return /** @type {any} */ (globalThis.fetch).mock.calls[0][1];
 }
 
 describe('SillyTavernCharacterRepository', () => {
-    let mockContext;
-
-    beforeEach(() => {
-        mockContext = {};
-        /** @type {any} */ (globalThis).fetch = vi.fn();
-    });
-
-    afterEach(() => {
-        vi.restoreAllMocks();
-    });
+    beforeEach(() => { /** @type {any} */ (globalThis).fetch = vi.fn(); });
+    afterEach(() => { vi.restoreAllMocks(); });
 
     it('should extend ICharacterRepository', () => {
-        const repository = new SillyTavernCharacterRepository(mockContext);
-        expect(repository).toBeInstanceOf(ICharacterRepository);
+        expect(new SillyTavernCharacterRepository(mockContext())).toBeInstanceOf(ICharacterRepository);
     });
 
-    it('should POST to /api/characters/import', async () => {
-        const card = mockCard('TestCharacter');
-        /** @type {any} */ (globalThis).fetch.mockResolvedValue(mockSuccessResponse('test.json'));
+    it('should POST to /api/characters/import with FormData', async () => {
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue(mockOkResponse('test.json'));
+        await new SillyTavernCharacterRepository(mockContext()).save(mockCard('Test'));
 
-        const repository = new SillyTavernCharacterRepository(mockContext);
-        const result = await repository.save(card);
-
-        expect(/** @type {any} */ (globalThis).fetch).toHaveBeenCalledWith(
-            '/api/characters/import',
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(card),
-            },
-        );
-
-        expect(result).toBe('test.json');
+        const [url, opts] = /** @type {any} */ (globalThis).fetch.mock.calls[0];
+        expect(url).toBe('/api/characters/import');
+        expect(opts.method).toBe('POST');
+        expect(opts.body).toBeInstanceOf(FormData);
+        expect(opts.body.get('file_type')).toBe('json');
+        expect(opts.body.has('avatar')).toBe(true);
     });
 
-    it('should sanitize character name if no filename in response', async () => {
-        const card = mockCard('My Test-Character!@#');
-        /** @type {any} */ (globalThis).fetch.mockResolvedValue(mockSuccessResponse());
+    it('should include CSRF token from getRequestHeaders', async () => {
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue(mockOkResponse('t.json'));
+        const ctx = mockContext();
+        await new SillyTavernCharacterRepository(ctx).save(mockCard('Test'));
 
-        const repository = new SillyTavernCharacterRepository(mockContext);
-        const result = await repository.save(card);
-
-        expect(result).toBe('My_Test-Character___');
+        expect(ctx.getRequestHeaders).toHaveBeenCalledWith({ omitContentType: true });
+        expect(lastFetchOptions().headers['X-CSRF-Token']).toBe('test-token');
     });
 
-    it('should use default name when character has no name', async () => {
-        const card = mockCard();
-        /** @type {any} */ (globalThis).fetch.mockResolvedValue(mockSuccessResponse());
+    it('should return file_name from response', async () => {
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue(mockOkResponse('TestCharacter.png'));
+        const result = await new SillyTavernCharacterRepository(mockContext()).save(mockCard('Test'));
+        expect(result).toBe('TestCharacter.png');
+    });
 
-        const repository = new SillyTavernCharacterRepository(mockContext);
-        const result = await repository.save(card);
+    it('should fall back to sanitized name when response lacks file_name', async () => {
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue(mockOkResponse());
+        const result = await new SillyTavernCharacterRepository(mockContext()).save(mockCard('My Test!@#'));
+        expect(result).toBe('My_Test___');
+    });
 
+    it('should use UnnamedCharacter when card has no name', async () => {
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue(mockOkResponse());
+        const result = await new SillyTavernCharacterRepository(mockContext()).save(mockCard());
         expect(result).toBe('UnnamedCharacter');
     });
 
-    it('should throw error if fetch response not ok', async () => {
-        const card = mockCard('TestCharacter');
-        /** @type {any} */ (globalThis).fetch.mockResolvedValue({
-            ok: false,
-            statusText: 'Internal Server Error',
-        });
-
-        const repository = new SillyTavernCharacterRepository(mockContext);
-
-        await expect(repository.save(card)).rejects.toThrow(
-            'Failed to save character: Internal Server Error',
-        );
+    it('should throw error if response not ok', async () => {
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue({ ok: false, statusText: 'Server Error' });
+        await expect(
+            new SillyTavernCharacterRepository(mockContext()).save(mockCard('Test')),
+        ).rejects.toThrow('Failed to save character: Server Error');
     });
 
     it('should propagate network errors', async () => {
-        const card = mockCard('TestCharacter');
-        const networkError = new Error('Network request failed');
-        /** @type {any} */ (globalThis).fetch.mockRejectedValue(networkError);
-
-        const repository = new SillyTavernCharacterRepository(mockContext);
-
-        await expect(repository.save(card)).rejects.toBe(networkError);
+        const err = new Error('Network request failed');
+        /** @type {any} */ (globalThis).fetch.mockRejectedValue(err);
+        await expect(
+            new SillyTavernCharacterRepository(mockContext()).save(mockCard('Test')),
+        ).rejects.toBe(err);
     });
 
-    it('should set Content-Type header correctly', async () => {
-        const card = mockCard('Test');
-        /** @type {any} */ (globalThis).fetch.mockResolvedValue(mockSuccessResponse('test.json'));
-
-        const repository = new SillyTavernCharacterRepository(mockContext);
-        await repository.save(card);
-
-        const callArgs = /** @type {any} */ (globalThis).fetch.mock.calls[0];
-        expect(callArgs[1].headers['Content-Type']).toBe('application/json');
+    it('should work with no context (empty headers)', async () => {
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue(mockOkResponse('t.json'));
+        await new SillyTavernCharacterRepository(null).save(mockCard('Test'));
+        expect(lastFetchOptions().headers).toEqual({});
     });
 });

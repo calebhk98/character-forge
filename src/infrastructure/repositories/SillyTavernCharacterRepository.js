@@ -21,21 +21,31 @@ export class SillyTavernCharacterRepository extends ICharacterRepository {
     }
 
     /**
-     * Save a character card to SillyTavern.
+     * Save a character card to SillyTavern via the /api/characters/import endpoint.
+     *
+     * ST's import endpoint uses multer for file uploads (.single('avatar')),
+     * so the card JSON must be sent as multipart FormData under the 'avatar' field
+     * with file_type='json'. The X-CSRF-Token from getRequestHeaders() is required.
      *
      * @param {object} cardJson - Character Card V3 JSON
-     * @returns {Promise<string>} character filename or identifier
+     * @returns {Promise<string>} character filename
      */
     async save(cardJson) {
         const characterName = cardJson.data?.name || 'UnnamedCharacter';
         const sanitizedName = characterName.replace(/[^a-zA-Z0-9_-]/g, '_');
 
+        const blob = new Blob([JSON.stringify(cardJson)], { type: 'application/json' });
+        const formData = new FormData();
+        formData.append('avatar', blob, `${sanitizedName}.json`);
+        formData.append('file_type', 'json');
+
+        // omitContentType=true: browser sets Content-Type with boundary for FormData
+        const headers = this.ctx?.getRequestHeaders?.({ omitContentType: true }) ?? {};
+
         const response = await fetch('/api/characters/import', {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(cardJson),
+            headers,
+            body: formData,
         });
 
         if (!response.ok) {
@@ -43,6 +53,6 @@ export class SillyTavernCharacterRepository extends ICharacterRepository {
         }
 
         const result = await response.json();
-        return result.filename || sanitizedName;
+        return result.file_name || sanitizedName;
     }
 }

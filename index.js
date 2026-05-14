@@ -15,33 +15,17 @@ import { ExtensionSettingsConfigStore } from './src/infrastructure/config/Extens
 const MODULE_NAME = 'character-forge';
 
 /**
- * Extension entry point. Called by SillyTavern on extension load.
- * The name is part of SillyTavern's extension API contract.
+ * Extension entry point. Self-executes when ST injects the module script tag.
+ * ST exposes its API exclusively via the `SillyTavern` global (set on globalThis
+ * in script.js); there is no bare `getContext` global.
  *
  * @returns {Promise<void>}
  */
 async function setup() {
-    // @ts-ignore - getContext is injected by SillyTavern at runtime
-    // eslint-disable-next-line no-undef
-    const stContext = getContext?.();
+    // @ts-ignore - SillyTavern global is injected at runtime
+    const stContext = globalThis.SillyTavern?.getContext?.();
     if (!stContext) {
         console.warn('[Character Forge] SillyTavern context not available, using defaults');
-    }
-
-    // generateQuietPrompt is a module export from ST's script.js, not on
-    // the context object. Attach it so SillyTavernLlmProvider can find it.
-    // Indirect import via new Function prevents Vite/Vitest from statically
-    // analyzing the path (script.js only exists in the SillyTavern runtime).
-    if (stContext && !stContext.generateQuietPrompt) {
-        try {
-            const indirectImport = /** @type {function(string): Promise<any>} */ (
-                new Function('s', 'return import(s)')
-            );
-            const stModule = await indirectImport('../../../../script.js');
-            stContext.generateQuietPrompt = stModule.generateQuietPrompt;
-        } catch {
-            // Not running inside SillyTavern (e.g. tests) — no-op.
-        }
     }
 
     const configStore = new ExtensionSettingsConfigStore(MODULE_NAME, stContext);
@@ -149,9 +133,9 @@ function hideModal(overlay) {
     overlay.style.display = 'none';
 }
 
-// Self-execute when loaded inside SillyTavern.
-// @ts-ignore - getContext is injected by SillyTavern at runtime
-if (typeof getContext !== 'undefined') {
+// Self-execute when loaded inside SillyTavern. The SillyTavern global is set
+// on globalThis by script.js; its absence means we're in a test environment.
+if (globalThis.SillyTavern) {
     setup().catch(err => {
         console.error('[Character Forge] Setup error:', err);
     });
