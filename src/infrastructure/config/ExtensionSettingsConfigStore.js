@@ -24,6 +24,15 @@ export class ExtensionSettingsConfigStore extends IConfigStore {
     }
 
     /**
+     * Resolve the live ST context, re-fetching if the stored one is stale.
+     *
+     * @returns {object|null} SillyTavern context or null
+     */
+    resolveContext() {
+        return this.ctx ?? globalThis.SillyTavern?.getContext?.() ?? null;
+    }
+
+    /**
      * Get a config value.
      *
      * @param {string} key - configuration key
@@ -31,7 +40,8 @@ export class ExtensionSettingsConfigStore extends IConfigStore {
      * @returns {*} configuration value
      */
     get(key, defaultValue) {
-        const moduleSettings = this.ctx?.extension_settings?.[this.moduleName];
+        const ctx = this.resolveContext();
+        const moduleSettings = ctx?.extension_settings?.[this.moduleName];
         if (!moduleSettings) {
             return defaultValue;
         }
@@ -47,16 +57,19 @@ export class ExtensionSettingsConfigStore extends IConfigStore {
      * @returns {Promise<void>}
      */
     async set(key, value) {
-        if (!this.ctx?.extension_settings) {
+        const ctx = this.resolveContext();
+        // ST puts extension_settings on both the context object and window;
+        // fall back to the window global for extensions loaded before ST is fully ready.
+        const extSettings = ctx?.extension_settings ?? globalThis.extension_settings;
+        if (!extSettings) {
             throw new Error('SillyTavern context not available');
         }
-        if (!this.ctx.extension_settings[this.moduleName]) {
-            this.ctx.extension_settings[this.moduleName] = {};
+        if (!extSettings[this.moduleName]) {
+            extSettings[this.moduleName] = {};
         }
-        this.ctx.extension_settings[this.moduleName][key] = value;
-        // saveSettingsDebounced is the correct ST API for persisting extension settings
-        // (confirmed in st-context.js). There is no synchronous saveSettings exposed
-        // to extensions; the debounced version coalesces rapid writes into one disk flush.
-        await this.ctx.saveSettingsDebounced?.();
+        extSettings[this.moduleName][key] = value;
+        const saveSettingsDebounced =
+            ctx?.saveSettingsDebounced ?? globalThis.saveSettingsDebounced;
+        await saveSettingsDebounced?.();
     }
 }

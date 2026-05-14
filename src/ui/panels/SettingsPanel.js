@@ -39,13 +39,15 @@ export class SettingsPanel {
                     </select>
                 </div>
                 <div class="setting-group">
-                    <label for="lorebook-entry-count-input">Lorebook Entry Count</label>
-                    <input
-                        id="lorebook-entry-count-input"
-                        type="text"
-                        class="lorebook-entry-count-input"
-                        placeholder="auto or number"
-                        />
+                    <label for="lorebook-entry-count-select">Lorebook Entry Count</label>
+                    <select id="lorebook-entry-count-select" class="lorebook-entry-count-select">
+                        <option value="auto">Auto (AI decides)</option>
+                        <option value="5">5</option>
+                        <option value="8">8</option>
+                        <option value="10">10</option>
+                        <option value="15">15</option>
+                        <option value="20">20</option>
+                    </select>
                 </div>
                 <div class="setting-group">
                     <label for="generation-temperature-slider">
@@ -102,12 +104,12 @@ export class SettingsPanel {
             promptTemplateSelect.value = value;
         }
 
-        const lorebookInput = /** @type {HTMLInputElement} */ (
-            this.element?.querySelector('#lorebook-entry-count-input')
+        const lorebookSelect = /** @type {HTMLSelectElement} */ (
+            this.element?.querySelector('#lorebook-entry-count-select')
         );
-        if (lorebookInput) {
+        if (lorebookSelect) {
             const value = this.container?.configStore?.get('lorebookEntryCount', 'auto');
-            lorebookInput.value = value;
+            lorebookSelect.value = value;
         }
 
         const tempSlider = /** @type {HTMLInputElement} */ (
@@ -162,12 +164,12 @@ export class SettingsPanel {
             });
         }
 
-        const lorebookInput = /** @type {HTMLInputElement} */ (
-            this.element?.querySelector('#lorebook-entry-count-input')
+        const lorebookSelect = /** @type {HTMLSelectElement} */ (
+            this.element?.querySelector('#lorebook-entry-count-select')
         );
-        if (lorebookInput) {
-            lorebookInput.addEventListener('change', () => {
-                this.saveSetting('lorebookEntryCount', lorebookInput.value);
+        if (lorebookSelect) {
+            lorebookSelect.addEventListener('change', () => {
+                this.saveSetting('lorebookEntryCount', lorebookSelect.value);
             });
         }
 

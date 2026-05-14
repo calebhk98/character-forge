@@ -131,15 +131,15 @@ describe('SettingsPanel - Checkbox/Input Changes', () => {
         expect(saved.value).toBe(true);
     });
 
-    it('should save lorebookEntryCount on input change', async () => {
+    it('should save lorebookEntryCount on select change', async () => {
         let saved = {};
         mockContainer.configStore.set = async (key, value) => {
             saved = { key, value };
         };
 
         panel.render(mockElement);
-        const input = /** @type {HTMLInputElement} */ (
-            mockElement.querySelector('#lorebook-entry-count-input')
+        const input = /** @type {HTMLSelectElement} */ (
+            mockElement.querySelector('#lorebook-entry-count-select')
         );
         input.value = '15';
         input.dispatchEvent(new Event('change'));
