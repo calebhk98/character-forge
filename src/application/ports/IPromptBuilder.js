@@ -20,4 +20,18 @@ export class IPromptBuilder {
     build(_description, _options = {}) {
         throw new Error('IPromptBuilder.build must be implemented by subclass');
     }
+
+    // eslint-disable-next-line jsdoc/require-returns-check
+    /**
+     * Build a refinement request for a single character field.
+     *
+     * @param {string} _description - original character concept
+     * @param {string} _fieldName - character property to rewrite
+     * @param {string} _currentValue - existing field text
+     * @param {string} [_feedback] - optional user direction for the rewrite
+     * @returns {import('../../domain/value-objects/GenerationRequest.js').GenerationRequest} generation request
+     */
+    buildRefinementRequest(_description, _fieldName, _currentValue, _feedback = '') {
+        throw new Error('IPromptBuilder.buildRefinementRequest must be implemented by subclass');
+    }
 }

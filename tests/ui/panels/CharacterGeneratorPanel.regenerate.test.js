@@ -116,8 +116,8 @@ describe('CharacterGeneratorPanel - regenerate form visibility', () => {
         panel.generatedLorebook = createMockLorebook();
         panel.showPreview();
 
-        targetElement.querySelector('.regen-btn[data-field="name"]').click();
-        targetElement.querySelector('.regen-cancel[data-field="name"]').click();
+        /** @type {HTMLElement} */ (targetElement.querySelector('.regen-btn[data-field="name"]')).click();
+        /** @type {HTMLElement} */ (targetElement.querySelector('.regen-cancel[data-field="name"]')).click();
 
         const form = targetElement.querySelector('.regen-form[data-field="name"]');
         expect(/** @type {HTMLElement} */ (form).style.display).toBe('none');
@@ -146,14 +146,14 @@ describe('CharacterGeneratorPanel - regenerate field confirm', () => {
             targetElement.querySelector('.regen-confirm[data-field="first_mes"]')
         ).click();
 
-        await vi.waitFor(() => {
-            expect(container.refineCharacterField.execute).toHaveBeenCalled();
-        });
-
         const input = /** @type {HTMLTextAreaElement} */ (
             targetElement.querySelector('#edit-first-mes')
         );
-        expect(input.value).toBe('Rewritten first message');
+        await vi.waitFor(() => {
+            expect(input.value).toBe('Rewritten first message');
+        });
+
+        expect(container.refineCharacterField.execute).toHaveBeenCalled();
         expect(panel.generatedCharacter.first_mes).toBe('Rewritten first message');
 
         targetElement.remove();
