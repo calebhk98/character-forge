@@ -222,6 +222,43 @@ describe('GenerateCharacterFromDescription - Core Functionality', () => {
     });
 });
 
+describe('GenerateCharacterFromDescription - alternate_greetings', () => {
+    it('should pass through alternate_greetings from LLM response', async () => {
+        const promptBuilder = new FakePromptBuilder();
+        const responseWithAlternates = JSON.stringify({
+            name: 'TestCharacter',
+            description: 'A test character',
+            personality: 'Cheerful',
+            scenario: 'In a test world',
+            first_mes: 'Hello from test!',
+            mes_example: 'This is a test message.',
+            alternate_greetings: ['Alternate one.', 'Alternate two.', 'Alternate three.'],
+        });
+        const llmProvider = new FakeLlmProvider(responseWithAlternates);
+        const logger = new FakeLogger();
+
+        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger);
+        const character = await useCase.execute('A brave knight');
+
+        expect(character.alternate_greetings).toEqual([
+            'Alternate one.',
+            'Alternate two.',
+            'Alternate three.',
+        ]);
+    });
+
+    it('should default alternate_greetings to empty array when LLM omits the field', async () => {
+        const promptBuilder = new FakePromptBuilder();
+        const llmProvider = new FakeLlmProvider();
+        const logger = new FakeLogger();
+
+        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger);
+        const character = await useCase.execute('A brave knight');
+
+        expect(character.alternate_greetings).toEqual([]);
+    });
+});
+
 describe('GenerateCharacterFromDescription - JSON Repair', () => {
     /**
      * Test JSON repair for malformed markdown-wrapped JSON.

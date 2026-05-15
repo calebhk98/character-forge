@@ -55,6 +55,47 @@ describe('Character - construction', () => {
     });
 });
 
+describe('Character - alternate_greetings', () => {
+    it('should default alternate_greetings to empty array when not provided', () => {
+        const character = new Character(validCharacterData());
+        expect(character.alternate_greetings).toEqual([]);
+    });
+
+    it('should accept valid alternate_greetings array', () => {
+        const data = {
+            ...validCharacterData(),
+            alternate_greetings: ['Hello!', 'Greetings, stranger.', 'Well met!'],
+        };
+        const character = new Character(data);
+        expect(character.alternate_greetings).toEqual(['Hello!', 'Greetings, stranger.', 'Well met!']);
+    });
+
+    it('should throw when alternate_greetings contains a non-string element', () => {
+        const data = {
+            ...validCharacterData(),
+            /** @type {any} */
+            alternate_greetings: ['Hello!', 42],
+        };
+        expect(() => new Character(data)).toThrow();
+    });
+
+    it('should throw when alternate_greetings contains an empty string', () => {
+        const data = {
+            ...validCharacterData(),
+            alternate_greetings: ['Hello!', ''],
+        };
+        expect(() => new Character(data)).toThrow();
+    });
+
+    it('should throw when alternate_greetings contains a whitespace-only string', () => {
+        const data = {
+            ...validCharacterData(),
+            alternate_greetings: ['Hello!', '   '],
+        };
+        expect(() => new Character(data)).toThrow();
+    });
+});
+
 describe('Character - validation', () => {
     it('should throw when name is missing', () => {
         const data = validCharacterData();

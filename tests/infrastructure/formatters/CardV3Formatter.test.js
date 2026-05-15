@@ -122,6 +122,33 @@ describe('CardV3Formatter', () => {
 
         expect(result.data.character_book.entries).toEqual([]);
     });
+
+    it('should include alternate_greetings from character in output', () => {
+        const character = new Character({
+            name: 'Aria',
+            description: 'A mysterious mage',
+            personality: 'Curious and witty',
+            scenario: 'In a magical tower',
+            first_mes: 'Welcome, traveler.',
+            mes_example: 'How can I assist you?',
+            alternate_greetings: ['A warm greeting.', 'A cold welcome.', 'A mysterious nod.'],
+        });
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(character);
+
+        expect(result.data.alternate_greetings).toEqual([
+            'A warm greeting.',
+            'A cold welcome.',
+            'A mysterious nod.',
+        ]);
+    });
+
+    it('should output empty alternate_greetings when character has none', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(createBasicCharacter());
+
+        expect(result.data.alternate_greetings).toEqual([]);
+    });
 });
 
 describe('CardV3Formatter (snapshots)', () => {
