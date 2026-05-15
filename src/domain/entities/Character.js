@@ -4,6 +4,27 @@
  */
 
 /**
+ * Validate the alternate_greetings field and append errors to the errors array.
+ *
+ * @param {unknown} value - value to validate
+ * @param {string[]} errors - errors array to append to
+ * @returns {void}
+ */
+function validateAlternateGreetings(value, errors) {
+    if (!Array.isArray(value)) {
+        errors.push('alternate_greetings must be an array');
+        return;
+    }
+    for (let i = 0; i < value.length; i++) {
+        if (typeof value[i] !== 'string') {
+            errors.push(`alternate_greetings[${i}] must be a string`);
+        } else if (value[i].trim().length === 0) {
+            errors.push(`alternate_greetings[${i}] cannot be empty`);
+        }
+    }
+}
+
+/**
  * A complete character with all V3 card fields.
  */
 export class Character {
@@ -34,6 +55,9 @@ export class Character {
     /** @type {string|undefined} optional post-history instructions */
     post_history_instructions;
 
+    /** @type {string[]} alternate opening messages */
+    alternate_greetings;
+
     /**
      * Construct a Character from raw data. Validates required fields.
      *
@@ -47,6 +71,7 @@ export class Character {
      * @param {string} [data.creator_notes] - optional creator notes
      * @param {string} [data.system_prompt] - optional system prompt
      * @param {string} [data.post_history_instructions] - optional post-history instructions
+     * @param {string[]} [data.alternate_greetings] - optional alternate opening messages
      */
     constructor(data) {
         const required = ['name', 'description', 'personality', 'scenario', 'first_mes', 'mes_example'];
@@ -62,10 +87,15 @@ export class Character {
             }
         }
 
+        if (data.alternate_greetings !== undefined) {
+            validateAlternateGreetings(data.alternate_greetings, errors);
+        }
+
         if (errors.length > 0) {
             throw new Error(`Invalid character data: ${errors.join('; ')}`);
         }
 
         Object.assign(this, data);
+        this.alternate_greetings = data.alternate_greetings ?? [];
     }
 }
