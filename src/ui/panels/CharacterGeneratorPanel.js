@@ -4,6 +4,8 @@
  * through dependency injection.
  */
 
+import { CharacterFieldRegenerator } from './CharacterFieldRegenerator.js';
+
 /**
  * Character generator panel component.
  */
@@ -19,6 +21,7 @@ export class CharacterGeneratorPanel {
         this.generatedCharacter = null;
         this.generatedLorebook = null;
         this.isGenerating = false;
+        this.currentDescription = null;
     }
 
     /**
@@ -113,6 +116,7 @@ export class CharacterGeneratorPanel {
         }
 
         this.isGenerating = true;
+        this.currentDescription = description;
         this.clearStatus();
         const generateBtn = /** @type {HTMLButtonElement} */ (
             this.element?.querySelector('#generate-button')
@@ -180,6 +184,7 @@ export class CharacterGeneratorPanel {
         this.setCharacterFieldValues();
         this.setLorebookEntryValues();
         this.attachPreviewEditListeners();
+        new CharacterFieldRegenerator(this.element, this.container, this).attach();
     }
 
     /**
@@ -198,20 +203,31 @@ export class CharacterGeneratorPanel {
      * @returns {string} HTML string
      */
     buildPreviewHtml() {
-        const char = `<div class="preview-character">
-                <div class="preview-field"><label for="edit-name"><strong>Name:</strong></label>
-                    <input type="text" id="edit-name" class="edit-input" />
-                </div><div class="preview-field"><label for="edit-description"><strong>Description:</strong></label>
-                    <textarea id="edit-description" class="edit-textarea" rows="4"></textarea>
-                </div><div class="preview-field"><label for="edit-personality"><strong>Personality:</strong></label>
-                    <textarea id="edit-personality" class="edit-textarea" rows="3"></textarea>
-                </div><div class="preview-field"><label for="edit-scenario"><strong>Scenario:</strong></label>
-                    <textarea id="edit-scenario" class="edit-textarea" rows="3"></textarea>
-                </div><div class="preview-field"><label for="edit-first-mes"><strong>First Message:</strong></label>
-                    <textarea id="edit-first-mes" class="edit-textarea" rows="2"></textarea>
-                </div><div class="preview-field"><label for="edit-mes-example"><strong>Example Dialogue:</strong></label>
-                    <textarea id="edit-mes-example" class="edit-textarea" rows="3"></textarea></div></div>`;
-        return char + this.buildLorebookHtml();
+        const fields = [
+            this.buildFieldHtml('edit-name', 'Name', 'name', true),
+            this.buildFieldHtml('edit-description', 'Description', 'description', false, 4),
+            this.buildFieldHtml('edit-personality', 'Personality', 'personality', false, 3),
+            this.buildFieldHtml('edit-scenario', 'Scenario', 'scenario', false, 3),
+            this.buildFieldHtml('edit-first-mes', 'First Message', 'first_mes', false, 2),
+            this.buildFieldHtml('edit-mes-example', 'Example Dialogue', 'mes_example', false, 3),
+        ].join('');
+        return `<div class="preview-character">${fields}</div>` + this.buildLorebookHtml();
+    }
+
+    /**
+     * Build HTML for a single preview field with an inline ↺ regenerate control.
+     *
+     * @param {string} id - element id for the input or textarea
+     * @param {string} label - visible field label text
+     * @param {string} fieldName - character property key used in data-field attributes
+     * @param {boolean} [isInput] - render as text input when true; textarea otherwise
+     * @param {number} [rows] - textarea row count; ignored when isInput is true
+     * @returns {string} HTML string for the field row
+     */
+    buildFieldHtml(id, label, fieldName, isInput = false, rows = 3) {
+        const ctl = isInput ? `<input type="text" id="${id}" class="edit-input"/>` : `<textarea id="${id}" class="edit-textarea" rows="${rows}"></textarea>`;
+        const regenForm = `<div class="regen-form" data-field="${fieldName}" style="display:none"><input class="regen-feedback" placeholder="What to change (optional)..."/><button class="regen-confirm" data-field="${fieldName}">Rewrite</button><button class="regen-cancel" data-field="${fieldName}">×</button></div>`;
+        return `<div class="preview-field"><label for="${id}"><strong>${label}:</strong></label><button class="regen-btn" data-field="${fieldName}">↺</button>${regenForm}${ctl}</div>`;
     }
 
     /**

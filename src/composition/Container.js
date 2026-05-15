@@ -16,6 +16,7 @@ import { ToastrNotifier } from '../infrastructure/notifications/ToastrNotifier.j
 import { GenerateCharacterFromDescription } from '../application/use-cases/GenerateCharacterFromDescription.js';
 import { GenerateLorebookForCharacter } from '../application/use-cases/GenerateLorebookForCharacter.js';
 import { SaveCharacterToTavern } from '../application/use-cases/SaveCharacterToTavern.js';
+import { RefineCharacterField } from '../application/use-cases/RefineCharacterField.js';
 
 /**
  * @typedef {(cfg: object, ctx: object) => object} LlmFactory
@@ -65,6 +66,7 @@ export function buildContainer(config, stContext) {
     const generateCharacter = new GenerateCharacterFromDescription(promptBuilder, llm, logger);
     const generateLorebook = new GenerateLorebookForCharacter(promptBuilder, llm, logger);
     const saveCharacter = new SaveCharacterToTavern(formatter, charRepository, notifier, logger);
+    const refineCharacterField = new RefineCharacterField(promptBuilder, llm, logger);
 
     return {
         llm,
@@ -78,5 +80,6 @@ export function buildContainer(config, stContext) {
         generateCharacter,
         generateLorebook,
         saveCharacter,
+        refineCharacterField,
     };
 }

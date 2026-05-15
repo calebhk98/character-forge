@@ -128,7 +128,74 @@ describe('DefaultPromptBuilder - Snapshots', () => {
     });
 });
 
+describe('DefaultPromptBuilder - buildRefinementRequest', () => {
+    /**
+     * Returns a GenerationRequest instance.
+     */
+    it('should return a GenerationRequest', () => {
+        const builder = new DefaultPromptBuilder();
+        const request = builder.buildRefinementRequest('A knight', 'personality', 'Brave', '');
+
+        expect(request).toBeInstanceOf(GenerationRequest);
+    });
+
+    /**
+     * fieldName appears in the user prompt.
+     */
+    it('should include fieldName in the user prompt', () => {
+        const builder = new DefaultPromptBuilder();
+        const request = builder.buildRefinementRequest('A knight', 'personality', 'Brave', '');
+
+        expect(request.userPrompt).toContain('personality');
+    });
+
+    /**
+     * currentValue appears in the user prompt.
+     */
+    it('should include currentValue in the user prompt', () => {
+        const builder = new DefaultPromptBuilder();
+        const request = builder.buildRefinementRequest('A knight', 'personality', 'Brave and bold', '');
+
+        expect(request.userPrompt).toContain('Brave and bold');
+    });
+
+    /**
+     * feedback string appears in the user prompt when provided.
+     */
+    it('should include feedback in the user prompt when provided', () => {
+        const builder = new DefaultPromptBuilder();
+        const request = builder.buildRefinementRequest('A knight', 'personality', 'Brave', 'make darker');
+
+        expect(request.userPrompt).toContain('make darker');
+    });
+
+    /**
+     * Empty feedback still produces a valid GenerationRequest.
+     */
+    it('should produce a valid GenerationRequest with empty feedback', () => {
+        const builder = new DefaultPromptBuilder();
+        const request = builder.buildRefinementRequest('A knight', 'personality', 'Brave', '');
+
+        expect(request.systemPrompt).toBeDefined();
+        expect(typeof request.userPrompt).toBe('string');
+        expect(request.userPrompt.length).toBeGreaterThan(0);
+    });
+
+    /**
+     * Character description appears in the user prompt.
+     */
+    it('should include the character description in the user prompt', () => {
+        const builder = new DefaultPromptBuilder();
+        const request = builder.buildRefinementRequest('A fierce warrior', 'scenario', 'Old scenario', '');
+
+        expect(request.userPrompt).toContain('A fierce warrior');
+    });
+});
+
 describe('DefaultPromptBuilder - alternate_greetings', () => {
+    /**
+     * alternate_greetings field documented in character system prompt.
+     */
     it('should include alternate_greetings in character system prompt', () => {
         const builder = new DefaultPromptBuilder();
         const request = builder.build('A character');
@@ -136,6 +203,9 @@ describe('DefaultPromptBuilder - alternate_greetings', () => {
         expect(request.systemPrompt).toContain('alternate_greetings');
     });
 
+    /**
+     * alternate_greetings included in character user prompt.
+     */
     it('should include alternate_greetings in character user prompt', () => {
         const builder = new DefaultPromptBuilder();
         const request = builder.build('A character');
