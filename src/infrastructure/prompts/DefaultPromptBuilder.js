@@ -95,7 +95,14 @@ Output a JSON object with these fields:
   • Mention {{char}}'s name at least once per block to reinforce who is speaking.
   • Always use {{char}} and {{user}} as placeholders — never substitute real names.
 
-All fields must be non-empty strings. The JSON must be valid and parseable.
+- **alternate_greetings** (array of 3 strings): Three additional opening messages, each placing the character in a distinct scenario or tone. Follow the same quality bar as first_mes (150–300 words, narrative scene with action descriptions and dialogue, ends with an engagement hook) but vary the entry point:
+  1. A different **tone** (e.g. casual, comedic, or tense — contrasting first_mes).
+  2. A different **scenario** (e.g. finding the character mid-crisis, or summoning them for the first time).
+  3. A version that works as a **standalone group-chat opener** — no assumed prior context, written to engage multiple users.
+
+  Each entry must be meaningfully different from first_mes and from each other — not minor rewrites.
+
+All fields must be non-empty strings except alternate_greetings which is an array. The JSON must be valid and parseable.
 
 ## Guidelines
 
@@ -125,7 +132,8 @@ Return ONLY a valid JSON object. No markdown, no code blocks, no extra text.`;
         prompt += '- personality: a behavioral brief (no adjective lists — explain the why and when behind each trait)\n';
         prompt += '- scenario\n';
         prompt += '- first_mes: a rich narrative opening scene (150-300 words) — its length calibrates how long AI replies will be throughout the conversation\n';
-        prompt += '- mes_example: 2-3 short exchanges (5-6 lines each) in <START> / {{char}}: / {{user}}: format. Vary action verbs across all examples — never repeat the same one. Quotes for dialogue only.\n\n';
+        prompt += '- mes_example: 2-3 short exchanges (5-6 lines each) in <START> / {{char}}: / {{user}}: format. Vary action verbs across all examples — never repeat the same one. Quotes for dialogue only.\n';
+        prompt += '- alternate_greetings: an array of exactly 3 opening scenes. Each 150–300 words, narrative style matching first_mes quality. Cover a different tone, a different scenario, and one group-chat-safe opener respectively.\n\n';
         prompt += 'Return only valid JSON with the character data. No markdown, no code blocks, just the JSON object.';
         return prompt;
     }

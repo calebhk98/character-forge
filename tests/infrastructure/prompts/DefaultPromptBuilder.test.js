@@ -192,6 +192,28 @@ describe('DefaultPromptBuilder - buildRefinementRequest', () => {
     });
 });
 
+describe('DefaultPromptBuilder - alternate_greetings', () => {
+    /**
+     * alternate_greetings field documented in character system prompt.
+     */
+    it('should include alternate_greetings in character system prompt', () => {
+        const builder = new DefaultPromptBuilder();
+        const request = builder.build('A character');
+
+        expect(request.systemPrompt).toContain('alternate_greetings');
+    });
+
+    /**
+     * alternate_greetings included in character user prompt.
+     */
+    it('should include alternate_greetings in character user prompt', () => {
+        const builder = new DefaultPromptBuilder();
+        const request = builder.build('A character');
+
+        expect(request.userPrompt).toContain('alternate_greetings');
+    });
+});
+
 describe('DefaultPromptBuilder - Lorebook defaults', () => {
     it('should use default entryCount of 10 when entryCount is 0', () => {
         const builder = new DefaultPromptBuilder();
