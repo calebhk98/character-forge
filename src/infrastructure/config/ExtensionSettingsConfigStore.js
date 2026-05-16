@@ -41,7 +41,7 @@ export class ExtensionSettingsConfigStore extends IConfigStore {
      */
     get(key, defaultValue) {
         const ctx = this.resolveContext();
-        const moduleSettings = ctx?.extension_settings?.[this.moduleName];
+        const moduleSettings = ctx?.extensionSettings?.[this.moduleName];
         if (!moduleSettings) {
             return defaultValue;
         }
@@ -58,9 +58,9 @@ export class ExtensionSettingsConfigStore extends IConfigStore {
      */
     async set(key, value) {
         const ctx = this.resolveContext();
-        // ST puts extension_settings on both the context object and window;
-        // fall back to the window global for extensions loaded before ST is fully ready.
-        const extSettings = ctx?.extension_settings ?? globalThis.extension_settings;
+        // ST exposes extensionSettings (camelCase) on context and extension_settings on window.
+        // Fall back to the window global for extensions loaded before ST is fully ready.
+        const extSettings = ctx?.extensionSettings ?? globalThis.extension_settings;
         if (!extSettings) {
             throw new Error('SillyTavern context not available');
         }

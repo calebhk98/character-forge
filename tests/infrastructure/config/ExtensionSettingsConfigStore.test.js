@@ -11,7 +11,7 @@ describe('ExtensionSettingsConfigStore', () => {
 
     beforeEach(() => {
         mockContext = {
-            extension_settings: {},
+            extensionSettings: {},
             saveSettingsDebounced: () => Promise.resolve(),
         };
         store = new ExtensionSettingsConfigStore('character-forge', mockContext);
@@ -19,25 +19,25 @@ describe('ExtensionSettingsConfigStore', () => {
 
     describe('get()', () => {
         it('should return value if key exists', () => {
-            mockContext.extension_settings['character-forge'] = { promptTemplate: 'default' };
+            mockContext.extensionSettings['character-forge'] = { promptTemplate: 'default' };
             const value = store.get('promptTemplate');
             expect(value).toBe('default');
         });
 
         it('should return default value if key does not exist', () => {
-            mockContext.extension_settings['character-forge'] = {};
+            mockContext.extensionSettings['character-forge'] = {};
             const value = store.get('promptTemplate', 'fallback');
             expect(value).toBe('fallback');
         });
 
         it('should return undefined if key does not exist and no default provided', () => {
-            mockContext.extension_settings['character-forge'] = {};
+            mockContext.extensionSettings['character-forge'] = {};
             const value = store.get('promptTemplate');
             expect(value).toBeUndefined();
         });
 
         it('should handle missing module settings object', () => {
-            mockContext.extension_settings = {};
+            mockContext.extensionSettings = {};
             const value = store.get('promptTemplate', 'fallback');
             expect(value).toBe('fallback');
         });
@@ -45,15 +45,15 @@ describe('ExtensionSettingsConfigStore', () => {
 
     describe('set()', () => {
         it('should set a value in extension_settings', async () => {
-            mockContext.extension_settings['character-forge'] = {};
+            mockContext.extensionSettings['character-forge'] = {};
             await store.set('promptTemplate', 'advanced');
-            expect(mockContext.extension_settings['character-forge'].promptTemplate).toBe('advanced');
+            expect(mockContext.extensionSettings['character-forge'].promptTemplate).toBe('advanced');
         });
 
         it('should create module settings object if it does not exist', async () => {
-            mockContext.extension_settings = {};
+            mockContext.extensionSettings = {};
             await store.set('promptTemplate', 'advanced');
-            expect(mockContext.extension_settings['character-forge'].promptTemplate).toBe('advanced');
+            expect(mockContext.extensionSettings['character-forge'].promptTemplate).toBe('advanced');
         });
 
         it('should call saveSettingsDebounced after setting value', async () => {
@@ -62,22 +62,22 @@ describe('ExtensionSettingsConfigStore', () => {
                 saveSettingsDebouncedCalled = true;
                 return Promise.resolve();
             };
-            mockContext.extension_settings['character-forge'] = {};
+            mockContext.extensionSettings['character-forge'] = {};
 
             await store.set('promptTemplate', 'advanced');
             expect(saveSettingsDebouncedCalled).toBe(true);
         });
 
         it('should handle numeric values', async () => {
-            mockContext.extension_settings['character-forge'] = {};
+            mockContext.extensionSettings['character-forge'] = {};
             await store.set('lorebookEntryCount', 5);
-            expect(mockContext.extension_settings['character-forge'].lorebookEntryCount).toBe(5);
+            expect(mockContext.extensionSettings['character-forge'].lorebookEntryCount).toBe(5);
         });
 
         it('should handle boolean values', async () => {
-            mockContext.extension_settings['character-forge'] = {};
+            mockContext.extensionSettings['character-forge'] = {};
             await store.set('autoSaveOnGenerate', true);
-            expect(mockContext.extension_settings['character-forge'].autoSaveOnGenerate).toBe(true);
+            expect(mockContext.extensionSettings['character-forge'].autoSaveOnGenerate).toBe(true);
         });
 
         it('should throw when context is not available', async () => {
