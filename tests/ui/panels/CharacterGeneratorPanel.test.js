@@ -60,6 +60,9 @@ function createMockContainer() {
         saveCharacter: {
             execute: vi.fn().mockResolvedValue('saved-id'),
         },
+        configStore: {
+            get: vi.fn().mockReturnValue('auto'),
+        },
         logger: {
             info: vi.fn(),
             debug: vi.fn(),
@@ -178,7 +181,7 @@ describe('CharacterGeneratorPanel - Generation', () => {
         await panel.onGenerateClick();
 
         expect(container.generateCharacter.execute).toHaveBeenCalledWith('A mysterious wizard');
-        expect(container.generateLorebook.execute).toHaveBeenCalledWith('A mysterious wizard');
+        expect(container.generateLorebook.execute).toHaveBeenCalledWith('A mysterious wizard', { entryCount: undefined });
     });
 
     it('shows error toast if no description provided', async () => {
