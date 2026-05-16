@@ -15,6 +15,8 @@ import { INotifier } from '../../src/application/ports/INotifier.js';
 import { GenerateCharacterFromDescription } from '../../src/application/use-cases/GenerateCharacterFromDescription.js';
 import { GenerateLorebookForCharacter } from '../../src/application/use-cases/GenerateLorebookForCharacter.js';
 import { SaveCharacterToTavern } from '../../src/application/use-cases/SaveCharacterToTavern.js';
+import { DefaultPromptBuilder } from '../../src/infrastructure/prompts/DefaultPromptBuilder.js';
+import { AdvancedPromptBuilder } from '../../src/infrastructure/prompts/AdvancedPromptBuilder.js';
 
 describe('Container - structure', () => {
     it('should build container with all required services', () => {
@@ -119,6 +121,33 @@ describe('Container - formatter and prompt builder wiring', () => {
         const container = buildContainer(config, mockContext);
 
         expect(container.promptBuilder).toBeInstanceOf(IPromptBuilder);
+    });
+
+    it('should wire DefaultPromptBuilder when promptTemplate is "default"', () => {
+        const mockContext = { extensionSettings: {} };
+        const config = { llmProvider: 'mock', cardFormat: 'v3', mockResponses: [], promptTemplate: 'default' };
+
+        const container = buildContainer(config, mockContext);
+
+        expect(container.promptBuilder).toBeInstanceOf(DefaultPromptBuilder);
+    });
+
+    it('should wire AdvancedPromptBuilder when promptTemplate is "advanced"', () => {
+        const mockContext = { extensionSettings: {} };
+        const config = { llmProvider: 'mock', cardFormat: 'v3', mockResponses: [], promptTemplate: 'advanced' };
+
+        const container = buildContainer(config, mockContext);
+
+        expect(container.promptBuilder).toBeInstanceOf(AdvancedPromptBuilder);
+    });
+
+    it('should default to DefaultPromptBuilder when promptTemplate is not set', () => {
+        const mockContext = { extensionSettings: {} };
+        const config = { llmProvider: 'mock', cardFormat: 'v3', mockResponses: [] };
+
+        const container = buildContainer(config, mockContext);
+
+        expect(container.promptBuilder).toBeInstanceOf(DefaultPromptBuilder);
     });
 });
 
