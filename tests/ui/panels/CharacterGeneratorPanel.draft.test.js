@@ -51,7 +51,7 @@ function createMockContainer() {
  * Render a panel into a fresh div, type a description, and trigger generation.
  *
  * @param {object} container - mock container
- * @returns {Promise<{panel: CharacterGeneratorPanel, targetElement: HTMLElement}>}
+ * @returns {Promise<{panel: CharacterGeneratorPanel, targetElement: HTMLElement}>} panel and its mounted element
  */
 async function setupAndGenerate(container) {
     const targetElement = document.createElement('div');
