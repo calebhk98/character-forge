@@ -22,12 +22,26 @@
 ```
 src/
 ├── domain/                 Pure data entities, no I/O
-├── application/            Use cases and abstract ports
-├── infrastructure/         Adapters (LLM, formatters, storage)
+├── application/
+│   ├── ports/              12 abstract port contracts
+│   └── use-cases/          10 use cases
+├── infrastructure/
+│   ├── llm/                LLM adapters
+│   ├── repositories/       SillyTavern character/lorebook storage
+│   ├── formatters/         Card V3 formatter
+│   ├── validators/         Card V3 validator
+│   ├── prompts/            Default + Advanced prompt builders
+│   ├── images/             Image generation and hosting adapters
+│   ├── config/             Extension settings store
+│   ├── logging/            Console logger
+│   ├── notifications/      Toastr notifier
+│   └── utils/              JSON repair, PNG chunk writer
 ├── composition/            Dependency injection wiring
-└── ui/                     Panel UI and event handlers
+└── ui/
+    ├── panels/             Generator, batch, loader, image approval, settings, etc.
+    └── slash-commands/     /forge and /forge-from-chat handlers
 
-tests/                       Mirrors src/ structure
+tests/                      Mirrors src/ structure
 ```
 
 ### Tech Stack
@@ -81,9 +95,13 @@ Each port is an abstract base class that infrastructure adapters implement:
 
 - **ILlmProvider** - translates structured requests into generated text.
 - **ICharacterRepository** and **ILorebookRepository** - persist cards to storage.
-- **IPromptBuilder** - converts user description into a GenerationRequest.
+- **IPromptBuilder** - converts user description into a GenerationRequest; also builds field-refinement requests.
 - **ICardFormatter** - converts domain entities to Character Card V3 JSON.
+- **ICardValidator** - validates a formatted card JSON object against its spec.
 - **IConfigStore** - reads/writes user settings.
+- **IImageGenerator** - generates character portraits via SillyTavern's image generation extension.
+- **IImageHost** - uploads image blobs to a remote or local destination and returns a URL.
+- **IJsonRepair** - repairs malformed JSON from LLM responses.
 - **ILogger** and **INotifier** - diagnostics and user-facing messages.
 
 See DESIGN.md under "Ports" for the full contract definitions.

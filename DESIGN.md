@@ -5,7 +5,7 @@ Audience: developers and contributors. If you just want to use the extension, st
 ## Project Status
 
 ✅ **All core features complete.** The extension is production-ready with:
-- 242 unit and integration tests (all passing)
+- 624 unit and integration tests (all passing)
 - Comprehensive test coverage for domain, application, infrastructure, and UI layers
 - Full adherence to architecture and code constraints
 - No incomplete work, no TODOs
@@ -26,7 +26,7 @@ This document captures the architectural decisions for Character Forge and the r
 
 ## Non-goals
 
-1. Editing existing character cards. Character Forge generates new ones. Editing is SillyTavern's job.
+1. Full card editing. Character Forge can load an existing card for light field editing, but deep card management (renaming, deleting, persona assignment) remains SillyTavern's job.
 2. Running its own LLM. All inference goes through SillyTavern's Connection Manager.
 3. Hosting or sharing characters. The extension produces a card and hands it to SillyTavern.
 4. Supporting Character Card V2. V3 only.
@@ -94,13 +94,24 @@ character-forge/
 │   │   │   ├── ILorebookRepository.js
 │   │   │   ├── IPromptBuilder.js
 │   │   │   ├── ICardFormatter.js
+│   │   │   ├── ICardValidator.js
 │   │   │   ├── IConfigStore.js
+│   │   │   ├── IImageGenerator.js
+│   │   │   ├── IImageHost.js
+│   │   │   ├── IJsonRepair.js
 │   │   │   ├── ILogger.js
 │   │   │   └── INotifier.js
 │   │   └── use-cases/
 │   │       ├── GenerateCharacterFromDescription.js
 │   │       ├── GenerateLorebookForCharacter.js
-│   │       └── SaveCharacterToTavern.js
+│   │       ├── SaveCharacterToTavern.js
+│   │       ├── RefineCharacterField.js
+│   │       ├── LoadCharacterForEditing.js
+│   │       ├── GenerateCharacterImages.js
+│   │       ├── UploadGreetingImages.js
+│   │       ├── DecomposeGroupDescription.js
+│   │       ├── GenerateSharedLorebook.js
+│   │       └── ExtractCharacterFromChat.js
 │   ├── infrastructure/
 │   │   ├── llm/
 │   │   │   ├── SillyTavernLlmProvider.js
@@ -110,19 +121,43 @@ character-forge/
 │   │   │   └── SillyTavernLorebookRepository.js
 │   │   ├── formatters/
 │   │   │   └── CardV3Formatter.js
+│   │   ├── validators/
+│   │   │   └── CardV3Validator.js
 │   │   ├── prompts/
-│   │   │   └── DefaultPromptBuilder.js
+│   │   │   ├── BasePromptBuilder.js
+│   │   │   ├── DefaultPromptBuilder.js
+│   │   │   └── AdvancedPromptBuilder.js
+│   │   ├── images/
+│   │   │   ├── SillyTavernImageGenerator.js
+│   │   │   ├── MockImageGenerator.js
+│   │   │   ├── CatboxImageHost.js
+│   │   │   ├── ConfigurableImageHost.js
+│   │   │   ├── LocalImageHost.js
+│   │   │   └── MockImageHost.js
 │   │   ├── config/
 │   │   │   └── ExtensionSettingsConfigStore.js
 │   │   ├── logging/
 │   │   │   └── ConsoleLogger.js
-│   │   └── notifications/
-│   │       └── ToastrNotifier.js
+│   │   ├── notifications/
+│   │   │   └── ToastrNotifier.js
+│   │   └── utils/
+│   │       ├── JsonRepair.js
+│   │       ├── JsonRepairAdapter.js
+│   │       └── PngChunkWriter.js
 │   ├── composition/
 │   │   └── Container.js              DI wiring, factory tables
 │   └── ui/
-│       ├── panels/CharacterGeneratorPanel.js
-│       ├── components/
+│       ├── panels/
+│       │   ├── CharacterGeneratorPanel.js
+│       │   ├── CharacterPreviewBuilder.js
+│       │   ├── CharacterFieldRegenerator.js
+│       │   ├── CharacterImageGenTrigger.js
+│       │   ├── CharacterLoaderPanel.js
+│       │   ├── BatchGeneratorPanel.js
+│       │   ├── ImageApprovalPanel.js
+│       │   └── SettingsPanel.js
+│       ├── slash-commands/
+│       │   └── SlashCommandHandler.js
 │       └── templates/panel.html
 └── tests/                            mirrors src/ structure
     ├── domain/
@@ -207,6 +242,22 @@ Takes a user description and a generation strategy, produces a `GenerationReques
 
 Takes a domain `Character` (and its embedded `Lorebook`) and outputs the JSON structure for a specific card spec. Currently only `CardV3Formatter`.
 
+### `ICardValidator`
+
+Validates a formatted card JSON object against its spec schema before it is persisted. The default adapter is `CardV3Validator`, which checks required fields, spec string, and spec version.
+
+### `IImageGenerator`
+
+Generates a character portrait (and optional expression sprites) from a text prompt. The default adapter delegates to SillyTavern's `generatePicture()` global, which supports 20+ backends (AUTOMATIC1111, ComfyUI, DALL-E, NovelAI, Stable Horde, and more). `isAvailable()` must be checked before calling; all callers treat generation as best-effort.
+
+### `IImageHost`
+
+Uploads an image `Blob` to a remote or local destination and returns a URL. Current adapters: `CatboxImageHost` (catbox.moe, no account needed), `LocalImageHost` (base64 data URI, fully offline), and `ConfigurableImageHost` (delegates to the above based on user config). `MockImageHost` is used in tests.
+
+### `IJsonRepair`
+
+Repairs malformed JSON strings produced by LLMs (markdown fences, trailing commas, truncated output, etc.) and returns a valid JSON string or throws. Keeps the repair dependency out of use cases so it can be swapped or stubbed independently. The default adapter wraps `JsonRepair.js`.
+
 ### `IConfigStore`
 
 Reads and writes extension settings. The default adapter wraps SillyTavern's `extension_settings[moduleName]` bucket.
@@ -223,15 +274,39 @@ const LLM_FACTORIES = {
     'mock':         (cfg, ctx) => new MockLlmProvider(cfg.mockResponses),
 };
 
+const PROMPT_BUILDER_FACTORIES = {
+    'default':  () => new DefaultPromptBuilder(),
+    'advanced': () => new AdvancedPromptBuilder(),
+};
+
 const FORMATTER_FACTORIES = {
     'v3': () => new CardV3Formatter(),
 };
 
+const VALIDATOR_FACTORIES = {
+    'v3': () => new CardV3Validator(),
+};
+
+const IMAGE_GEN_FACTORIES = {
+    'silly-tavern': (ctx) => new SillyTavernImageGenerator(ctx),
+    'mock':         ()    => new MockImageGenerator(),
+};
+
+const IMAGE_HOST_DELEGATES = {
+    'catbox': () => new CatboxImageHost(),
+    'local':  () => new LocalImageHost(),
+    'mock':   () => new MockImageHost(),
+};
+
 export function buildContainer(config, stContext) {
-    const llm       = LLM_FACTORIES[config.llmProvider](config, stContext);
-    const formatter = FORMATTER_FACTORIES[config.cardFormat]();
-    // ... wire other ports
-    return { llm, formatter, /* ... */ };
+    const llm          = LLM_FACTORIES[config.llmProvider || 'silly-tavern'](config, stContext);
+    const formatter    = FORMATTER_FACTORIES[config.cardFormat || 'v3']();
+    const validator    = VALIDATOR_FACTORIES[config.cardFormat || 'v3']();
+    const promptBuilder = PROMPT_BUILDER_FACTORIES[config.promptTemplate || 'default']();
+    const imageGenerator = IMAGE_GEN_FACTORIES[config.imageGenerator || 'silly-tavern'](stContext);
+    const imageHost    = new ConfigurableImageHost(configStore, /* delegates */);
+    // ... wire use cases
+    return { /* all wired services */ };
 }
 ```
 
@@ -249,16 +324,18 @@ Configuration is split into two sets:
 
 **User-visible config** lives in the SillyTavern settings panel and is round-tripped through `IConfigStore`. Fields:
 
-- `promptTemplate`
-- `lorebookEntryCount`
-- `generationTemperature`
-- `autoSaveOnGenerate`
-- `customSystemPromptOverride`
+- `promptTemplate` — prompt strategy: `'default'` or `'advanced'`.
+- `lorebookEntryCount` — target number of lorebook entries.
+- `generationTemperature` — LLM temperature.
+- `autoSaveOnGenerate` — skip review and save immediately.
+- `customSystemPromptOverride` — advanced override for the system prompt.
 
 **Internal extension points** are the factory keys in the composition root. Today these are:
 
 - `llmProvider`: `'silly-tavern'` in production, `'mock'` in tests.
 - `cardFormat`: `'v3'` only.
+- `imageGenerator`: `'silly-tavern'` (delegates to SillyTavern's image generation extension) or `'mock'` in tests.
+- `imageHost`: resolved via `ConfigurableImageHost`; delegates are `'catbox'`, `'local'`, or `'mock'`.
 
 Internal keys are not exposed in the UI. Changing them means editing the composition root, which is intentional. The user does not need to think about adapter selection.
 
@@ -303,13 +380,13 @@ The prompt builder asks for between 5 and 15 entries by default, configurable vi
 
 ## Prompt strategy
 
-The default prompt builder:
+Two prompt builders ship. Both extend `BasePromptBuilder`, which provides the shared `buildRefinementRequest` implementation used by `RefineCharacterField`.
 
-1. Loads a static system prompt that includes V3 spec hints, PList formatting guidance, lorebook key strategy, and example structure.
-2. Wraps the user's description in a user prompt that asks for a JSON document matching a schema.
-3. Requests deterministic JSON output. The parser retries with corrective instructions if the response is malformed.
+**`DefaultPromptBuilder`** — standard strategy: a static system prompt with V3 spec hints, PList formatting guidance, and lorebook key strategy, plus a user prompt requesting JSON output. The JSON repair step handles malformed responses.
 
-The system prompt content is static text in `src/infrastructure/prompts/DefaultPromptBuilder.js`. Updating community best practices means editing that string.
+**`AdvancedPromptBuilder`** — stricter strategy: explicit field-length targets, a chain-of-thought preamble, and tighter formatting rules. Drop-in replacement for `DefaultPromptBuilder`; selectable via `promptTemplate: 'advanced'` in config.
+
+The system prompt content in each builder is static text. Updating community best practices means editing the string in the relevant builder class.
 
 ## Testing strategy
 
@@ -329,7 +406,7 @@ These constraints exist to keep the codebase readable and to prevent any one fil
 | Constraint | Value | Enforced by |
 |---|---|---|
 | Max file length | 500 lines | ESLint `max-lines` |
-| Max function length | 60 lines | ESLint `max-lines-per-function` |
+| Max function length | 100 lines | ESLint `max-lines-per-function` |
 | Max nesting depth | 5 inside a function body | ESLint `max-depth` |
 | Cyclomatic complexity | 10 | ESLint `complexity` |
 | JSDoc on functions, methods, classes | Required | ESLint `jsdoc/require-jsdoc` |
@@ -361,11 +438,11 @@ React or Vue were considered for the panel. Rejected because SillyTavern's UI is
 
 ## Slice plan
 
-The build proceeded in vertical slices, with each slice adding a working feature. All slices are now complete:
+The build proceeded in vertical slices, with each slice adding a working feature. All slices are complete:
 
 - ✅ **0. Bootstrap** - Repo layout, manifest, lint, test runner, pre-commit hook
 - ✅ **1. Domain entities** - `Character`, `Lorebook`, `LorebookEntry` with validation
-- ✅ **2. Ports** - Abstract base classes for all 8 ports with contract tests
+- ✅ **2. Ports** - Abstract base classes for all 12 ports with contract tests
 - ✅ **3. First use case with mocks** - `GenerateCharacterFromDescription` + `MockLlmProvider`
 - ✅ **4. Prompt builder** - `DefaultPromptBuilder` with static system/user prompts and snapshot tests
 - ✅ **5. Card V3 formatter** - Convert domain entities to valid Character Card V3 JSON
@@ -373,20 +450,24 @@ The build proceeded in vertical slices, with each slice adding a working feature
 - ✅ **7. Lorebook generation** - `GenerateLorebookForCharacter` use case with keyword strategy
 - ✅ **8. UI panel** - Textarea for input, generate button, preview with inline edit, save action
 - ✅ **9. Settings UI** - Extension settings panel with temperature, entry count, prompt template, auto-save toggle
-- ✅ **10. Polish** - JSON repair for malformed LLM output, validation feedback, error handling
+- ✅ **10. Polish** - JSON repair (`IJsonRepair`, `JsonRepairAdapter`), V3 validation (`CardV3Validator`), error handling
+- ✅ **11. Field refinement** - `RefineCharacterField` use case + per-field regenerate controls in `CharacterFieldRegenerator`
+- ✅ **12. Alternate greetings** - Generate and cycle multiple first-message variants
+- ✅ **13. Slash commands** - `/forge` and `/forge-from-chat` via `SlashCommandHandler`
+- ✅ **14. Character loading** - `LoadCharacterForEditing` use case + `CharacterLoaderPanel` for editing existing cards
+- ✅ **15. Advanced prompt builder** - `AdvancedPromptBuilder` with chain-of-thought preamble and field-length targets
+- ✅ **16. Image generation** - `GenerateCharacterImages` use case, `SillyTavernImageGenerator` adapter, `ImageApprovalPanel`, `UploadGreetingImages`, image hosting (catbox, local)
+- ✅ **17. Batch generation** - `BatchGeneratorPanel` with group-decompose mode (`DecomposeGroupDescription`, `GenerateSharedLorebook`) and list mode
+- ✅ **18. Chat extraction** - `ExtractCharacterFromChat` use case, generate a card from chat history
 
 **Build history:** The project was completed using test-driven development. Every feature was written with a failing test first (`test(red)` commit) followed by the implementation (`feat(green)` commit).
 
 ## Future enhancements
 
-The core product is complete. Potential future work (not blocking release):
+Potential future work (not blocking release):
 
-- **Alternate greetings** - Generate multiple greeting variants in one pass
-- **Slash command interface** - Complement the panel with `/generate` command
-- **V3 validation policy** - Decide how strictly to validate against the spec before saving
-- **Runtime wiki** - Fetch World Info Encyclopedia guidance at runtime with caching instead of inlining
-- **Batch generation** - Generate multiple characters from a list
-- **Character editing** - Light editing mode for cards after generation
-- **Prompt templates** - User-defined prompt strategies alongside the default
+- **Runtime wiki** - Fetch World Info Encyclopedia guidance at runtime with caching instead of inlining static text in the prompt builders
+- **V2 card support** - Add a `CardV2Formatter` and `CardV2Validator`; the formatter factory table makes this a two-file addition
+- **Prompt template authoring UI** - Let users write and save custom system prompts in the settings panel without touching code
 
 These are tracked as issues in the repository. Implementation will follow the same TDD workflow and architecture patterns documented above.

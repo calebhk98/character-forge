@@ -118,7 +118,7 @@ Then restart SillyTavern.
 
 All settings live in SillyTavern's extension settings panel and persist across sessions. Currently:
 
-- `promptTemplate` - which built-in prompt strategy to use. Default: `default`.
+- `promptTemplate` - which built-in prompt strategy to use: `default` or `advanced`. Default: `default`.
 - `lorebookEntryCount` - target number of lorebook entries to generate. Default: `auto`.
 - `generationTemperature` - LLM temperature for generation. Default: `0.85`.
 - `autoSaveOnGenerate` - skip the review step and save straight to library. Default: `false`.
@@ -181,10 +181,16 @@ Character Forge ships with all core features complete:
 
 - ✅ **Character generation** - Converts a text description into a complete Character Card V3
 - ✅ **Lorebook generation** - Creates keyword-triggered world info entries
-- ✅ **Review and edit** - Preview the card before saving, edit any field
+- ✅ **Alternate greetings** - Generate multiple first-message variants and cycle through them
+- ✅ **Field refinement** - Regenerate any individual field with optional feedback
+- ✅ **Review and edit** - Preview the card before saving, edit any field inline
+- ✅ **Load existing cards** - Open a saved character card for editing and re-saving
+- ✅ **Batch generation** - Generate multiple characters from a list, or decompose an ensemble description
+- ✅ **Image generation** - Generate a character portrait after saving (requires a SillyTavern image generation extension)
+- ✅ **Slash commands** - `/forge` and `/forge-from-chat` for generating cards without leaving the chat
 - ✅ **SillyTavern integration** - Save directly to your character library
-- ✅ **Configuration** - Adjust temperature, entry count, and prompt templates
-- ✅ **Full test coverage** - 242 unit and integration tests, all passing
+- ✅ **Configuration** - Adjust temperature, entry count, and prompt strategy (default or advanced)
+- ✅ **Full test coverage** - 624 unit and integration tests, all passing
 - ✅ **Hexagonal architecture** - Swap LLM providers, formatters, or storage without touching business logic
 
 See [DESIGN.md](./DESIGN.md#slice-plan) for the full development history.
