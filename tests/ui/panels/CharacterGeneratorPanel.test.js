@@ -61,7 +61,10 @@ function createMockContainer() {
             execute: vi.fn().mockResolvedValue('saved-id'),
         },
         configStore: {
-            get: vi.fn().mockReturnValue('auto'),
+            get: vi.fn().mockImplementation((key, defaultValue) => {
+                if (key === 'lorebookEntryCount') return 'auto';
+                return defaultValue ?? '';
+            }),
         },
         logger: {
             info: vi.fn(),

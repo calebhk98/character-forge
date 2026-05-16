@@ -15,6 +15,8 @@ export class IPromptBuilder {
      *
      * @param {string} _description - character concept in plain language
      * @param {object} [_options] - generation options
+     * @param {number} [_options.entryCount] - target lorebook entries
+     * @param {string} [_options.customSystemPrompt] - verbatim system prompt override
      * @returns {import('../../domain/value-objects/GenerationRequest.js').GenerationRequest} generation request
      */
     build(_description, _options = {}) {
