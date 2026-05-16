@@ -196,3 +196,80 @@ describe('CardV3Formatter - group_only_greetings', () => {
         expect(result.data.group_only_greetings).toEqual(['Greetings to the whole party!']);
     });
 });
+
+describe('CardV3Formatter - null/undefined optional field fallbacks', () => {
+    /**
+     * Helper: create a minimal character-like plain object bypassing
+     * the Character constructor so fields can be null/undefined,
+     * exercising the ?? fallback branches in format().
+     *
+     * @param {object} overrides - field overrides to apply
+     * @returns {object} plain character-like object
+     */
+    function makePlainCharacter(overrides = {}) {
+        return {
+            name: 'Aria',
+            description: 'A mysterious mage',
+            personality: 'Curious and witty',
+            scenario: 'In a magical tower',
+            first_mes: 'Welcome, traveler.',
+            mes_example: 'How can I assist you?',
+            creator_notes: undefined,
+            system_prompt: undefined,
+            post_history_instructions: undefined,
+            alternate_greetings: undefined,
+            group_only_greetings: undefined,
+            ...overrides,
+        };
+    }
+
+    it('should fall back to [] when alternate_greetings is undefined', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(makePlainCharacter({ alternate_greetings: undefined }));
+        expect(result.data.alternate_greetings).toEqual([]);
+    });
+
+    it('should fall back to [] when alternate_greetings is null', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(makePlainCharacter({ alternate_greetings: null }));
+        expect(result.data.alternate_greetings).toEqual([]);
+    });
+
+    it('should fall back to [] when group_only_greetings is undefined', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(makePlainCharacter({ group_only_greetings: undefined }));
+        expect(result.data.group_only_greetings).toEqual([]);
+    });
+
+    it('should fall back to [] when group_only_greetings is null', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(makePlainCharacter({ group_only_greetings: null }));
+        expect(result.data.group_only_greetings).toEqual([]);
+    });
+
+    it('should use provided alternate_greetings array when not null/undefined', () => {
+        const formatter = new CardV3Formatter();
+        const greetings = ['Hello!', 'Greetings!'];
+        const result = formatter.format(makePlainCharacter({ alternate_greetings: greetings }));
+        expect(result.data.alternate_greetings).toEqual(greetings);
+    });
+
+    it('should use provided group_only_greetings array when not null/undefined', () => {
+        const formatter = new CardV3Formatter();
+        const greetings = ['Welcome, party!'];
+        const result = formatter.format(makePlainCharacter({ group_only_greetings: greetings }));
+        expect(result.data.group_only_greetings).toEqual(greetings);
+    });
+
+    it('should always output tags as an empty array', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(makePlainCharacter());
+        expect(result.data.tags).toEqual([]);
+    });
+
+    it('should always output extensions as an empty object', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(makePlainCharacter());
+        expect(result.data.extensions).toEqual({});
+    });
+});

@@ -17,6 +17,8 @@ import { GenerateLorebookForCharacter } from '../../src/application/use-cases/Ge
 import { SaveCharacterToTavern } from '../../src/application/use-cases/SaveCharacterToTavern.js';
 import { DefaultPromptBuilder } from '../../src/infrastructure/prompts/DefaultPromptBuilder.js';
 import { AdvancedPromptBuilder } from '../../src/infrastructure/prompts/AdvancedPromptBuilder.js';
+import { SillyTavernLlmProvider } from '../../src/infrastructure/llm/SillyTavernLlmProvider.js';
+import { CardV3Formatter } from '../../src/infrastructure/formatters/CardV3Formatter.js';
 
 describe('Container - structure', () => {
     it('should build container with all required services', () => {
@@ -272,5 +274,82 @@ describe('Container - use case wiring', () => {
         const container = buildContainer(config, mockContext);
 
         expect(container.saveCharacter).toBeInstanceOf(SaveCharacterToTavern);
+    });
+});
+
+describe('Container - fallback defaults when config keys are omitted', () => {
+    it('should use silly-tavern LLM provider when llmProvider is not set', () => {
+        const mockContext = { extensionSettings: {} };
+        // llmProvider deliberately omitted to trigger the || 'silly-tavern' fallback
+        const config = /** @type {any} */ ({ cardFormat: 'v3' });
+
+        const container = buildContainer(config, mockContext);
+
+        expect(container.llm).toBeInstanceOf(SillyTavernLlmProvider);
+    });
+
+    it('should use v3 card formatter when cardFormat is not set', () => {
+        const mockContext = { extensionSettings: {} };
+        // cardFormat deliberately omitted to trigger the || 'v3' fallback
+        const config = /** @type {any} */ ({ llmProvider: 'mock', mockResponses: [] });
+
+        const container = buildContainer(config, mockContext);
+
+        expect(container.formatter).toBeInstanceOf(CardV3Formatter);
+    });
+
+    it('should use DefaultPromptBuilder when promptTemplate is not set', () => {
+        const mockContext = { extensionSettings: {} };
+        // promptTemplate deliberately omitted to trigger the || 'default' fallback
+        const config = { llmProvider: 'mock', cardFormat: 'v3', mockResponses: [] };
+
+        const container = buildContainer(config, mockContext);
+
+        expect(container.promptBuilder).toBeInstanceOf(DefaultPromptBuilder);
+    });
+
+    it('should use v3 validator when cardFormat is not set', () => {
+        const mockContext = { extensionSettings: {} };
+        const config = /** @type {any} */ ({ llmProvider: 'mock', mockResponses: [] });
+
+        const container = buildContainer(config, mockContext);
+
+        // validator is keyed on the same cardFormat fallback as formatter
+        expect(container.validator).toBeDefined();
+    });
+
+    it('should build a complete container when all optional keys are omitted', () => {
+        const mockContext = { extensionSettings: {} };
+        // Only required runtime context supplied; all adapter keys rely on defaults
+        const config = /** @type {any} */ ({});
+
+        const container = buildContainer(config, mockContext);
+
+        expect(container.llm).toBeInstanceOf(SillyTavernLlmProvider);
+        expect(container.formatter).toBeInstanceOf(CardV3Formatter);
+        expect(container.promptBuilder).toBeInstanceOf(DefaultPromptBuilder);
+    });
+});
+
+describe('Container - invalid adapter keys', () => {
+    it('should throw when llmProvider key is unknown', () => {
+        const mockContext = { extensionSettings: {} };
+        const config = { llmProvider: 'does-not-exist', cardFormat: 'v3' };
+
+        expect(() => buildContainer(config, mockContext)).toThrow();
+    });
+
+    it('should throw when cardFormat key is unknown', () => {
+        const mockContext = { extensionSettings: {} };
+        const config = { llmProvider: 'mock', mockResponses: [], cardFormat: 'v99' };
+
+        expect(() => buildContainer(config, mockContext)).toThrow();
+    });
+
+    it('should throw when promptTemplate key is unknown', () => {
+        const mockContext = { extensionSettings: {} };
+        const config = { llmProvider: 'mock', mockResponses: [], cardFormat: 'v3', promptTemplate: 'nonexistent' };
+
+        expect(() => buildContainer(config, mockContext)).toThrow();
     });
 });

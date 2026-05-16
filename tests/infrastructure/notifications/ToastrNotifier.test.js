@@ -67,7 +67,7 @@ describe('ToastrNotifier - basic notifications', () => {
 describe('ToastrNotifier - toastr unavailable', () => {
     beforeEach(() => {
         // Simulate ST not yet loaded or toastr missing
-        globalThis.window = {};
+        globalThis.window = /** @type {any} */ ({});
     });
 
     afterEach(() => { delete globalThis.window; });

@@ -90,8 +90,8 @@ describe('BatchGeneratorPanel - rendering', () => {
 
         expect(groupSection).not.toBeNull();
         expect(listSection).not.toBeNull();
-        expect(groupSection.style.display).not.toBe('none');
-        expect(listSection.style.display).toBe('none');
+        expect(/** @type {HTMLElement} */ (groupSection).style.display).not.toBe('none');
+        expect(/** @type {HTMLElement} */ (listSection).style.display).toBe('none');
     });
 
     it('should render a decompose button in group mode', () => {
@@ -122,8 +122,8 @@ describe('BatchGeneratorPanel - tab switching', () => {
         const groupSection = /** @type {HTMLElement} */ (target.querySelector('#batch-group-section'));
         const listSection = /** @type {HTMLElement} */ (target.querySelector('#batch-list-section'));
 
-        expect(listSection.style.display).not.toBe('none');
-        expect(groupSection.style.display).toBe('none');
+        expect(/** @type {HTMLElement} */ (listSection).style.display).not.toBe('none');
+        expect(/** @type {HTMLElement} */ (groupSection).style.display).toBe('none');
     });
 
     it('should switch back to group section when group tab is clicked', () => {
@@ -274,7 +274,7 @@ describe('BatchGeneratorPanel - batch generation', () => {
 
         const progress = /** @type {HTMLElement} */ (target.querySelector('#batch-progress-section'));
         expect(progress).not.toBeNull();
-        expect(progress.style.display).not.toBe('none');
+        expect(/** @type {HTMLElement} */ (progress).style.display).not.toBe('none');
     });
 });
 
