@@ -7,6 +7,7 @@
 
 // @ts-check
 
+import { BatchGeneratorPanel } from './src/ui/panels/BatchGeneratorPanel.js';
 import { CharacterGeneratorPanel } from './src/ui/panels/CharacterGeneratorPanel.js';
 import { SettingsPanel } from './src/ui/panels/SettingsPanel.js';
 import { SlashCommandHandler } from './src/ui/slash-commands/SlashCommandHandler.js';
@@ -100,6 +101,9 @@ export function buildInlineDrawer(container) {
 
     const generatorPanel = new CharacterGeneratorPanel(container);
     generatorPanel.render(content);
+
+    const batchPanel = new BatchGeneratorPanel(container);
+    batchPanel.render(content);
 
     drawer.appendChild(toggle);
     drawer.appendChild(content);
