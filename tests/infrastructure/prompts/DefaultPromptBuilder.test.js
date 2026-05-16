@@ -204,6 +204,41 @@ describe('DefaultPromptBuilder - alternate_greetings', () => {
     });
 });
 
+describe('DefaultPromptBuilder - customSystemPrompt override', () => {
+    /**
+     * When options.customSystemPrompt is provided, it should be returned as-is.
+     */
+    it('should return customSystemPrompt verbatim when provided', () => {
+        const builder = new DefaultPromptBuilder();
+        const override = 'You are a custom system prompt for testing.';
+        const request = builder.build('A knight', { customSystemPrompt: override });
+
+        expect(request.systemPrompt).toBe(override);
+    });
+
+    /**
+     * customSystemPrompt takes priority over entryCount lorebook routing.
+     */
+    it('should prefer customSystemPrompt over entryCount routing', () => {
+        const builder = new DefaultPromptBuilder();
+        const override = 'Custom override beats lorebook routing.';
+        const request = builder.build('A knight', { customSystemPrompt: override, entryCount: 5 });
+
+        expect(request.systemPrompt).toBe(override);
+    });
+
+    /**
+     * An empty string override should NOT suppress the default prompt.
+     */
+    it('should use default prompt when customSystemPrompt is empty string', () => {
+        const builder = new DefaultPromptBuilder();
+        const request = builder.build('A knight', { customSystemPrompt: '' });
+
+        expect(request.systemPrompt).not.toBe('');
+        expect(request.systemPrompt).toContain('character');
+    });
+});
+
 describe('DefaultPromptBuilder - Lorebook defaults', () => {
     it('should use default entryCount of 10 when entryCount is 0', () => {
         const builder = new DefaultPromptBuilder();
