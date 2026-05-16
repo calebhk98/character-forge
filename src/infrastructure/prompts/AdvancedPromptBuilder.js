@@ -126,10 +126,11 @@ Output ONLY the final JSON object — no reasoning, no commentary.
      *
      * @private
      * @param {string} description - character concept
-     * @param {object} [_options] - unused
+     * @param {object} [options] - generation options
+     * @param {string} [options.groupDescription] - parent group concept; when set, adds group_only_greetings field
      * @returns {string} user prompt text
      */
-    buildUserPrompt(description, _options) {
+    buildUserPrompt(description, options = {}) {
         let prompt = `Create a detailed character for the following concept:\n\n"${description}"\n\n`;
         prompt += 'Follow the chain-of-thought steps in your system prompt before writing JSON.\n\n';
         prompt += 'Required fields and word-count targets:\n';
@@ -139,8 +140,13 @@ Output ONLY the final JSON object — no reasoning, no commentary.
         prompt += '- scenario [50–100 words]\n';
         prompt += '- first_mes [150–300 words]: narrative scene with interleaved action + dialogue; ends with engagement hook\n';
         prompt += '- mes_example: 2–3 exchanges in <START>/{{char}}:/{{user}}: format; unique action verbs; dialogue-only quotes\n';
-        prompt += '- alternate_greetings: array of exactly 3 strings [150–300 words each] — vary tone, scenario, and one group-chat-safe opener\n\n';
-        prompt += 'Return only valid JSON. No markdown, no code blocks, no extra text.';
+        prompt += '- alternate_greetings: array of exactly 3 strings [150–300 words each] — vary tone, scenario, and one group-chat-safe opener\n';
+        if (options.groupDescription) {
+            prompt += '- group_only_greetings: array of exactly 1 string [150–250 words] — a group-chat-specific ';
+            prompt += `opening that acknowledges the shared ensemble: "${options.groupDescription}". `;
+            prompt += 'Written to engage multiple participants simultaneously, referencing the team/family context.\n';
+        }
+        prompt += '\nReturn only valid JSON. No markdown, no code blocks, no extra text.';
         return prompt;
     }
 
@@ -208,6 +214,38 @@ Return ONLY a valid JSON object with the "entries" array. No additional text.`;
             userPrompt += `Feedback: ${feedback.trim()}\n\n`;
         }
         userPrompt += `Rewrite the "${fieldName}" field only. Return just the new text, nothing else.`;
+        return new GenerationRequest({ systemPrompt, userPrompt });
+    }
+
+    /**
+     * Build a request to generate a shared lorebook for an ensemble of characters.
+     * Uses chain-of-thought to surface the richest relationship dynamics and group lore.
+     *
+     * @param {string} groupDescription - description of the group or ensemble
+     * @param {string[]} characterNames - names of the generated characters in this ensemble
+     * @param {object} [options] - generation options
+     * @param {number} [options.entryCount] - target entry count (default: 20)
+     * @returns {GenerationRequest} structured generation request
+     */
+    buildSharedLorebookRequest(groupDescription, characterNames, options = {}) {
+        const entryCount = options.entryCount || 20;
+        const nameList = characterNames.join(', ');
+        const systemPrompt =
+            'You are an expert in creating lorebook (World Info) entries for SillyTavern roleplay. ' +
+            'Your task is to generate a SHARED lorebook for an ensemble of characters.\n\n' +
+            '## Chain-of-Thought Steps\n' +
+            '1. Map every pair of characters — what is their dynamic? Any tension, history, or loyalty?\n' +
+            '2. Identify the group\'s founding story: how did they come together? What defines their bond?\n' +
+            '3. List shared locations, symbols, rituals, or enemies that tie the group together.\n' +
+            '4. Draft entries — relationship-pair entries first, then group-wide lore.\n' +
+            '5. Verify each entry\'s content is self-contained (80–300 words), informative without context.\n\n' +
+            'Output ONLY the final JSON — no reasoning, no markdown, no code fences.\n' +
+            'Format: { "name": "Lorebook name", "entries": [...] }';
+        let userPrompt = `Ensemble concept: "${groupDescription}"\n`;
+        userPrompt += `Characters: ${nameList}\n\n`;
+        userPrompt += `Follow the chain-of-thought steps, then generate approximately ${entryCount} entries.\n`;
+        userPrompt += 'Weight toward relationship dynamics, group history, and inter-character tension.\n';
+        userPrompt += 'Return JSON: { "name": "...", "entries": [...] }';
         return new GenerationRequest({ systemPrompt, userPrompt });
     }
 

@@ -23,6 +23,7 @@ export class BatchGeneratorPanel {
         this.element = null;
         this.activeMode = 'group';
         this.decomposedDescriptions = [];
+        this.groupDescription = '';
         this.isRunning = false;
     }
 
@@ -155,6 +156,7 @@ export class BatchGeneratorPanel {
 
         try {
             const descriptions = await this.container.decomposeGroup.execute(description, {});
+            this.groupDescription = description;
             this.decomposedDescriptions = descriptions;
             this.renderDecomposedList(descriptions);
         } catch (error) {
@@ -226,21 +228,43 @@ export class BatchGeneratorPanel {
         );
         if (generateBtn) generateBtn.disabled = true;
 
-        let successCount = 0;
-        for (let i = 0; i < descriptions.length; i++) {
-            this.updateProgressItem(i, 'pending', descriptions[i]);
-            const result = await this.generateOne(descriptions[i]);
-            if (result.success) {
-                successCount++;
-                this.updateProgressItem(i, 'success', descriptions[i]);
-            } else {
-                this.updateProgressItem(i, 'error', descriptions[i], result.error);
-            }
+        const { successCount, savedNames } = await this.runBatch(descriptions);
+
+        if (this.activeMode === 'group' && savedNames.length > 0) {
+            await this.generateAndSaveSharedLorebook(savedNames);
         }
 
         this.showSummary(successCount, descriptions.length);
         this.isRunning = false;
         if (generateBtn) generateBtn.disabled = false;
+    }
+
+    /**
+     * Run the generation loop over all descriptions. Returns counts for summary.
+     *
+     * @private
+     * @param {string[]} descriptions - character descriptions to generate
+     * @returns {Promise<{successCount: number, savedNames: string[]}>} generation results
+     */
+    async runBatch(descriptions) {
+        const groupContext = this.activeMode === 'group' && this.groupDescription
+            ? { groupDescription: this.groupDescription }
+            : {};
+
+        let successCount = 0;
+        const savedNames = [];
+        for (let i = 0; i < descriptions.length; i++) {
+            this.updateProgressItem(i, 'pending', descriptions[i]);
+            const result = await this.generateOne(descriptions[i], groupContext);
+            if (result.success) {
+                successCount++;
+                if (result.characterName) savedNames.push(result.characterName);
+                this.updateProgressItem(i, 'success', descriptions[i]);
+            } else {
+                this.updateProgressItem(i, 'error', descriptions[i], result.error);
+            }
+        }
+        return { successCount, savedNames };
     }
 
     /**
@@ -276,22 +300,49 @@ export class BatchGeneratorPanel {
      *
      * @private
      * @param {string} description - character description
-     * @returns {Promise<{success: boolean, error?: string}>} result
+     * @param {object} [groupContext] - optional group context for prompt builder
+     * @param {string} [groupContext.groupDescription] - parent ensemble description
+     * @returns {Promise<{success: boolean, characterName?: string, error?: string}>} result
      */
-    async generateOne(description) {
+    async generateOne(description, groupContext = {}) {
         try {
             const rawCount = this.container.configStore?.get('lorebookEntryCount', 'auto');
             const entryCount = rawCount === 'auto' ? undefined : parseInt(rawCount, 10);
 
-            const character = await this.container.generateCharacter.execute(description);
+            const character = await this.container.generateCharacter.execute(description, groupContext);
             const lorebook = await this.container.generateLorebook.execute(description, { entryCount });
             const draft = new CharacterDraft({ character, lorebook });
 
             await this.container.saveCharacter.execute(draft.character, draft.lorebook);
-            return { success: true };
+            return { success: true, characterName: character.name };
         } catch (error) {
             this.container.logger.error('Batch item failed', { description, error: error.message });
             return { success: false, error: error.message };
+        }
+    }
+
+    /**
+     * Generate and save the shared lorebook for the ensemble. Logs errors but
+     * does not throw — a shared lorebook failure should not block the summary.
+     *
+     * @private
+     * @param {string[]} characterNames - names of all successfully saved characters
+     * @returns {Promise<void>}
+     */
+    async generateAndSaveSharedLorebook(characterNames) {
+        if (!this.container.generateSharedLorebook || !this.container.lorebookRepository) {
+            return;
+        }
+        try {
+            this.container.logger.info('Generating shared lorebook', { characterNames });
+            const lorebook = await this.container.generateSharedLorebook.execute(
+                this.groupDescription, characterNames,
+            );
+            await this.container.lorebookRepository.save(lorebook);
+            this.container.notifier.success('Shared lorebook saved.');
+        } catch (error) {
+            this.container.logger.error('Shared lorebook generation failed', { error: error.message });
+            this.container.notifier.warning('Shared lorebook failed — individual cards were saved.');
         }
     }
 

@@ -46,6 +46,12 @@ function createMockContainer() {
         saveCharacter: {
             execute: vi.fn().mockResolvedValue('saved-id'),
         },
+        generateSharedLorebook: {
+            execute: vi.fn().mockResolvedValue(new Lorebook({ name: 'Shared Lorebook' })),
+        },
+        lorebookRepository: {
+            save: vi.fn().mockResolvedValue('lorebook-id'),
+        },
         configStore: {
             get: vi.fn().mockImplementation((key, def) => def ?? ''),
         },
@@ -269,5 +275,97 @@ describe('BatchGeneratorPanel - batch generation', () => {
         const progress = target.querySelector('#batch-progress-section');
         expect(progress).not.toBeNull();
         expect(progress.style.display).not.toBe('none');
+    });
+});
+
+describe('BatchGeneratorPanel - group context passed to character generation', () => {
+    it('should pass groupDescription to generateCharacter when in group mode', async () => {
+        const container = createMockContainer();
+        const panel = new BatchGeneratorPanel(container);
+        const target = document.createElement('div');
+        panel.render(target);
+
+        target.querySelector('#group-description-input').value = 'A family of four heroes';
+        await panel.onDecomposeClick();
+        await panel.onGenerateAllClick();
+
+        expect(container.generateCharacter.execute).toHaveBeenCalledWith(
+            expect.any(String),
+            expect.objectContaining({ groupDescription: 'A family of four heroes' }),
+        );
+    });
+
+    it('should NOT pass groupDescription when in list mode', async () => {
+        const container = createMockContainer();
+        const panel = new BatchGeneratorPanel(container);
+        const target = document.createElement('div');
+        panel.render(target);
+
+        target.querySelector('[data-tab="list"]').click();
+        target.querySelector('#list-descriptions-input').value = 'A lone knight';
+        await panel.onGenerateAllClick();
+
+        const calls = container.generateCharacter.execute.mock.calls;
+        expect(calls[0][1]).not.toHaveProperty('groupDescription');
+    });
+});
+
+describe('BatchGeneratorPanel - shared lorebook generation', () => {
+    it('should call generateSharedLorebook after group mode generation succeeds', async () => {
+        const container = createMockContainer();
+        const panel = new BatchGeneratorPanel(container);
+        const target = document.createElement('div');
+        panel.render(target);
+
+        target.querySelector('#group-description-input').value = 'A family of heroes';
+        await panel.onDecomposeClick();
+        await panel.onGenerateAllClick();
+
+        expect(container.generateSharedLorebook.execute).toHaveBeenCalledWith(
+            'A family of heroes',
+            expect.arrayContaining([expect.any(String)]),
+        );
+    });
+
+    it('should save the shared lorebook via lorebookRepository', async () => {
+        const container = createMockContainer();
+        const panel = new BatchGeneratorPanel(container);
+        const target = document.createElement('div');
+        panel.render(target);
+
+        target.querySelector('#group-description-input').value = 'A family of heroes';
+        await panel.onDecomposeClick();
+        await panel.onGenerateAllClick();
+
+        expect(container.lorebookRepository.save).toHaveBeenCalledTimes(1);
+    });
+
+    it('should NOT call generateSharedLorebook in list mode', async () => {
+        const container = createMockContainer();
+        const panel = new BatchGeneratorPanel(container);
+        const target = document.createElement('div');
+        panel.render(target);
+
+        target.querySelector('[data-tab="list"]').click();
+        target.querySelector('#list-descriptions-input').value = 'A knight';
+        await panel.onGenerateAllClick();
+
+        expect(container.generateSharedLorebook.execute).not.toHaveBeenCalled();
+    });
+
+    it('should continue and show summary even if shared lorebook generation fails', async () => {
+        const container = createMockContainer();
+        container.generateSharedLorebook.execute.mockRejectedValue(new Error('LLM error'));
+        const panel = new BatchGeneratorPanel(container);
+        const target = document.createElement('div');
+        panel.render(target);
+
+        target.querySelector('#group-description-input').value = 'A family of heroes';
+        await panel.onDecomposeClick();
+        await panel.onGenerateAllClick();
+
+        const summary = target.querySelector('#batch-summary');
+        expect(summary).not.toBeNull();
+        expect(summary.textContent).toContain('saved');
     });
 });

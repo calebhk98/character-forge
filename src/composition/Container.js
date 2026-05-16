@@ -26,6 +26,7 @@ import { RefineCharacterField } from '../application/use-cases/RefineCharacterFi
 import { GenerateCharacterImages } from '../application/use-cases/GenerateCharacterImages.js';
 import { UploadGreetingImages } from '../application/use-cases/UploadGreetingImages.js';
 import { DecomposeGroupDescription } from '../application/use-cases/DecomposeGroupDescription.js';
+import { GenerateSharedLorebook } from '../application/use-cases/GenerateSharedLorebook.js';
 
 /**
  * @typedef {(cfg: object, ctx: object) => object} LlmFactory
@@ -121,6 +122,7 @@ export function buildContainer(config, stContext) {
     );
     const uploadGreetingImages = new UploadGreetingImages(imageHost, logger);
     const decomposeGroup = new DecomposeGroupDescription(promptBuilder, llm, logger);
+    const generateSharedLorebook = new GenerateSharedLorebook(promptBuilder, llm, logger);
 
     return {
         llm,
@@ -140,5 +142,6 @@ export function buildContainer(config, stContext) {
         generateCharacterImages,
         uploadGreetingImages,
         decomposeGroup,
+        generateSharedLorebook,
     };
 }

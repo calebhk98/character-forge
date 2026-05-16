@@ -58,6 +58,9 @@ export class Character {
     /** @type {string[]} alternate opening messages */
     alternate_greetings;
 
+    /** @type {string[]} opening messages used only in group chats */
+    group_only_greetings;
+
     /**
      * Construct a Character from raw data. Validates required fields.
      *
@@ -72,6 +75,7 @@ export class Character {
      * @param {string} [data.system_prompt] - optional system prompt
      * @param {string} [data.post_history_instructions] - optional post-history instructions
      * @param {string[]} [data.alternate_greetings] - optional alternate opening messages
+     * @param {string[]} [data.group_only_greetings] - optional group-chat-specific opening messages
      */
     constructor(data) {
         const required = ['name', 'description', 'personality', 'scenario', 'first_mes', 'mes_example'];
@@ -91,11 +95,16 @@ export class Character {
             validateAlternateGreetings(data.alternate_greetings, errors);
         }
 
+        if (data.group_only_greetings !== undefined) {
+            validateAlternateGreetings(data.group_only_greetings, errors);
+        }
+
         if (errors.length > 0) {
             throw new Error(`Invalid character data: ${errors.join('; ')}`);
         }
 
         Object.assign(this, data);
         this.alternate_greetings = data.alternate_greetings ?? [];
+        this.group_only_greetings = data.group_only_greetings ?? [];
     }
 }
