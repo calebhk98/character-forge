@@ -9,6 +9,7 @@
 
 import { CharacterGeneratorPanel } from './src/ui/panels/CharacterGeneratorPanel.js';
 import { SettingsPanel } from './src/ui/panels/SettingsPanel.js';
+import { SlashCommandHandler } from './src/ui/slash-commands/SlashCommandHandler.js';
 import { buildContainer } from './src/composition/Container.js';
 import { ExtensionSettingsConfigStore } from './src/infrastructure/config/ExtensionSettingsConfigStore.js';
 
@@ -43,6 +44,8 @@ async function setup() {
     };
 
     const container = buildContainer(userConfig, stContext);
+
+    new SlashCommandHandler(container, stContext).register();
 
     // ST's extension settings drawer is #extensions_settings2 (defined in
     // public/index.html). Each extension appends an inline_drawer section here,
