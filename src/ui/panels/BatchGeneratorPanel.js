@@ -124,7 +124,8 @@ export class BatchGeneratorPanel {
     switchTab(tab) {
         this.activeMode = tab;
         this.element.querySelectorAll('.batch-tab').forEach((btn) => {
-            btn.classList.toggle('batch-tab-active', /** @type {HTMLElement} */ (btn).dataset.tab === tab);
+            const tabBtn = /** @type {HTMLElement} */ (btn);
+            tabBtn.classList.toggle('batch-tab-active', tabBtn.dataset.tab === tab);
         });
         const groupSection = /** @type {HTMLElement} */ (this.element.querySelector('#batch-group-section'));
         const listSection = /** @type {HTMLElement} */ (this.element.querySelector('#batch-list-section'));

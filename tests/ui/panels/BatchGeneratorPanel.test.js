@@ -85,8 +85,8 @@ describe('BatchGeneratorPanel - rendering', () => {
         const target = document.createElement('div');
         panel.render(target);
 
-        const groupSection = target.querySelector('#batch-group-section');
-        const listSection = target.querySelector('#batch-list-section');
+        const groupSection = /** @type {HTMLElement} */ (target.querySelector('#batch-group-section'));
+        const listSection = /** @type {HTMLElement} */ (target.querySelector('#batch-list-section'));
 
         expect(groupSection).not.toBeNull();
         expect(listSection).not.toBeNull();
@@ -119,8 +119,8 @@ describe('BatchGeneratorPanel - tab switching', () => {
 
         /** @type {HTMLElement} */ (target.querySelector('[data-tab="list"]')).click();
 
-        const groupSection = target.querySelector('#batch-group-section');
-        const listSection = target.querySelector('#batch-list-section');
+        const groupSection = /** @type {HTMLElement} */ (target.querySelector('#batch-group-section'));
+        const listSection = /** @type {HTMLElement} */ (target.querySelector('#batch-list-section'));
 
         expect(/** @type {HTMLElement} */ (listSection).style.display).not.toBe('none');
         expect(/** @type {HTMLElement} */ (groupSection).style.display).toBe('none');
@@ -134,8 +134,8 @@ describe('BatchGeneratorPanel - tab switching', () => {
         /** @type {HTMLElement} */ (target.querySelector('[data-tab="list"]')).click();
         /** @type {HTMLElement} */ (target.querySelector('[data-tab="group"]')).click();
 
-        const groupSection = target.querySelector('#batch-group-section');
-        expect(/** @type {HTMLElement} */ (groupSection).style.display).not.toBe('none');
+        const groupSection = /** @type {HTMLElement} */ (target.querySelector('#batch-group-section'));
+        expect(groupSection.style.display).not.toBe('none');
     });
 });
 
@@ -146,8 +146,8 @@ describe('BatchGeneratorPanel - group decomposition', () => {
         const target = document.createElement('div');
         panel.render(target);
 
-        const textarea = target.querySelector('#group-description-input');
-        /** @type {HTMLInputElement} */ (textarea).value = 'A dad and his 3 superpowered daughters';
+        const textarea = /** @type {HTMLTextAreaElement} */ (target.querySelector('#group-description-input'));
+        textarea.value = 'A dad and his 3 superpowered daughters';
 
         await panel.onDecomposeClick();
 
@@ -272,7 +272,7 @@ describe('BatchGeneratorPanel - batch generation', () => {
 
         await panel.onGenerateAllClick();
 
-        const progress = target.querySelector('#batch-progress-section');
+        const progress = /** @type {HTMLElement} */ (target.querySelector('#batch-progress-section'));
         expect(progress).not.toBeNull();
         expect(/** @type {HTMLElement} */ (progress).style.display).not.toBe('none');
     });
@@ -364,7 +364,7 @@ describe('BatchGeneratorPanel - shared lorebook generation', () => {
         await panel.onDecomposeClick();
         await panel.onGenerateAllClick();
 
-        const summary = target.querySelector('#batch-summary');
+        const summary = /** @type {HTMLElement} */ (target.querySelector('#batch-summary'));
         expect(summary).not.toBeNull();
         expect(summary.textContent).toContain('saved');
     });

@@ -9,6 +9,26 @@ import { ILlmProvider } from '../../../src/application/ports/ILlmProvider.js';
 import { ILogger } from '../../../src/application/ports/ILogger.js';
 import { GenerationRequest } from '../../../src/domain/value-objects/GenerationRequest.js';
 import { Character } from '../../../src/domain/entities/Character.js';
+import { IJsonRepair } from '../../../src/application/ports/IJsonRepair.js';
+import { repairJson } from '../../../src/infrastructure/utils/JsonRepair.js';
+
+/**
+ * Fake JSON repair adapter for testing. Uses the real repair implementation
+ * so JSON-repair tests exercise the actual repair logic.
+ *
+ * @augments IJsonRepair
+ */
+class FakeJsonRepair extends IJsonRepair {
+    /**
+     * Repair malformed JSON using the real utility.
+     *
+     * @param {string} input - raw LLM output
+     * @returns {object|null} parsed object or null
+     */
+    repair(input) {
+        return repairJson(input);
+    }
+}
 
 /**
  * Fake prompt builder for testing.
@@ -146,7 +166,7 @@ describe('GenerateCharacterFromDescription - Core Functionality', () => {
         const llmProvider = new FakeLlmProvider();
         const logger = new FakeLogger();
 
-        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger);
+        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
         const character = await useCase.execute('A brave knight');
 
         expect(character).toBeInstanceOf(Character);
@@ -166,7 +186,7 @@ describe('GenerateCharacterFromDescription - Core Functionality', () => {
         const llmProvider = new FakeLlmProvider('{ invalid json }');
         const logger = new FakeLogger();
 
-        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger);
+        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
 
         await expect(useCase.execute('A brave knight')).rejects.toThrow();
     });
@@ -183,7 +203,7 @@ describe('GenerateCharacterFromDescription - Core Functionality', () => {
         const llmProvider = new FakeLlmProvider(invalidResponse);
         const logger = new FakeLogger();
 
-        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger);
+        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
 
         await expect(useCase.execute('A brave knight')).rejects.toThrow();
     });
@@ -196,7 +216,7 @@ describe('GenerateCharacterFromDescription - Core Functionality', () => {
         const llmProvider = new FakeLlmProvider();
         const logger = new FakeLogger();
 
-        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger);
+        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
         const options = { entryCount: 5 };
         await useCase.execute('A brave knight', options);
 
@@ -212,7 +232,7 @@ describe('GenerateCharacterFromDescription - Core Functionality', () => {
         const llmProvider = new FakeLlmProvider();
         const logger = new FakeLogger();
 
-        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger);
+        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
         await useCase.execute('A brave knight');
 
         expect(llmProvider.lastRequest).toBeDefined();
@@ -236,7 +256,7 @@ describe('GenerateCharacterFromDescription - alternate_greetings', () => {
         const llmProvider = new FakeLlmProvider(responseWithAlternates);
         const logger = new FakeLogger();
 
-        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger);
+        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
         const character = await useCase.execute('A brave knight');
 
         expect(character.alternate_greetings).toEqual([
@@ -251,7 +271,7 @@ describe('GenerateCharacterFromDescription - alternate_greetings', () => {
         const llmProvider = new FakeLlmProvider();
         const logger = new FakeLogger();
 
-        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger);
+        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
         const character = await useCase.execute('A brave knight');
 
         expect(character.alternate_greetings).toEqual([]);
@@ -277,7 +297,7 @@ describe('GenerateCharacterFromDescription - JSON Repair', () => {
         const llmProvider = new FakeLlmProvider(malformedJson);
         const logger = new FakeLogger();
 
-        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger);
+        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
         const character = await useCase.execute('A brave knight');
 
         expect(character).toBeInstanceOf(Character);
@@ -300,7 +320,7 @@ describe('GenerateCharacterFromDescription - JSON Repair', () => {
         const llmProvider = new FakeLlmProvider(jsonWithTrailingCommas);
         const logger = new FakeLogger();
 
-        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger);
+        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
         const character = await useCase.execute('A brave knight');
 
         expect(character).toBeInstanceOf(Character);

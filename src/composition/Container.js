@@ -19,7 +19,9 @@ import { SillyTavernImageGenerator } from '../infrastructure/images/SillyTavernI
 import { MockImageGenerator } from '../infrastructure/images/MockImageGenerator.js';
 import { CatboxImageHost } from '../infrastructure/images/CatboxImageHost.js';
 import { ConfigurableImageHost } from '../infrastructure/images/ConfigurableImageHost.js';
+import { LocalImageHost } from '../infrastructure/images/LocalImageHost.js';
 import { MockImageHost } from '../infrastructure/images/MockImageHost.js';
+import { JsonRepairAdapter } from '../infrastructure/utils/JsonRepairAdapter.js';
 import { GenerateCharacterFromDescription } from '../application/use-cases/GenerateCharacterFromDescription.js';
 import { GenerateLorebookForCharacter } from '../application/use-cases/GenerateLorebookForCharacter.js';
 import { SaveCharacterToTavern } from '../application/use-cases/SaveCharacterToTavern.js';
@@ -90,6 +92,7 @@ const IMAGE_GEN_FACTORIES = {
  */
 const IMAGE_HOST_DELEGATES = {
     'catbox': () => new CatboxImageHost(),
+    'local': () => new LocalImageHost(),
     'mock': () => new MockImageHost(),
 };
 
@@ -118,6 +121,7 @@ export function buildContainer(config, stContext) {
     const configStore = new ExtensionSettingsConfigStore('character-forge', stContext);
     const logger = new ConsoleLogger('CharacterForge');
     const notifier = new ToastrNotifier(stContext);
+    const jsonRepair = new JsonRepairAdapter();
     // @ts-ignore - factory return type matches port contract
     const imageGenerator = IMAGE_GEN_FACTORIES[config.imageGenerator || 'silly-tavern'](stContext);
 
@@ -127,8 +131,8 @@ export function buildContainer(config, stContext) {
     const imageHost = new ConfigurableImageHost(configStore, imageDelegates);
 
     // Wire use cases
-    const generateCharacter = new GenerateCharacterFromDescription(promptBuilder, llm, logger);
-    const generateLorebook = new GenerateLorebookForCharacter(promptBuilder, llm, logger);
+    const generateCharacter = new GenerateCharacterFromDescription(promptBuilder, llm, logger, jsonRepair);
+    const generateLorebook = new GenerateLorebookForCharacter(promptBuilder, llm, logger, jsonRepair);
     const saveCharacter = new SaveCharacterToTavern(formatter, validator, charRepository, notifier, logger);
     const refineCharacterField = new RefineCharacterField(promptBuilder, llm, logger);
     const extractCharacterFromChat = new ExtractCharacterFromChat(llm, logger);
@@ -137,8 +141,8 @@ export function buildContainer(config, stContext) {
         imageGenerator, charRepository, formatter, configStore, logger, notifier,
     );
     const uploadGreetingImages = new UploadGreetingImages(imageHost, logger);
-    const decomposeGroup = new DecomposeGroupDescription(promptBuilder, llm, logger);
-    const generateSharedLorebook = new GenerateSharedLorebook(promptBuilder, llm, logger);
+    const decomposeGroup = new DecomposeGroupDescription(promptBuilder, llm, logger, jsonRepair);
+    const generateSharedLorebook = new GenerateSharedLorebook(promptBuilder, llm, logger, jsonRepair);
 
     return {
         llm,

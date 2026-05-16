@@ -183,7 +183,7 @@ describe('CharacterGeneratorPanel - Generation', () => {
 
         await panel.onGenerateClick();
 
-        expect(container.generateCharacter.execute).toHaveBeenCalledWith('A mysterious wizard');
+        expect(container.generateCharacter.execute).toHaveBeenCalledWith('A mysterious wizard', {});
         expect(container.generateLorebook.execute).toHaveBeenCalledWith('A mysterious wizard', { entryCount: undefined });
     });
 

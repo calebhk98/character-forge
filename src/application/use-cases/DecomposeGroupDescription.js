@@ -5,8 +5,6 @@
  * description strings ready to pass to GenerateCharacterFromDescription.
  */
 
-import { repairJson } from '../../infrastructure/utils/JsonRepair.js';
-
 /**
  * Decompose a group description into individual character descriptions.
  */
@@ -17,11 +15,13 @@ export class DecomposeGroupDescription {
      * @param {import('../ports/IPromptBuilder.js').IPromptBuilder} promptBuilder - port for building generation requests
      * @param {import('../ports/ILlmProvider.js').ILlmProvider} llmProvider - port for LLM text generation
      * @param {import('../ports/ILogger.js').ILogger} logger - port for diagnostic logging
+     * @param {import('../ports/IJsonRepair.js').IJsonRepair} jsonRepair - port for JSON repair
      */
-    constructor(promptBuilder, llmProvider, logger) {
+    constructor(promptBuilder, llmProvider, logger, jsonRepair) {
         this.promptBuilder = promptBuilder;
         this.llmProvider = llmProvider;
         this.logger = logger;
+        this.jsonRepair = jsonRepair;
     }
 
     /**
@@ -55,12 +55,8 @@ export class DecomposeGroupDescription {
     parseResponse(response) {
         try {
             return JSON.parse(response);
-        } catch {
-            const repaired = repairJson(response);
-            if (!repaired) {
-                this.logger.error('Failed to parse group decomposition response', { response });
-                throw new Error('LLM returned invalid JSON for group decomposition. Please try again.');
-            }
+        } catch (_e) {
+            const repaired = this.jsonRepair.parseOrRepair(response, 'group decomposition');
             this.logger.info('Repaired malformed JSON from group decomposition');
             return repaired;
         }
