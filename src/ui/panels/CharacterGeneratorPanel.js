@@ -5,6 +5,7 @@
  */
 
 import { CharacterFieldRegenerator } from './CharacterFieldRegenerator.js';
+import { CharacterPreviewBuilder } from './CharacterPreviewBuilder.js';
 import { startImageGeneration } from './CharacterImageGenTrigger.js';
 import { CharacterDraft } from '../../domain/value-objects/CharacterDraft.js';
 /**
@@ -129,11 +130,12 @@ export class CharacterGeneratorPanel {
             this.container?.logger?.info('Starting character generation', { descriptionLength: description.length });
 
             const character = await this.container.generateCharacter.execute(description);
-            const lorebook = await this.container.generateLorebook.execute(description);
+            const rawCount = this.container.configStore?.get('lorebookEntryCount', 'auto');
+            const entryCount = rawCount === 'auto' ? undefined : parseInt(rawCount, 10);
+            const lorebook = await this.container.generateLorebook.execute(description, { entryCount });
             this.draft = new CharacterDraft({ character, lorebook });
 
             this.container?.logger?.info('Generation complete');
-
             // Check auto-save setting
             const autoSaveCheckbox = /** @type {HTMLInputElement} */ (
                 this.element?.querySelector('#auto-save-checkbox')
@@ -173,8 +175,10 @@ export class CharacterGeneratorPanel {
 
         this.hideInputSections();
 
-        const html = this.buildPreviewHtml();
-        previewContent.innerHTML = html;
+        const builder = new CharacterPreviewBuilder();
+        previewContent.innerHTML = builder.buildPreviewHtml(
+            this.draft.character, this.draft.lorebook,
+        );
         previewSection.style.display = 'block';
 
         this.setCharacterFieldValues();
@@ -191,68 +195,6 @@ export class CharacterGeneratorPanel {
         const controlsSection = /** @type {HTMLElement} */ (this.element?.querySelector('.controls-section'));
         if (inputSection) inputSection.style.display = 'none';
         if (controlsSection) controlsSection.style.display = 'none';
-    }
-
-    /**
-     * Build preview form HTML.
-     *
-     * @returns {string} HTML string
-     */
-    buildPreviewHtml() {
-        const fields = [
-            this.buildFieldHtml('edit-name', 'Name', 'name', true),
-            this.buildFieldHtml('edit-description', 'Description', 'description', false, 4),
-            this.buildFieldHtml('edit-personality', 'Personality', 'personality', false, 3),
-            this.buildFieldHtml('edit-scenario', 'Scenario', 'scenario', false, 3),
-            this.buildFieldHtml('edit-first-mes', 'First Message', 'first_mes', false, 2),
-            this.buildFieldHtml('edit-mes-example', 'Example Dialogue', 'mes_example', false, 3),
-        ].join('');
-        return `<div class="preview-character">${fields}</div>` + this.buildLorebookHtml();
-    }
-
-    /**
-     * Build HTML for a single preview field with an inline ↺ regenerate control.
-     *
-     * @param {string} id - element id for the input or textarea
-     * @param {string} label - visible field label text
-     * @param {string} fieldName - character property key used in data-field attributes
-     * @param {boolean} [isInput] - render as text input when true; textarea otherwise
-     * @param {number} [rows] - textarea row count; ignored when isInput is true
-     * @returns {string} HTML string for the field row
-     */
-    buildFieldHtml(id, label, fieldName, isInput = false, rows = 3) {
-        const ctl = isInput ? `<input type="text" id="${id}" class="edit-input"/>` : `<textarea id="${id}" class="edit-textarea" rows="${rows}"></textarea>`;
-        const regenForm = `<div class="regen-form" data-field="${fieldName}" style="display:none"><input class="regen-feedback" placeholder="What to change (optional)..."/><button class="regen-confirm" data-field="${fieldName}">Rewrite</button><button class="regen-cancel" data-field="${fieldName}">×</button></div>`;
-        return `<div class="preview-field"><label for="${id}"><strong>${label}:</strong></label><button class="regen-btn" data-field="${fieldName}">↺</button>${regenForm}${ctl}</div>`;
-    }
-
-    /**
-     * Build HTML for editable lorebook entries.
-     *
-     * @returns {string} HTML string
-     */
-    buildLorebookHtml() {
-        let html = '<div class="preview-lorebook"><h4>Lorebook Entries</h4>';
-        if (!this.draft?.lorebook?.entries?.length) {
-            html += '<p>No entries generated</p>';
-        } else {
-            html += '<div class="lorebook-entries">';
-            for (let i = 0; i < this.draft.lorebook.entries.length; i++) {
-                html += `
-                    <div class="lorebook-entry" data-index="${i}">
-                        <label for="edit-entry-name-${i}"><strong>Name:</strong></label>
-                        <input type="text" id="edit-entry-name-${i}" class="edit-input edit-entry-name" data-index="${i}" />
-                        <label for="edit-entry-keys-${i}"><strong>Keys (comma-separated):</strong></label>
-                        <input type="text" id="edit-entry-keys-${i}" class="edit-input edit-entry-keys" data-index="${i}" />
-                        <label for="edit-entry-content-${i}"><strong>Content:</strong></label>
-                        <textarea id="edit-entry-content-${i}" class="edit-textarea edit-entry-content" data-index="${i}" rows="3"></textarea>
-                    </div>
-                `;
-            }
-            html += '</div>';
-        }
-        html += '</div>';
-        return html;
     }
 
     /**
@@ -274,6 +216,16 @@ export class CharacterGeneratorPanel {
             );
             if (input) {
                 input.value = this.draft.character[field.prop];
+            }
+        }
+
+        const greetings = this.draft?.character?.alternate_greetings ?? [];
+        for (let i = 0; i < greetings.length; i++) {
+            const ta = /** @type {HTMLTextAreaElement} */ (
+                this.element?.querySelector(`#edit-alt-greeting-${i}`)
+            );
+            if (ta) {
+                ta.value = greetings[i];
             }
         }
     }
@@ -359,6 +311,16 @@ export class CharacterGeneratorPanel {
                 const idx = parseInt(target.dataset.index, 10);
                 if (this.draft?.lorebook?.entries[idx]) {
                     this.draft.lorebook.entries[idx].content = target.value;
+                }
+            });
+        });
+
+        this.element?.querySelectorAll('.edit-alt-greeting').forEach((input) => {
+            input.addEventListener('change', (e) => {
+                const target = /** @type {HTMLTextAreaElement} */ (e.target);
+                const idx = parseInt(target.dataset.index, 10);
+                if (this.draft?.character?.alternate_greetings) {
+                    this.draft.character.alternate_greetings[idx] = target.value;
                 }
             });
         });
