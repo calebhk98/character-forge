@@ -13,10 +13,13 @@ import { DefaultPromptBuilder } from '../infrastructure/prompts/DefaultPromptBui
 import { ExtensionSettingsConfigStore } from '../infrastructure/config/ExtensionSettingsConfigStore.js';
 import { ConsoleLogger } from '../infrastructure/logging/ConsoleLogger.js';
 import { ToastrNotifier } from '../infrastructure/notifications/ToastrNotifier.js';
+import { SillyTavernImageGenerator } from '../infrastructure/images/SillyTavernImageGenerator.js';
+import { MockImageGenerator } from '../infrastructure/images/MockImageGenerator.js';
 import { GenerateCharacterFromDescription } from '../application/use-cases/GenerateCharacterFromDescription.js';
 import { GenerateLorebookForCharacter } from '../application/use-cases/GenerateLorebookForCharacter.js';
 import { SaveCharacterToTavern } from '../application/use-cases/SaveCharacterToTavern.js';
 import { RefineCharacterField } from '../application/use-cases/RefineCharacterField.js';
+import { GenerateCharacterImages } from '../application/use-cases/GenerateCharacterImages.js';
 
 /**
  * @typedef {(cfg: object, ctx: object) => object} LlmFactory
@@ -42,11 +45,22 @@ const FORMATTER_FACTORIES = {
 };
 
 /**
+ * Factory table for image generators.
+ *
+ * @type {{[key: string]: Function}}
+ */
+const IMAGE_GEN_FACTORIES = {
+    'silly-tavern': (ctx) => new SillyTavernImageGenerator(ctx),
+    'mock': () => new MockImageGenerator(),
+};
+
+/**
  * Build and wire all application services from config.
  *
  * @param {object} config configuration object with defaults applied
  * @param {string} config.llmProvider which LLM adapter to use
  * @param {string} config.cardFormat which card formatter to use
+ * @param {string} [config.imageGenerator] which image generator adapter to use
  * @param {object} stContext SillyTavern context object from getContext()
  * @returns {object} container with all wired services
  */
@@ -61,12 +75,17 @@ export function buildContainer(config, stContext) {
     const configStore = new ExtensionSettingsConfigStore('character-forge', stContext);
     const logger = new ConsoleLogger('CharacterForge');
     const notifier = new ToastrNotifier(stContext);
+    // @ts-ignore - factory return type matches port contract
+    const imageGenerator = IMAGE_GEN_FACTORIES[config.imageGenerator || 'silly-tavern'](stContext);
 
     // Wire use cases
     const generateCharacter = new GenerateCharacterFromDescription(promptBuilder, llm, logger);
     const generateLorebook = new GenerateLorebookForCharacter(promptBuilder, llm, logger);
     const saveCharacter = new SaveCharacterToTavern(formatter, charRepository, notifier, logger);
     const refineCharacterField = new RefineCharacterField(promptBuilder, llm, logger);
+    const generateCharacterImages = new GenerateCharacterImages(
+        imageGenerator, charRepository, formatter, configStore, logger, notifier,
+    );
 
     return {
         llm,
@@ -77,9 +96,11 @@ export function buildContainer(config, stContext) {
         configStore,
         logger,
         notifier,
+        imageGenerator,
         generateCharacter,
         generateLorebook,
         saveCharacter,
         refineCharacterField,
+        generateCharacterImages,
     };
 }
