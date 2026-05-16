@@ -25,6 +25,7 @@ import { SaveCharacterToTavern } from '../application/use-cases/SaveCharacterToT
 import { RefineCharacterField } from '../application/use-cases/RefineCharacterField.js';
 import { GenerateCharacterImages } from '../application/use-cases/GenerateCharacterImages.js';
 import { UploadGreetingImages } from '../application/use-cases/UploadGreetingImages.js';
+import { DecomposeGroupDescription } from '../application/use-cases/DecomposeGroupDescription.js';
 
 /**
  * @typedef {(cfg: object, ctx: object) => object} LlmFactory
@@ -119,6 +120,7 @@ export function buildContainer(config, stContext) {
         imageGenerator, charRepository, formatter, configStore, logger, notifier,
     );
     const uploadGreetingImages = new UploadGreetingImages(imageHost, logger);
+    const decomposeGroup = new DecomposeGroupDescription(promptBuilder, llm, logger);
 
     return {
         llm,
@@ -137,5 +139,6 @@ export function buildContainer(config, stContext) {
         refineCharacterField,
         generateCharacterImages,
         uploadGreetingImages,
+        decomposeGroup,
     };
 }

@@ -200,6 +200,31 @@ Return ONLY a valid JSON object with the "entries" array. No additional text.`;
     }
 
     /**
+     * Build a request to decompose a group description into individual character descriptions.
+     *
+     * @param {string} groupDescription - description of the group, ensemble, or family
+     * @param {object} [options] - decomposition options
+     * @param {number} [options.maxCharacters] - maximum number of characters to generate
+     * @returns {GenerationRequest} structured generation request
+     */
+    buildGroupDecompositionRequest(groupDescription, options = {}) {
+        const maxNote = options.maxCharacters
+            ? ` Limit your response to at most ${options.maxCharacters} characters.`
+            : '';
+        const systemPrompt =
+            'You are a world-building expert. Given a description of a group, ensemble, or family, ' +
+            'identify each individual member and write a concise standalone character concept for each one. ' +
+            'Return ONLY a valid JSON object with a "characters" key containing an array of strings. ' +
+            'Each string must be a self-contained character description (one sentence to a short paragraph). ' +
+            'No markdown, no code blocks, no extra text.';
+        const userPrompt =
+            `Group or ensemble concept: "${groupDescription}"\n\n` +
+            `Identify each individual character in this group and describe them.${maxNote} ` +
+            'Return JSON: { "characters": ["description of character 1", "description of character 2", ...] }';
+        return new GenerationRequest({ systemPrompt, userPrompt });
+    }
+
+    /**
      * Build a user prompt for lorebook generation.
      *
      * @private
