@@ -13,6 +13,8 @@ import { DefaultPromptBuilder } from '../infrastructure/prompts/DefaultPromptBui
 import { ExtensionSettingsConfigStore } from '../infrastructure/config/ExtensionSettingsConfigStore.js';
 import { ConsoleLogger } from '../infrastructure/logging/ConsoleLogger.js';
 import { ToastrNotifier } from '../infrastructure/notifications/ToastrNotifier.js';
+import { SillyTavernImageGenerator } from '../infrastructure/images/SillyTavernImageGenerator.js';
+import { MockImageGenerator } from '../infrastructure/images/MockImageGenerator.js';
 import { CatboxImageHost } from '../infrastructure/images/CatboxImageHost.js';
 import { ConfigurableImageHost } from '../infrastructure/images/ConfigurableImageHost.js';
 import { MockImageHost } from '../infrastructure/images/MockImageHost.js';
@@ -20,6 +22,7 @@ import { GenerateCharacterFromDescription } from '../application/use-cases/Gener
 import { GenerateLorebookForCharacter } from '../application/use-cases/GenerateLorebookForCharacter.js';
 import { SaveCharacterToTavern } from '../application/use-cases/SaveCharacterToTavern.js';
 import { RefineCharacterField } from '../application/use-cases/RefineCharacterField.js';
+import { GenerateCharacterImages } from '../application/use-cases/GenerateCharacterImages.js';
 import { UploadGreetingImages } from '../application/use-cases/UploadGreetingImages.js';
 
 /**
@@ -46,6 +49,16 @@ const FORMATTER_FACTORIES = {
 };
 
 /**
+ * Factory table for image generators.
+ *
+ * @type {{[key: string]: Function}}
+ */
+const IMAGE_GEN_FACTORIES = {
+    'silly-tavern': (ctx) => new SillyTavernImageGenerator(ctx),
+    'mock': () => new MockImageGenerator(),
+};
+
+/**
  * Factory table for image host delegates, keyed by provider name.
  *
  * @type {{[key: string]: Function}}
@@ -61,6 +74,7 @@ const IMAGE_HOST_DELEGATES = {
  * @param {object} config configuration object with defaults applied
  * @param {string} config.llmProvider which LLM adapter to use
  * @param {string} config.cardFormat which card formatter to use
+ * @param {string} [config.imageGenerator] which image generator adapter to use
  * @param {object} stContext SillyTavern context object from getContext()
  * @returns {object} container with all wired services
  */
@@ -75,6 +89,8 @@ export function buildContainer(config, stContext) {
     const configStore = new ExtensionSettingsConfigStore('character-forge', stContext);
     const logger = new ConsoleLogger('CharacterForge');
     const notifier = new ToastrNotifier(stContext);
+    // @ts-ignore - factory return type matches port contract
+    const imageGenerator = IMAGE_GEN_FACTORIES[config.imageGenerator || 'silly-tavern'](stContext);
 
     const imageDelegates = Object.fromEntries(
         Object.entries(IMAGE_HOST_DELEGATES).map(([k, factory]) => [k, factory()]),
@@ -86,6 +102,9 @@ export function buildContainer(config, stContext) {
     const generateLorebook = new GenerateLorebookForCharacter(promptBuilder, llm, logger);
     const saveCharacter = new SaveCharacterToTavern(formatter, charRepository, notifier, logger);
     const refineCharacterField = new RefineCharacterField(promptBuilder, llm, logger);
+    const generateCharacterImages = new GenerateCharacterImages(
+        imageGenerator, charRepository, formatter, configStore, logger, notifier,
+    );
     const uploadGreetingImages = new UploadGreetingImages(imageHost, logger);
 
     return {
@@ -97,11 +116,13 @@ export function buildContainer(config, stContext) {
         configStore,
         logger,
         notifier,
+        imageGenerator,
         imageHost,
         generateCharacter,
         generateLorebook,
         saveCharacter,
         refineCharacterField,
+        generateCharacterImages,
         uploadGreetingImages,
     };
 }

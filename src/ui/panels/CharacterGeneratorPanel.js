@@ -5,7 +5,7 @@
  */
 
 import { CharacterFieldRegenerator } from './CharacterFieldRegenerator.js';
-
+import { startImageGeneration } from './CharacterImageGenTrigger.js';
 /**
  * Character generator panel component.
  */
@@ -403,7 +403,8 @@ export class CharacterGeneratorPanel {
     }
 
     /**
-     * Handle the save button click. Calls the save use case.
+     * Handle the save button click. Calls the save use case, then fires
+     * background image generation without awaiting it.
      *
      * @returns {Promise<void>}
      */
@@ -428,6 +429,9 @@ export class CharacterGeneratorPanel {
             this.container?.logger?.info('Character saved successfully');
             this.container?.notifier?.success('Character saved to SillyTavern');
             this.showStatus('Character saved to SillyTavern', 'success');
+
+            // Fire background image generation; does not block the save path.
+            startImageGeneration(this.container, this.generatedCharacter, this.generatedLorebook);
 
             // Reset the panel
             this.generatedCharacter = null;

@@ -29,7 +29,7 @@ function mockContext() {
 /**
  * Return a mock fetch success response.
  *
- * @param {string} [file_name] response file_name field
+ * @param {string} [file_name] - response file_name field
  * @returns {object} fetch response mock
  */
 function mockOkResponse(file_name) {
@@ -54,19 +54,27 @@ describe('SillyTavernCharacterRepository', () => {
     });
 
     it('should POST to /api/characters/import with FormData', async () => {
-        /** @type {any} */ (globalThis).fetch.mockResolvedValue(mockOkResponse('test.json'));
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue(mockOkResponse('test.png'));
         await new SillyTavernCharacterRepository(mockContext()).save(mockCard('Test'));
 
         const [url, opts] = /** @type {any} */ (globalThis).fetch.mock.calls[0];
         expect(url).toBe('/api/characters/import');
         expect(opts.method).toBe('POST');
         expect(opts.body).toBeInstanceOf(FormData);
-        expect(opts.body.get('file_type')).toBe('json');
+        expect(opts.body.get('file_type')).toBe('png');
         expect(opts.body.has('avatar')).toBe(true);
     });
 
+    it('should upload a PNG blob (not JSON)', async () => {
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue(mockOkResponse('test.png'));
+        await new SillyTavernCharacterRepository(mockContext()).save(mockCard('Test'));
+
+        const avatarBlob = lastFetchOptions().body.get('avatar');
+        expect(avatarBlob.type).toBe('image/png');
+    });
+
     it('should include CSRF token from getRequestHeaders', async () => {
-        /** @type {any} */ (globalThis).fetch.mockResolvedValue(mockOkResponse('t.json'));
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue(mockOkResponse('t.png'));
         const ctx = mockContext();
         await new SillyTavernCharacterRepository(ctx).save(mockCard('Test'));
 
@@ -108,8 +116,22 @@ describe('SillyTavernCharacterRepository', () => {
     });
 
     it('should work with no context (empty headers)', async () => {
-        /** @type {any} */ (globalThis).fetch.mockResolvedValue(mockOkResponse('t.json'));
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue(mockOkResponse('t.png'));
         await new SillyTavernCharacterRepository(null).save(mockCard('Test'));
         expect(lastFetchOptions().headers).toEqual({});
+    });
+
+    it('should use provided pngBytes as the image carrier', async () => {
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue(mockOkResponse('portrait.png'));
+
+        // Provide a valid placeholder PNG so embedJsonInPng can parse it
+        const { createPlaceholderPng } = await import('../../../src/infrastructure/utils/PngChunkWriter.js');
+        const pngBytes = createPlaceholderPng();
+
+        const result = await new SillyTavernCharacterRepository(mockContext()).save(mockCard('Test'), pngBytes);
+        expect(result).toBe('portrait.png');
+
+        const avatarBlob = lastFetchOptions().body.get('avatar');
+        expect(avatarBlob.type).toBe('image/png');
     });
 });
