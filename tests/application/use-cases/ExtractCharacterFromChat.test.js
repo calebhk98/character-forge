@@ -15,7 +15,7 @@ const VALID_CHARACTER = {
     personality: 'Enthusiastic, knowledgeable, secretly artistic',
     scenario: 'College classroom setting',
     first_mes: 'Good morning, class. Today we explore the Renaissance.',
-    mes_example: '',
+    mes_example: 'User: Hello Bob. Bob: Good morning!',
 };
 
 /**
