@@ -119,7 +119,7 @@ describe('ImageApprovalPanel - interactions', () => {
 
         panel.render(target, character, [makeItem()], onComplete);
 
-        target.querySelector('#skip-upload-button').click();
+        /** @type {HTMLElement} */ (target.querySelector('#skip-upload-button')).click();
 
         expect(onComplete).toHaveBeenCalledWith(character);
     });
@@ -133,9 +133,9 @@ describe('ImageApprovalPanel - interactions', () => {
         panel.render(target, character, items, onComplete);
 
         const checkboxes = target.querySelectorAll('input[type="checkbox"]');
-        checkboxes[1].checked = false;
+        /** @type {HTMLInputElement} */ (checkboxes[1]).checked = false;
 
-        target.querySelector('#upload-selected-button').click();
+        /** @type {HTMLElement} */ (target.querySelector('#upload-selected-button')).click();
 
         await vi.waitFor(() => expect(onComplete).toHaveBeenCalled());
         const approvedItems = container.uploadGreetingImages.execute.mock.calls[0][1];
@@ -152,7 +152,7 @@ describe('ImageApprovalPanel - interactions', () => {
 
         panel.render(target, character, [makeItem()], onComplete);
 
-        target.querySelector('#upload-selected-button').click();
+        /** @type {HTMLElement} */ (target.querySelector('#upload-selected-button')).click();
 
         await vi.waitFor(() => expect(onComplete).toHaveBeenCalledWith(updatedCharacter));
     });
@@ -165,7 +165,7 @@ describe('ImageApprovalPanel - interactions', () => {
 
         panel.render(target, character, [makeItem()], onComplete);
 
-        target.querySelector('#upload-selected-button').click();
+        /** @type {HTMLElement} */ (target.querySelector('#upload-selected-button')).click();
 
         await vi.waitFor(() => expect(onComplete).toHaveBeenCalledWith(character));
         expect(container.notifier.error).toHaveBeenCalled();
