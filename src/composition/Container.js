@@ -19,6 +19,7 @@ import { SillyTavernImageGenerator } from '../infrastructure/images/SillyTavernI
 import { MockImageGenerator } from '../infrastructure/images/MockImageGenerator.js';
 import { CatboxImageHost } from '../infrastructure/images/CatboxImageHost.js';
 import { ConfigurableImageHost } from '../infrastructure/images/ConfigurableImageHost.js';
+import { LocalImageHost } from '../infrastructure/images/LocalImageHost.js';
 import { MockImageHost } from '../infrastructure/images/MockImageHost.js';
 import { JsonRepairAdapter } from '../infrastructure/utils/JsonRepairAdapter.js';
 import { GenerateCharacterFromDescription } from '../application/use-cases/GenerateCharacterFromDescription.js';
@@ -91,6 +92,7 @@ const IMAGE_GEN_FACTORIES = {
  */
 const IMAGE_HOST_DELEGATES = {
     'catbox': () => new CatboxImageHost(),
+    'local': () => new LocalImageHost(),
     'mock': () => new MockImageHost(),
 };
 
