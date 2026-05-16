@@ -87,4 +87,12 @@ describe('JsonRepair', () => {
         const result = repairJson(json);
         expect(result).toBeNull();
     });
+
+    it('handles escaped quote followed by literal newline before closing quote', () => {
+        // Buggy regex /"([^"]*?)"/g stops at \" and leaves the newline unescaped,
+        // so JSON.parse never succeeds and repairJson returns null.
+        const json = '{"a":"x\\"' + '\n' + 'y"}';
+        const result = repairJson(json);
+        expect(result).toEqual({ a: 'x"\ny' });
+    });
 });
