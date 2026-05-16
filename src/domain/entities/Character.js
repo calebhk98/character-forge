@@ -4,6 +4,26 @@
  */
 
 /**
+ * Validate an array-of-strings field and append errors to the errors array.
+ *
+ * @param {unknown} value - value to validate
+ * @param {string} fieldName - name used in error messages
+ * @param {string[]} errors - errors array to append to
+ * @returns {void}
+ */
+function validateStringArray(value, fieldName, errors) {
+    if (!Array.isArray(value)) {
+        errors.push(`${fieldName} must be an array`);
+        return;
+    }
+    for (let i = 0; i < value.length; i++) {
+        if (typeof value[i] !== 'string') {
+            errors.push(`${fieldName}[${i}] must be a string`);
+        }
+    }
+}
+
+/**
  * Validate the alternate_greetings field and append errors to the errors array.
  *
  * @param {unknown} value - value to validate
@@ -21,6 +41,26 @@ function validateAlternateGreetings(value, errors) {
         } else if (value[i].trim().length === 0) {
             errors.push(`alternate_greetings[${i}] cannot be empty`);
         }
+    }
+}
+
+/**
+ * Validate optional array fields (alternate_greetings, group_only_greetings, tags)
+ * and append any errors to the errors array.
+ *
+ * @param {object} data - raw character data
+ * @param {string[]} errors - errors array to append to
+ * @returns {void}
+ */
+function validateOptionalArrayFields(data, errors) {
+    if (data.alternate_greetings !== undefined) {
+        validateAlternateGreetings(data.alternate_greetings, errors);
+    }
+    if (data.group_only_greetings !== undefined) {
+        validateAlternateGreetings(data.group_only_greetings, errors);
+    }
+    if (data.tags !== undefined) {
+        validateStringArray(data.tags, 'tags', errors);
     }
 }
 
@@ -61,6 +101,9 @@ export class Character {
     /** @type {string[]} opening messages used only in group chats */
     group_only_greetings;
 
+    /** @type {string[]} genre, role, and character-type tags */
+    tags;
+
     /**
      * Construct a Character from raw data. Validates required fields.
      *
@@ -76,6 +119,7 @@ export class Character {
      * @param {string} [data.post_history_instructions] - optional post-history instructions
      * @param {string[]} [data.alternate_greetings] - optional alternate opening messages
      * @param {string[]} [data.group_only_greetings] - optional group-chat-specific opening messages
+     * @param {string[]} [data.tags] - optional genre/role/character-type tags
      */
     constructor(data) {
         const required = ['name', 'description', 'personality', 'scenario', 'first_mes', 'mes_example'];
@@ -91,13 +135,7 @@ export class Character {
             }
         }
 
-        if (data.alternate_greetings !== undefined) {
-            validateAlternateGreetings(data.alternate_greetings, errors);
-        }
-
-        if (data.group_only_greetings !== undefined) {
-            validateAlternateGreetings(data.group_only_greetings, errors);
-        }
+        validateOptionalArrayFields(data, errors);
 
         if (errors.length > 0) {
             throw new Error(`Invalid character data: ${errors.join('; ')}`);
@@ -106,5 +144,6 @@ export class Character {
         Object.assign(this, data);
         this.alternate_greetings = data.alternate_greetings ?? [];
         this.group_only_greetings = data.group_only_greetings ?? [];
+        this.tags = data.tags ?? [];
     }
 }

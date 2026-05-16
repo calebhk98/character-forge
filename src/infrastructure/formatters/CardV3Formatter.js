@@ -37,7 +37,7 @@ export class CardV3Formatter extends ICardFormatter {
                 post_history_instructions: character.post_history_instructions,
                 alternate_greetings: character.alternate_greetings ?? [],
                 group_only_greetings: character.group_only_greetings ?? [],
-                tags: [],
+                tags: character.tags ?? [],
                 extensions: {},
                 character_book: {
                     name: charBook.name,

@@ -154,6 +154,35 @@ describe('Character - validation', () => {
     });
 });
 
+describe('Character - tags', () => {
+    it('should default tags to empty array when not provided', () => {
+        const character = new Character(validCharacterData());
+        expect(character.tags).toEqual([]);
+    });
+
+    it('should accept a valid tags array', () => {
+        const data = { ...validCharacterData(), tags: ['fantasy', 'mage', 'female'] };
+        const character = new Character(data);
+        expect(character.tags).toEqual(['fantasy', 'mage', 'female']);
+    });
+
+    it('should accept an empty tags array', () => {
+        const data = { ...validCharacterData(), tags: [] };
+        const character = new Character(data);
+        expect(character.tags).toEqual([]);
+    });
+
+    it('should throw when tags contains a non-string element', () => {
+        const data = { ...validCharacterData(), /** @type {any} */ tags: ['fantasy', 42] };
+        expect(() => new Character(data)).toThrow();
+    });
+
+    it('should throw when tags is not an array', () => {
+        const data = { ...validCharacterData(), /** @type {any} */ tags: 'fantasy' };
+        expect(() => new Character(data)).toThrow();
+    });
+});
+
 describe('Character - group_only_greetings', () => {
     it('should default group_only_greetings to empty array when not provided', () => {
         const character = new Character(validCharacterData());

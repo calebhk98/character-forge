@@ -149,6 +149,32 @@ describe('CardV3Formatter', () => {
 
         expect(result.data.alternate_greetings).toEqual([]);
     });
+
+});
+
+describe('CardV3Formatter - tags', () => {
+    it('should emit tags from character when tags are provided', () => {
+        const character = new Character({
+            name: 'Aria',
+            description: 'A mysterious mage',
+            personality: 'Curious and witty',
+            scenario: 'In a magical tower',
+            first_mes: 'Welcome, traveler.',
+            mes_example: 'How can I assist you?',
+            tags: ['fantasy', 'mage', 'female'],
+        });
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(character);
+
+        expect(result.data.tags).toEqual(['fantasy', 'mage', 'female']);
+    });
+
+    it('should output empty tags when character has none', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(createBasicCharacter());
+
+        expect(result.data.tags).toEqual([]);
+    });
 });
 
 describe('CardV3Formatter (snapshots)', () => {
@@ -261,10 +287,22 @@ describe('CardV3Formatter - null/undefined optional field fallbacks', () => {
         expect(result.data.group_only_greetings).toEqual(greetings);
     });
 
-    it('should always output tags as an empty array', () => {
+    it('should fall back to [] when tags is undefined', () => {
         const formatter = new CardV3Formatter();
-        const result = formatter.format(makePlainCharacter());
+        const result = formatter.format(makePlainCharacter({ tags: undefined }));
         expect(result.data.tags).toEqual([]);
+    });
+
+    it('should fall back to [] when tags is null', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(makePlainCharacter({ tags: null }));
+        expect(result.data.tags).toEqual([]);
+    });
+
+    it('should emit tags from character when present', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(makePlainCharacter({ tags: ['fantasy', 'mage'] }));
+        expect(result.data.tags).toEqual(['fantasy', 'mage']);
     });
 
     it('should always output extensions as an empty object', () => {
