@@ -112,7 +112,7 @@ export class ImageApprovalPanel {
      */
     async _onUploadClick(character, items, onComplete) {
         const checkboxes = this.element.querySelectorAll('.approval-checkbox');
-        const approvedItems = items.filter((_item, i) => checkboxes[i]?.checked);
+        const approvedItems = items.filter((_item, i) => /** @type {HTMLInputElement} */ (checkboxes[i])?.checked);
 
         try {
             const updated = await this.container.uploadGreetingImages.execute(character, approvedItems);

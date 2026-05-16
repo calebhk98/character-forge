@@ -29,6 +29,7 @@ export class DefaultPromptBuilder extends IPromptBuilder {
      * @param {object} [options] - generation options
      * @param {number} [options.entryCount] - target lorebook entries
      * @param {string} [options.customSystemPrompt] - verbatim system prompt; replaces default when non-empty
+     * @param {string} [options.groupDescription] - ensemble context; triggers group_only_greetings guidance
      * @returns {GenerationRequest} structured generation request
      */
     build(description, options = {}) {

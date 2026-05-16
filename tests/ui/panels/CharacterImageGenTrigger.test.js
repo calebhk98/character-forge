@@ -112,6 +112,7 @@ describe('startImageGeneration - happy path', () => {
 
     it('does not await – returns synchronously without blocking', () => {
         const container = makeContainer();
+        /** @type {(value: any) => void} */
         let resolveExecute;
         container.generateCharacterImages.execute = vi.fn().mockReturnValue(
             new Promise((resolve) => { resolveExecute = resolve; }),

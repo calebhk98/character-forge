@@ -59,6 +59,6 @@ export class ConfigurableImageHost extends IImageHost {
      * @returns {boolean} true if the active provider is configured
      */
     isConfigured() {
-        return this._activeDelegate().isConfigured();
+        return /** @type {boolean} */ (this._activeDelegate().isConfigured());
     }
 }

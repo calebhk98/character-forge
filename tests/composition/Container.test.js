@@ -281,7 +281,7 @@ describe('Container - fallback defaults when config keys are omitted', () => {
     it('should use silly-tavern LLM provider when llmProvider is not set', () => {
         const mockContext = { extensionSettings: {} };
         // llmProvider deliberately omitted to trigger the || 'silly-tavern' fallback
-        const config = { cardFormat: 'v3' };
+        const config = /** @type {any} */ ({ cardFormat: 'v3' });
 
         const container = buildContainer(config, mockContext);
 
@@ -291,7 +291,7 @@ describe('Container - fallback defaults when config keys are omitted', () => {
     it('should use v3 card formatter when cardFormat is not set', () => {
         const mockContext = { extensionSettings: {} };
         // cardFormat deliberately omitted to trigger the || 'v3' fallback
-        const config = { llmProvider: 'mock', mockResponses: [] };
+        const config = /** @type {any} */ ({ llmProvider: 'mock', mockResponses: [] });
 
         const container = buildContainer(config, mockContext);
 
@@ -310,7 +310,7 @@ describe('Container - fallback defaults when config keys are omitted', () => {
 
     it('should use v3 validator when cardFormat is not set', () => {
         const mockContext = { extensionSettings: {} };
-        const config = { llmProvider: 'mock', mockResponses: [] };
+        const config = /** @type {any} */ ({ llmProvider: 'mock', mockResponses: [] });
 
         const container = buildContainer(config, mockContext);
 
@@ -321,7 +321,7 @@ describe('Container - fallback defaults when config keys are omitted', () => {
     it('should build a complete container when all optional keys are omitted', () => {
         const mockContext = { extensionSettings: {} };
         // Only required runtime context supplied; all adapter keys rely on defaults
-        const config = {};
+        const config = /** @type {any} */ ({});
 
         const container = buildContainer(config, mockContext);
 

@@ -28,6 +28,7 @@ export class AdvancedPromptBuilder extends IPromptBuilder {
      * @param {string} description - character or lorebook concept
      * @param {object} [options] - generation options
      * @param {number} [options.entryCount] - target lorebook entries
+     * @param {string} [options.groupDescription] - ensemble context; triggers group_only_greetings guidance
      * @returns {GenerationRequest} structured generation request
      */
     build(description, options = {}) {

@@ -314,6 +314,7 @@ describe('CharacterLoaderPanel - onLoadClick() success and guards', () => {
 
     it('does not execute a second load while one is in progress', async () => {
         selectCharacter('aria.png');
+        /** @type {(value: any) => void} */
         let resolveFirst;
         container.loadCharacterForEditing.execute.mockReturnValue(
             new Promise((r) => { resolveFirst = r; }),
