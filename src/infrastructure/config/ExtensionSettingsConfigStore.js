@@ -58,8 +58,8 @@ export class ExtensionSettingsConfigStore extends IConfigStore {
      */
     async set(key, value) {
         const ctx = this.resolveContext();
-        // ST exposes extensionSettings (camelCase) on context and extension_settings on window.
-        // Fall back to the window global for extensions loaded before ST is fully ready.
+        // ST exposes extension settings as extensionSettings on the context object.
+        // The globalThis fallback is kept as a safety net but is never populated by ST.
         const extSettings = ctx?.extensionSettings ?? globalThis.extension_settings;
         if (!extSettings) {
             throw new Error('SillyTavern context not available');
