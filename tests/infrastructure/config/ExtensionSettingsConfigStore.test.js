@@ -96,3 +96,25 @@ describe('ExtensionSettingsConfigStore', () => {
         });
     });
 });
+
+describe('ExtensionSettingsConfigStore - real ST context shape (camelCase extensionSettings)', () => {
+    it('should read from ctx.extensionSettings when ctx.extension_settings is absent', () => {
+        // ST's st-context.js exposes extensionSettings (camelCase), not extension_settings
+        const realShapedCtx = {
+            extensionSettings: { 'character-forge': { promptTemplate: 'real' } },
+            saveSettingsDebounced: () => Promise.resolve(),
+        };
+        const store = new ExtensionSettingsConfigStore('character-forge', realShapedCtx);
+        expect(store.get('promptTemplate')).toBe('real');
+    });
+
+    it('should write to ctx.extensionSettings when ctx.extension_settings is absent', async () => {
+        const realShapedCtx = {
+            extensionSettings: {},
+            saveSettingsDebounced: () => Promise.resolve(),
+        };
+        const store = new ExtensionSettingsConfigStore('character-forge', realShapedCtx);
+        await store.set('promptTemplate', 'real');
+        expect(realShapedCtx.extensionSettings['character-forge'].promptTemplate).toBe('real');
+    });
+});
