@@ -4,7 +4,6 @@
  */
 
 import { ICardFormatter } from '../../application/ports/ICardFormatter.js';
-import { Lorebook } from '../../domain/entities/Lorebook.js';
 
 /**
  * Formatter for Character Card V3 spec.
@@ -16,11 +15,14 @@ export class CardV3Formatter extends ICardFormatter {
      * Format a character and lorebook to V3 JSON.
      *
      * @param {import('../../domain/entities/Character.js').Character} character - character to format
-     * @param {import('../../domain/entities/Lorebook.js').Lorebook} [lorebook] - optional lorebook to embed
+     * @param {import('../../domain/entities/Lorebook.js').Lorebook} [lorebook] - lorebook to embed
      * @returns {object} Character Card V3 JSON object
      */
     format(character, lorebook) {
-        const charBook = lorebook || new Lorebook();
+        const charBook = lorebook ?? {
+            name: '', description: '', entries: [],
+            scan_depth: 2, token_budget: 0, recursive_scanning: false,
+        };
 
         return {
             spec: 'chara_card_v3',
