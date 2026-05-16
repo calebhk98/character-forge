@@ -3,6 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { buildInlineDrawer } from '../index.js';
 
 describe('index.js entry point', () => {
     let originalDocument;
@@ -74,5 +75,37 @@ describe('index.js entry point', () => {
 
         expect(module1).toBeDefined();
         expect(module2).toBeDefined();
+    });
+});
+
+describe('buildInlineDrawer', () => {
+    /**
+     * Build a minimal mock container sufficient for all panels to render.
+     *
+     * @returns {object} mock container
+     */
+    function createMockContainer() {
+        return {
+            notifier: { error: vi.fn(), success: vi.fn(), warning: vi.fn() },
+            logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn() },
+            configStore: { get: vi.fn().mockReturnValue(''), set: vi.fn() },
+            generateCharacter: { execute: vi.fn() },
+            generateLorebook: { execute: vi.fn() },
+            saveCharacter: { execute: vi.fn() },
+            decomposeGroup: { execute: vi.fn() },
+            generateSharedLorebook: { execute: vi.fn() },
+            lorebookRepository: { save: vi.fn() },
+        };
+    }
+
+    it('renders the batch generator panel inside the drawer', () => {
+        const drawer = buildInlineDrawer(createMockContainer());
+        expect(drawer.querySelector('#batch-forge-panel')).not.toBeNull();
+    });
+
+    it('renders both the settings panel and the character generator panel', () => {
+        const drawer = buildInlineDrawer(createMockContainer());
+        expect(drawer.querySelector('#settings-panel')).not.toBeNull();
+        expect(drawer.querySelector('#character-forge-panel')).not.toBeNull();
     });
 });

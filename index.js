@@ -7,6 +7,7 @@
 
 // @ts-check
 
+import { BatchGeneratorPanel } from './src/ui/panels/BatchGeneratorPanel.js';
 import { CharacterGeneratorPanel } from './src/ui/panels/CharacterGeneratorPanel.js';
 import { SettingsPanel } from './src/ui/panels/SettingsPanel.js';
 import { SlashCommandHandler } from './src/ui/slash-commands/SlashCommandHandler.js';
@@ -68,7 +69,7 @@ async function setup() {
  * @param {object} container - wired DI container
  * @returns {HTMLElement} the drawer root element
  */
-function buildInlineDrawer(container) {
+export function buildInlineDrawer(container) {
     const drawer = document.createElement('div');
     drawer.id = 'character-forge-extension-drawer';
     drawer.className = 'inline_drawer';
@@ -100,6 +101,9 @@ function buildInlineDrawer(container) {
 
     const generatorPanel = new CharacterGeneratorPanel(container);
     generatorPanel.render(content);
+
+    const batchPanel = new BatchGeneratorPanel(container);
+    batchPanel.render(content);
 
     drawer.appendChild(toggle);
     drawer.appendChild(content);
