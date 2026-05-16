@@ -139,10 +139,11 @@ describe('SlashCommandHandler - /forge-from-chat command', () => {
     }
 
     it('should invoke extractCharacterFromChat with name and chat history', async () => {
-        const mockChar = { name: 'Bob', description: 'A teacher' };
         const mockBook = { entries: [] };
+        const mockChar = { name: 'Bob', description: 'A teacher' };
         stContext.chat = [{ is_user: false, mes: 'I am Bob.' }];
-        container.extractCharacterFromChat.execute.mockResolvedValue(mockChar);
+        container.extractCharacterFromChat.execute.mockResolvedValue('Bob is a passionate teacher.');
+        container.generateCharacter.execute.mockResolvedValue(mockChar);
         container.generateLorebook.execute.mockResolvedValue(mockBook);
         container.saveCharacter.execute.mockResolvedValue('id-3');
 
@@ -154,11 +155,29 @@ describe('SlashCommandHandler - /forge-from-chat command', () => {
         );
     });
 
-    it('should invoke saveCharacter with the extracted character', async () => {
+    it('should pass the extracted description to generateCharacter', async () => {
         const mockChar = { name: 'Bob', description: 'A teacher' };
         const mockBook = { entries: [] };
         stContext.chat = [{ is_user: false, mes: 'I am Bob.' }];
-        container.extractCharacterFromChat.execute.mockResolvedValue(mockChar);
+        container.extractCharacterFromChat.execute.mockResolvedValue('Bob is a passionate teacher.');
+        container.generateCharacter.execute.mockResolvedValue(mockChar);
+        container.generateLorebook.execute.mockResolvedValue(mockBook);
+        container.saveCharacter.execute.mockResolvedValue('id-3a');
+
+        await getFromChatCallback()({ value: 'Bob' });
+
+        expect(container.generateCharacter.execute).toHaveBeenCalledWith(
+            'Bob is a passionate teacher.',
+            expect.any(Object),
+        );
+    });
+
+    it('should invoke saveCharacter with the generated character', async () => {
+        const mockChar = { name: 'Bob', description: 'A teacher' };
+        const mockBook = { entries: [] };
+        stContext.chat = [{ is_user: false, mes: 'I am Bob.' }];
+        container.extractCharacterFromChat.execute.mockResolvedValue('Bob is a passionate teacher.');
+        container.generateCharacter.execute.mockResolvedValue(mockChar);
         container.generateLorebook.execute.mockResolvedValue(mockBook);
         container.saveCharacter.execute.mockResolvedValue('id-4');
 

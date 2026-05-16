@@ -87,10 +87,9 @@ export class SlashCommandHandler {
 
         try {
             this.container.notifier.info(`Extracting "${characterName}" from chat…`);
-            const character = await this.container.extractCharacterFromChat.execute(characterName, chat);
-            const lorebook = await this.container.generateLorebook.execute(
-                character.description || characterName, {},
-            );
+            const description = await this.container.extractCharacterFromChat.execute(characterName, chat);
+            const character = await this.container.generateCharacter.execute(description, {});
+            const lorebook = await this.container.generateLorebook.execute(description, {});
             await this.container.saveCharacter.execute(character, lorebook);
         } catch (error) {
             this.container.notifier.error(`/forge-from-chat failed: ${error.message}`);
