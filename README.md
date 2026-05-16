@@ -107,22 +107,99 @@ Then restart SillyTavern.
 
 ## Usage
 
+### Generating a single character
+
 1. Open the Character Forge panel.
 2. Type your character concept in the description box.
-3. Adjust generation options if you want (lorebook entry count, temperature, prompt template).
-4. Click Generate.
-5. Review the result. Edit any field inline.
-6. Click Save to import into SillyTavern as a character card.
+3. Click **Generate**.
+4. Review the result. Every field (name, description, personality, scenario, first message, example dialogue, alternate greetings, lorebook entries) is editable inline.
+5. To rewrite any individual field, click the **↺** button next to it. An optional feedback box lets you give the AI direction ("make it darker", "shorter"). Click **Rewrite** and the field updates in place.
+6. Click **Save to SillyTavern** to import the finished card into your character library.
+
+### Loading and editing an existing card
+
+1. Expand the **Load Existing Character** section at the bottom of the panel.
+2. Click **↺ Refresh List** to populate the dropdown with your saved characters.
+3. Select a character and click **Load for Editing**.
+4. The card opens in the same review/edit view. Make changes and save.
+
+### Alternate greetings
+
+Each generated character includes three alternate first-message variants. They appear as separate editable textareas in the **Alternate Greetings** section of the preview. Edit them freely before saving.
+
+### Field-level regeneration
+
+Every core character field (name, description, personality, scenario, first message, example dialogue) has a **↺** regenerate button. Clicking it reveals an inline form where you can optionally type what to change. The AI rewrites just that field without touching the rest of the card.
+
+## Batch Generation
+
+The **Batch Generator** lets you create multiple characters in one run. Access it from the Character Forge panel.
+
+### Group / ensemble mode (default)
+
+1. Enter a description of the whole group — for example: *"A widowed scientist and his three superpowered daughters who protect their city."*
+2. Click **Decompose into Characters**. The LLM breaks the description into individual character descriptions, which appear as editable textareas.
+3. Review and tweak the descriptions, then click **Generate All**.
+
+Each character gets its own card and lorebook. The batch also produces a **shared lorebook** covering relationship dynamics and group history, which you should load alongside the character cards when setting up a group chat in SillyTavern. Each card's creator notes include setup instructions.
+
+### List mode
+
+1. Switch to the **List** tab.
+2. Enter one character description per line.
+3. Click **Generate All**.
+
+Characters are generated sequentially. A progress log shows each character's status in real time. Failures are skipped and reported at the end — they don't stop the rest of the batch.
+
+## Slash Commands
+
+Character Forge registers two slash commands in SillyTavern so you can generate cards without leaving the chat interface.
+
+### `/forge`
+
+```
+/forge A grizzled detective who drinks too much and solves impossible cases
+```
+
+Generates a character card from the description, saves it, and notifies you when done.
+
+### `/forge-from-chat`
+
+```
+/forge-from-chat Alice
+```
+
+Reads the current chat history, extracts everything known about the named character, and generates a card from it. Useful for turning an NPC or a persona that emerged through roleplay into a saved card.
+
+Both commands show a progress notification while running and an error message if something goes wrong.
+
+## Image Generation
+
+After saving a character, Character Forge automatically starts generating an avatar portrait in the background using whatever image generation backend you have configured in SillyTavern (AUTOMATIC1111, ComfyUI, DALL-E, NovelAI, Stable Horde, and others are all supported).
+
+Once generation completes, an **approval panel** appears with thumbnails of the generated images. Check the ones you want to keep and click **Upload selected**. Images are uploaded to your configured host (catbox.moe by default, or embedded as local data URIs if you prefer) and their URLs are injected into the relevant character fields.
+
+If no image generation backend is active, this step is silently skipped — the card is always saved regardless.
+
+Image generation can be turned on or off in the extension settings.
 
 ## Configuration
 
-All settings live in SillyTavern's extension settings panel and persist across sessions. Currently:
+All settings live in SillyTavern's extension settings panel and persist across sessions.
 
-- `promptTemplate` - which built-in prompt strategy to use: `default` or `advanced`. Default: `default`.
-- `lorebookEntryCount` - target number of lorebook entries to generate. Default: `auto`.
-- `generationTemperature` - LLM temperature for generation. Default: `0.85`.
-- `autoSaveOnGenerate` - skip the review step and save straight to library. Default: `false`.
-- `customSystemPromptOverride` - advanced users only, replaces the built-in system prompt.
+| Setting | What it does | Default |
+|---|---|---|
+| `promptTemplate` | Prompt strategy: `default` (standard) or `advanced` (chain-of-thought, stricter formatting) | `default` |
+| `lorebookEntryCount` | Target number of lorebook entries. `auto` lets the AI decide. | `auto` |
+| `autoSaveOnGenerate` | Skip the review step and save immediately after generation | `false` |
+| `customSystemPromptOverride` | Replace the built-in system prompt entirely (advanced users) | _(empty)_ |
+
+Image generation settings (if you have a SillyTavern image generation extension active):
+
+| Setting | What it does | Default |
+|---|---|---|
+| `generateAvatarAfterSave` | Automatically generate a portrait after each save | `true` |
+| `generateSpritesAfterSave` | Also generate expression sprites | `false` |
 
 LLM provider and card format are internal extension points rather than user-facing settings. Adding alternative providers or card formats means writing a new adapter class. See [DESIGN.md](./DESIGN.md) for how this works.
 
