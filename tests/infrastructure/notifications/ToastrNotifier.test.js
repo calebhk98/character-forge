@@ -64,6 +64,35 @@ describe('ToastrNotifier - basic notifications', () => {
     });
 });
 
+describe('ToastrNotifier - toastr unavailable', () => {
+    beforeEach(() => {
+        // Simulate ST not yet loaded or toastr missing
+        globalThis.window = {};
+    });
+
+    afterEach(() => { delete globalThis.window; });
+
+    it('should not throw when window.toastr is undefined on info()', () => {
+        const notifier = new ToastrNotifier({});
+        expect(() => notifier.info('msg')).not.toThrow();
+    });
+
+    it('should not throw when window.toastr is undefined on success()', () => {
+        const notifier = new ToastrNotifier({});
+        expect(() => notifier.success('msg')).not.toThrow();
+    });
+
+    it('should not throw when window.toastr is undefined on warning()', () => {
+        const notifier = new ToastrNotifier({});
+        expect(() => notifier.warning('msg')).not.toThrow();
+    });
+
+    it('should not throw when window.toastr is undefined on error()', () => {
+        const notifier = new ToastrNotifier({});
+        expect(() => notifier.error('msg')).not.toThrow();
+    });
+});
+
 describe('ToastrNotifier - error deduplication', () => {
     beforeEach(() => {
         globalThis.window = {

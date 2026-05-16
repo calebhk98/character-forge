@@ -43,6 +43,7 @@ export class ToastrNotifier extends INotifier {
      */
     info(message) {
         // @ts-ignore - window.toastr is provided by SillyTavern at runtime
+        if (!window.toastr) { console.info('[Character Forge]', message); return; }
         window.toastr.info(message);
     }
 
@@ -54,6 +55,7 @@ export class ToastrNotifier extends INotifier {
      */
     success(message) {
         // @ts-ignore - window.toastr is provided by SillyTavern at runtime
+        if (!window.toastr) { console.info('[Character Forge]', message); return; }
         window.toastr.success(message);
     }
 
@@ -65,6 +67,7 @@ export class ToastrNotifier extends INotifier {
      */
     warning(message) {
         // @ts-ignore - window.toastr is provided by SillyTavern at runtime
+        if (!window.toastr) { console.warn('[Character Forge]', message); return; }
         window.toastr.warning(message);
     }
 
@@ -78,6 +81,8 @@ export class ToastrNotifier extends INotifier {
      * @returns {void}
      */
     error(message) {
+        // @ts-ignore - window.toastr is provided by SillyTavern at runtime
+        if (!window.toastr) { console.error('[Character Forge]', message); return; }
         const existing = this._errorToasts.get(message);
         if (existing) {
             const count = (this._errorCounts.get(message) ?? 1) + 1;
