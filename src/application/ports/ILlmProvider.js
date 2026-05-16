@@ -7,7 +7,6 @@
  * @typedef {object} GenerationRequest
  * @property {string} systemPrompt - system context for the LLM
  * @property {string} userPrompt - user message/request
- * @property {number} [temperature] - sampling temperature
  * @property {number} [maxTokens] - max response length
  */
 

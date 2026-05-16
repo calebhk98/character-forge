@@ -50,21 +50,6 @@ export class SettingsPanel {
                     </select>
                 </div>
                 <div class="setting-group">
-                    <label for="generation-temperature-slider">
-                        Generation Temperature
-                        <span id="temperature-value-display">0.85</span>
-                    </label>
-                    <input
-                        id="generation-temperature-slider"
-                        type="range"
-                        min="0"
-                        max="1"
-                        step="0.05"
-                        value="0.85"
-                        class="generation-temperature-slider"
-                        />
-                </div>
-                <div class="setting-group">
                     <label>
                         <input
                             id="auto-save-checkbox"
@@ -112,15 +97,6 @@ export class SettingsPanel {
             lorebookSelect.value = value;
         }
 
-        const tempSlider = /** @type {HTMLInputElement} */ (
-            this.element?.querySelector('#generation-temperature-slider')
-        );
-        if (tempSlider) {
-            const value = this.container?.configStore?.get('generationTemperature', 0.85);
-            tempSlider.value = value;
-            this.updateTemperatureDisplay(value);
-        }
-
         const autoSaveCheckbox = /** @type {HTMLInputElement} */ (
             this.element?.querySelector('#auto-save-checkbox')
         );
@@ -135,19 +111,6 @@ export class SettingsPanel {
         if (customPromptTextarea) {
             const value = this.container?.configStore?.get('customSystemPromptOverride', '');
             customPromptTextarea.value = value;
-        }
-    }
-
-    /**
-     * Update the temperature display value.
-     *
-     * @param {number|string} value temperature value
-     */
-    updateTemperatureDisplay(value) {
-        const display = this.element?.querySelector('#temperature-value-display');
-        if (display) {
-            const numValue = parseFloat(/** @type {string} */ (value));
-            display.textContent = numValue.toFixed(2);
         }
     }
 
@@ -170,17 +133,6 @@ export class SettingsPanel {
         if (lorebookSelect) {
             lorebookSelect.addEventListener('change', () => {
                 this.saveSetting('lorebookEntryCount', lorebookSelect.value);
-            });
-        }
-
-        const tempSlider = /** @type {HTMLInputElement} */ (
-            this.element?.querySelector('#generation-temperature-slider')
-        );
-        if (tempSlider) {
-            tempSlider.addEventListener('change', () => {
-                const value = parseFloat(tempSlider.value);
-                this.updateTemperatureDisplay(value);
-                this.saveSetting('generationTemperature', value);
             });
         }
 

@@ -38,7 +38,6 @@ async function setup() {
         cardFormat: configStore.get('cardFormat', 'v3'),
         promptTemplate: configStore.get('promptTemplate', 'default'),
         lorebookEntryCount: configStore.get('lorebookEntryCount', 'auto'),
-        generationTemperature: configStore.get('generationTemperature', 0.85),
         autoSaveOnGenerate: configStore.get('autoSaveOnGenerate', false),
         customSystemPromptOverride: configStore.get('customSystemPromptOverride', ''),
     };
