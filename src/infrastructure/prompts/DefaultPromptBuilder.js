@@ -117,10 +117,11 @@ Return ONLY a valid JSON object. No markdown, no code blocks, no extra text.`;
      *
      * @private
      * @param {string} description - character concept
-     * @param {object} [_options] - unused
+     * @param {object} [options] - generation options
+     * @param {string} [options.groupDescription] - parent group concept; when set, adds group_only_greetings field
      * @returns {string} user prompt text
      */
-    buildUserPrompt(description, _options) {
+    buildUserPrompt(description, options = {}) {
         let prompt = `Create a detailed character for the following concept:\n\n"${description}"\n\n`;
         prompt += 'Generate a complete character profile including:\n';
         prompt += '- name\n';
@@ -129,8 +130,14 @@ Return ONLY a valid JSON object. No markdown, no code blocks, no extra text.`;
         prompt += '- scenario\n';
         prompt += '- first_mes: a rich narrative opening scene (150-300 words) — its length calibrates how long AI replies will be throughout the conversation\n';
         prompt += '- mes_example: 2-3 short exchanges (5-6 lines each) in <START> / {{char}}: / {{user}}: format. Vary action verbs across all examples — never repeat the same one. Quotes for dialogue only.\n';
-        prompt += '- alternate_greetings: an array of exactly 3 opening scenes. Each 150–300 words, narrative style matching first_mes quality. Cover a different tone, a different scenario, and one group-chat-safe opener respectively.\n\n';
-        prompt += 'Return only valid JSON with the character data. No markdown, no code blocks, just the JSON object.';
+        prompt += '- alternate_greetings: an array of exactly 3 opening scenes. Each 150–300 words, narrative style matching first_mes quality. Cover a different tone, a different scenario, and one group-chat-safe opener respectively.\n';
+        if (options.groupDescription) {
+            prompt += '- group_only_greetings: an array containing exactly 1 string — a 150–250 word opening message ';
+            prompt += 'written specifically for a SillyTavern group chat set in the same ensemble as: ';
+            prompt += `"${options.groupDescription}". The greeting should acknowledge the shared world or team `;
+            prompt += 'context and be written so it engages multiple participants simultaneously.\n';
+        }
+        prompt += '\nReturn only valid JSON with the character data. No markdown, no code blocks, just the JSON object.';
         return prompt;
     }
 
@@ -196,6 +203,70 @@ Return ONLY a valid JSON object with the "entries" array. No additional text.`;
             userPrompt += `Feedback: ${feedback.trim()}\n\n`;
         }
         userPrompt += `Rewrite the "${fieldName}" field only. Return just the new text, nothing else.`;
+        return new GenerationRequest({ systemPrompt, userPrompt });
+    }
+
+    /**
+     * Build a request to generate a shared lorebook for an ensemble of characters.
+     * Targets inter-character relationships, group dynamics, and shared world context.
+     *
+     * @param {string} groupDescription - description of the group or ensemble
+     * @param {string[]} characterNames - names of the generated characters in this ensemble
+     * @param {object} [options] - generation options
+     * @param {number} [options.entryCount] - target entry count (default: 20)
+     * @returns {GenerationRequest} structured generation request
+     */
+    buildSharedLorebookRequest(groupDescription, characterNames, options = {}) {
+        const entryCount = options.entryCount || 20;
+        const nameList = characterNames.join(', ');
+        const systemPrompt =
+            'You are an expert in creating lorebook (World Info) entries for SillyTavern roleplay. ' +
+            'Your task is to generate a SHARED lorebook for an ensemble of characters — ' +
+            'focus on inter-character relationships, group dynamics, shared history, and world context ' +
+            'that all members inhabit together. ' +
+            'CRITICAL: Only the content field is ever injected into the AI context. ' +
+            'Each entry must be fully self-contained and informative without surrounding context. ' +
+            'Return ONLY a valid JSON object with an "entries" array and an optional "name" string. ' +
+            'No markdown, no code blocks, no extra text.';
+        let userPrompt = `Generate a shared lorebook for this ensemble:\n\n"${groupDescription}"\n\n`;
+        userPrompt += `Characters in the ensemble: ${nameList}\n\n`;
+        userPrompt += `Create approximately ${entryCount} lorebook entries. `;
+        userPrompt += 'Prioritise these categories for a shared ensemble lorebook:\n';
+        userPrompt += '- Relationship dynamics between specific character pairs (highest value — use character names as keys)\n';
+        userPrompt += '- Group history: origin of the team/family, formative events, shared trauma or triumph\n';
+        userPrompt += '- Group identity: how they function together, roles each member plays, internal tensions\n';
+        userPrompt += '- Shared locations: headquarters, home, recurring meeting places\n';
+        userPrompt += '- Common enemies, allies, or factions that affect the whole group\n';
+        userPrompt += '- Shared rules, rituals, or customs unique to this group\n';
+        userPrompt += '- Individual backstory details that matter to the group dynamic\n\n';
+        userPrompt += 'Use character names and relationship-specific terms as trigger keywords. ';
+        userPrompt += 'Content must be self-contained prose (80–300 words per entry). ';
+        userPrompt += 'Return JSON: { "name": "Ensemble Lorebook name", "entries": [...] }';
+        return new GenerationRequest({ systemPrompt, userPrompt });
+    }
+
+    /**
+     * Build a request to decompose a group description into individual character descriptions.
+     *
+     * @param {string} groupDescription - description of the group, ensemble, or family
+     * @param {object} [options] - decomposition options
+     * @param {number} [options.maxCharacters] - maximum number of characters to generate
+     * @returns {GenerationRequest} structured generation request
+     */
+    buildGroupDecompositionRequest(groupDescription, options = {}) {
+        const maxNote = options.maxCharacters
+            ? ` Limit your response to at most ${options.maxCharacters} characters.`
+            : '';
+        const systemPrompt =
+            'You are a world-building expert. Given a description of a group, ensemble, or family, ' +
+            'identify each individual member and write a concise standalone character concept for each one. ' +
+            'Return ONLY a valid JSON object with a "characters" key containing an array of strings. ' +
+            'Each string must be a self-contained character description (one sentence to a short paragraph). ' +
+            'No markdown, no code blocks, no extra text.';
+        const userPrompt =
+            `Group or ensemble concept: "${groupDescription}"\n\n` +
+            `Identify each individual character in this group and describe them.${maxNote} ` +
+            'Return JSON: { "characters": ["description of character 1", "description of character 2", ...] }';
         return new GenerationRequest({ systemPrompt, userPrompt });
     }
 

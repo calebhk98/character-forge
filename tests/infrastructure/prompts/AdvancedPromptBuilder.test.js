@@ -219,3 +219,30 @@ describe('AdvancedPromptBuilder - Snapshots', () => {
         expect(request.userPrompt).toMatchSnapshot();
     });
 });
+
+describe('AdvancedPromptBuilder - buildSharedLorebookRequest', () => {
+    it('should return a GenerationRequest', () => {
+        const builder = new AdvancedPromptBuilder();
+        const result = builder.buildSharedLorebookRequest('A team of heroes', ['Alice', 'Bob']);
+        expect(result).toBeInstanceOf(GenerationRequest);
+    });
+
+    it('should include group description in the prompt', () => {
+        const builder = new AdvancedPromptBuilder();
+        const result = builder.buildSharedLorebookRequest('A family of superheroes', ['Blossom']);
+        expect(result.userPrompt).toContain('A family of superheroes');
+    });
+
+    it('should include character names in the prompt', () => {
+        const builder = new AdvancedPromptBuilder();
+        const result = builder.buildSharedLorebookRequest('A crew', ['Gandalf', 'Saruman']);
+        expect(result.userPrompt).toContain('Gandalf');
+        expect(result.userPrompt).toContain('Saruman');
+    });
+
+    it('should include group_only_greetings guidance when groupDescription option is set', () => {
+        const builder = new AdvancedPromptBuilder();
+        const request = builder.build('A brave knight', { groupDescription: 'A trio of heroes' });
+        expect(request.userPrompt).toContain('group_only_greetings');
+    });
+});

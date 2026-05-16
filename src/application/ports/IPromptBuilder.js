@@ -36,4 +36,31 @@ export class IPromptBuilder {
     buildRefinementRequest(_description, _fieldName, _currentValue, _feedback = '') {
         throw new Error('IPromptBuilder.buildRefinementRequest must be implemented by subclass');
     }
+
+    // eslint-disable-next-line jsdoc/require-returns-check
+    /**
+     * Build a request to generate a shared lorebook for an ensemble of characters.
+     *
+     * @param {string} _groupDescription - description of the group or ensemble
+     * @param {string[]} _characterNames - names of the characters in the ensemble
+     * @param {object} [_options] - generation options
+     * @param {number} [_options.entryCount] - target entry count
+     * @returns {import('../../domain/value-objects/GenerationRequest.js').GenerationRequest} generation request
+     */
+    buildSharedLorebookRequest(_groupDescription, _characterNames, _options = {}) {
+        throw new Error('IPromptBuilder.buildSharedLorebookRequest must be implemented by subclass');
+    }
+
+    // eslint-disable-next-line jsdoc/require-returns-check
+    /**
+     * Build a request to decompose a group description into individual character descriptions.
+     *
+     * @param {string} _groupDescription - description of the group, ensemble, or family
+     * @param {object} [_options] - decomposition options
+     * @param {number} [_options.maxCharacters] - maximum number of characters to generate
+     * @returns {import('../../domain/value-objects/GenerationRequest.js').GenerationRequest} generation request
+     */
+    buildGroupDecompositionRequest(_groupDescription, _options = {}) {
+        throw new Error('IPromptBuilder.buildGroupDecompositionRequest must be implemented by subclass');
+    }
 }

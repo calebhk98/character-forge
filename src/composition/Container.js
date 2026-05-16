@@ -27,6 +27,8 @@ import { RefineCharacterField } from '../application/use-cases/RefineCharacterFi
 import { LoadCharacterForEditing } from '../application/use-cases/LoadCharacterForEditing.js';
 import { GenerateCharacterImages } from '../application/use-cases/GenerateCharacterImages.js';
 import { UploadGreetingImages } from '../application/use-cases/UploadGreetingImages.js';
+import { DecomposeGroupDescription } from '../application/use-cases/DecomposeGroupDescription.js';
+import { GenerateSharedLorebook } from '../application/use-cases/GenerateSharedLorebook.js';
 import { ExtractCharacterFromChat } from '../application/use-cases/ExtractCharacterFromChat.js';
 
 /**
@@ -135,6 +137,8 @@ export function buildContainer(config, stContext) {
         imageGenerator, charRepository, formatter, configStore, logger, notifier,
     );
     const uploadGreetingImages = new UploadGreetingImages(imageHost, logger);
+    const decomposeGroup = new DecomposeGroupDescription(promptBuilder, llm, logger);
+    const generateSharedLorebook = new GenerateSharedLorebook(promptBuilder, llm, logger);
 
     return {
         llm,
@@ -155,6 +159,8 @@ export function buildContainer(config, stContext) {
         loadCharacterForEditing,
         generateCharacterImages,
         uploadGreetingImages,
+        decomposeGroup,
+        generateSharedLorebook,
         extractCharacterFromChat,
     };
 }

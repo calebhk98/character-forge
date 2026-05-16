@@ -153,3 +153,42 @@ describe('Character - validation', () => {
         expect(() => new Character(data)).toThrow();
     });
 });
+
+describe('Character - group_only_greetings', () => {
+    it('should default group_only_greetings to empty array when not provided', () => {
+        const character = new Character(validCharacterData());
+        expect(character.group_only_greetings).toEqual([]);
+    });
+
+    it('should accept valid group_only_greetings array', () => {
+        const data = {
+            ...validCharacterData(),
+            group_only_greetings: ['Hello from the team!'],
+        };
+        const character = new Character(data);
+        expect(character.group_only_greetings).toEqual(['Hello from the team!']);
+    });
+
+    it('should accept empty group_only_greetings array', () => {
+        const data = { ...validCharacterData(), group_only_greetings: [] };
+        const character = new Character(data);
+        expect(character.group_only_greetings).toEqual([]);
+    });
+
+    it('should throw when group_only_greetings contains a non-string element', () => {
+        const data = {
+            ...validCharacterData(),
+            /** @type {any} */
+            group_only_greetings: ['Hello!', 42],
+        };
+        expect(() => new Character(data)).toThrow();
+    });
+
+    it('should throw when group_only_greetings contains an empty string', () => {
+        const data = {
+            ...validCharacterData(),
+            group_only_greetings: ['Hello!', ''],
+        };
+        expect(() => new Character(data)).toThrow();
+    });
+});

@@ -257,3 +257,59 @@ describe('DefaultPromptBuilder - Lorebook defaults', () => {
     });
 
 });
+
+describe('DefaultPromptBuilder - buildSharedLorebookRequest', () => {
+    it('should return a GenerationRequest', () => {
+        const builder = new DefaultPromptBuilder();
+        const result = builder.buildSharedLorebookRequest(
+            'A team of four heroes', ['Alice', 'Bob', 'Carol', 'Dave'],
+        );
+        expect(result).toBeInstanceOf(GenerationRequest);
+    });
+
+    it('should include group description in the prompt', () => {
+        const builder = new DefaultPromptBuilder();
+        const result = builder.buildSharedLorebookRequest(
+            'A family of superheroes', ['Blossom', 'Bubbles', 'Buttercup'],
+        );
+        expect(result.userPrompt).toContain('A family of superheroes');
+    });
+
+    it('should include character names in the prompt', () => {
+        const builder = new DefaultPromptBuilder();
+        const result = builder.buildSharedLorebookRequest(
+            'A trio of mages', ['Gandalf', 'Saruman'],
+        );
+        expect(result.userPrompt).toContain('Gandalf');
+        expect(result.userPrompt).toContain('Saruman');
+    });
+
+    it('should request more entries than a single-character lorebook', () => {
+        const builder = new DefaultPromptBuilder();
+        const standard = builder.build('A lone knight', { entryCount: 10 });
+        const shared = builder.buildSharedLorebookRequest('A team', ['A', 'B'], { entryCount: 20 });
+        const sharedCount = parseInt(shared.userPrompt.match(/\d+/)?.[0] || '0', 10);
+        const standardCount = parseInt(standard.userPrompt.match(/(\d+)/)?.[0] || '0', 10);
+        expect(sharedCount).toBeGreaterThan(standardCount);
+    });
+
+    it('should emphasise inter-character relationships in its system prompt', () => {
+        const builder = new DefaultPromptBuilder();
+        const result = builder.buildSharedLorebookRequest('A crew', ['A', 'B']);
+        expect(result.systemPrompt.toLowerCase()).toMatch(/relationship|dynamic|ensemble|group/);
+    });
+});
+
+describe('DefaultPromptBuilder - group_only_greetings in character prompt', () => {
+    it('should include group_only_greetings guidance when groupDescription option is set', () => {
+        const builder = new DefaultPromptBuilder();
+        const request = builder.build('A brave knight', { groupDescription: 'A trio of heroes' });
+        expect(request.userPrompt).toContain('group_only_greetings');
+    });
+
+    it('should not include group_only_greetings guidance without groupDescription option', () => {
+        const builder = new DefaultPromptBuilder();
+        const request = builder.build('A brave knight');
+        expect(request.userPrompt).not.toContain('group_only_greetings');
+    });
+});

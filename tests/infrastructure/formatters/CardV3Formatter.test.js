@@ -173,3 +173,26 @@ describe('CardV3Formatter (snapshots)', () => {
         expect(result).toMatchSnapshot();
     });
 });
+
+describe('CardV3Formatter - group_only_greetings', () => {
+    it('should output empty group_only_greetings when character has none', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(createBasicCharacter());
+        expect(result.data.group_only_greetings).toEqual([]);
+    });
+
+    it('should include group_only_greetings from character when present', () => {
+        const character = new Character({
+            name: 'Aria',
+            description: 'A mysterious mage',
+            personality: 'Curious and witty',
+            scenario: 'In a magical tower',
+            first_mes: 'Welcome, traveler.',
+            mes_example: 'How can I assist you?',
+            group_only_greetings: ['Greetings to the whole party!'],
+        });
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(character);
+        expect(result.data.group_only_greetings).toEqual(['Greetings to the whole party!']);
+    });
+});
