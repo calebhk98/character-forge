@@ -4,6 +4,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { CharacterGeneratorPanel } from '../../../src/ui/panels/CharacterGeneratorPanel.js';
+import { CharacterDraft } from '../../../src/domain/value-objects/CharacterDraft.js';
 import { Character } from '../../../src/domain/entities/Character.js';
 import { Lorebook } from '../../../src/domain/entities/Lorebook.js';
 import { LorebookEntry } from '../../../src/domain/entities/LorebookEntry.js';
@@ -81,8 +82,7 @@ describe('CharacterGeneratorPanel - Character field editing', () => {
         const panel = new CharacterGeneratorPanel(container);
 
         panel.render(targetElement);
-        panel.generatedCharacter = createMockCharacter();
-        panel.generatedLorebook = createMockLorebook();
+        panel.draft = new CharacterDraft({ character: createMockCharacter(), lorebook: createMockLorebook() });
         panel.showPreview();
 
         const scenarioInput = /** @type {HTMLTextAreaElement} */ (
@@ -91,7 +91,7 @@ describe('CharacterGeneratorPanel - Character field editing', () => {
         scenarioInput.value = 'Updated scenario';
         scenarioInput.dispatchEvent(new Event('change'));
 
-        expect(panel.generatedCharacter.scenario).toBe('Updated scenario');
+        expect(panel.draft.character.scenario).toBe('Updated scenario');
 
         targetElement.remove();
     });
@@ -103,8 +103,7 @@ describe('CharacterGeneratorPanel - Character field editing', () => {
         const panel = new CharacterGeneratorPanel(container);
 
         panel.render(targetElement);
-        panel.generatedCharacter = createMockCharacter();
-        panel.generatedLorebook = createMockLorebook();
+        panel.draft = new CharacterDraft({ character: createMockCharacter(), lorebook: createMockLorebook() });
         panel.showPreview();
 
         const firstMesInput = /** @type {HTMLTextAreaElement} */ (
@@ -113,7 +112,7 @@ describe('CharacterGeneratorPanel - Character field editing', () => {
         firstMesInput.value = 'Updated first message';
         firstMesInput.dispatchEvent(new Event('change'));
 
-        expect(panel.generatedCharacter.first_mes).toBe('Updated first message');
+        expect(panel.draft.character.first_mes).toBe('Updated first message');
 
         targetElement.remove();
     });
@@ -125,8 +124,7 @@ describe('CharacterGeneratorPanel - Character field editing', () => {
         const panel = new CharacterGeneratorPanel(container);
 
         panel.render(targetElement);
-        panel.generatedCharacter = createMockCharacter();
-        panel.generatedLorebook = createMockLorebook();
+        panel.draft = new CharacterDraft({ character: createMockCharacter(), lorebook: createMockLorebook() });
         panel.showPreview();
 
         const mesExampleInput = /** @type {HTMLTextAreaElement} */ (
@@ -135,7 +133,7 @@ describe('CharacterGeneratorPanel - Character field editing', () => {
         mesExampleInput.value = 'Updated example';
         mesExampleInput.dispatchEvent(new Event('change'));
 
-        expect(panel.generatedCharacter.mes_example).toBe('Updated example');
+        expect(panel.draft.character.mes_example).toBe('Updated example');
 
         targetElement.remove();
     });
@@ -149,8 +147,7 @@ describe('CharacterGeneratorPanel - Lorebook entry editing', () => {
         const panel = new CharacterGeneratorPanel(container);
 
         panel.render(targetElement);
-        panel.generatedCharacter = createMockCharacter();
-        panel.generatedLorebook = createMockLorebook();
+        panel.draft = new CharacterDraft({ character: createMockCharacter(), lorebook: createMockLorebook() });
         panel.showPreview();
 
         const entryNameInput = /** @type {HTMLInputElement} */ (
@@ -159,7 +156,7 @@ describe('CharacterGeneratorPanel - Lorebook entry editing', () => {
         entryNameInput.value = 'Updated Entry Name';
         entryNameInput.dispatchEvent(new Event('change'));
 
-        expect(panel.generatedLorebook.entries[0].name).toBe('Updated Entry Name');
+        expect(panel.draft.lorebook.entries[0].name).toBe('Updated Entry Name');
 
         targetElement.remove();
     });
@@ -171,8 +168,7 @@ describe('CharacterGeneratorPanel - Lorebook entry editing', () => {
         const panel = new CharacterGeneratorPanel(container);
 
         panel.render(targetElement);
-        panel.generatedCharacter = createMockCharacter();
-        panel.generatedLorebook = createMockLorebook();
+        panel.draft = new CharacterDraft({ character: createMockCharacter(), lorebook: createMockLorebook() });
         panel.showPreview();
 
         const entryKeysInput = /** @type {HTMLInputElement} */ (
@@ -181,7 +177,7 @@ describe('CharacterGeneratorPanel - Lorebook entry editing', () => {
         entryKeysInput.value = 'key1, key2, key3';
         entryKeysInput.dispatchEvent(new Event('change'));
 
-        expect(panel.generatedLorebook.entries[0].keys).toEqual(['key1', 'key2', 'key3']);
+        expect(panel.draft.lorebook.entries[0].keys).toEqual(['key1', 'key2', 'key3']);
 
         targetElement.remove();
     });
@@ -193,8 +189,7 @@ describe('CharacterGeneratorPanel - Lorebook entry editing', () => {
         const panel = new CharacterGeneratorPanel(container);
 
         panel.render(targetElement);
-        panel.generatedCharacter = createMockCharacter();
-        panel.generatedLorebook = createMockLorebook();
+        panel.draft = new CharacterDraft({ character: createMockCharacter(), lorebook: createMockLorebook() });
         panel.showPreview();
 
         const entryKeysInput = /** @type {HTMLInputElement} */ (
@@ -203,7 +198,7 @@ describe('CharacterGeneratorPanel - Lorebook entry editing', () => {
         entryKeysInput.value = ' key1 , key2 , key3 ';
         entryKeysInput.dispatchEvent(new Event('change'));
 
-        expect(panel.generatedLorebook.entries[1].keys).toEqual(['key1', 'key2', 'key3']);
+        expect(panel.draft.lorebook.entries[1].keys).toEqual(['key1', 'key2', 'key3']);
 
         targetElement.remove();
     });
@@ -217,8 +212,7 @@ describe('CharacterGeneratorPanel - Lorebook content and preview', () => {
         const panel = new CharacterGeneratorPanel(container);
 
         panel.render(targetElement);
-        panel.generatedCharacter = createMockCharacter();
-        panel.generatedLorebook = createMockLorebook();
+        panel.draft = new CharacterDraft({ character: createMockCharacter(), lorebook: createMockLorebook() });
         panel.showPreview();
 
         const entryContentInput = /** @type {HTMLTextAreaElement} */ (
@@ -227,7 +221,7 @@ describe('CharacterGeneratorPanel - Lorebook content and preview', () => {
         entryContentInput.value = 'Updated content';
         entryContentInput.dispatchEvent(new Event('change'));
 
-        expect(panel.generatedLorebook.entries[0].content).toBe('Updated content');
+        expect(panel.draft.lorebook.entries[0].content).toBe('Updated content');
 
         targetElement.remove();
     });
@@ -239,8 +233,7 @@ describe('CharacterGeneratorPanel - Lorebook content and preview', () => {
         const panel = new CharacterGeneratorPanel(container);
 
         panel.render(targetElement);
-        panel.generatedCharacter = createMockCharacter();
-        panel.generatedLorebook = createMockLorebook();
+        panel.draft = new CharacterDraft({ character: createMockCharacter(), lorebook: createMockLorebook() });
 
         // Remove the preview section to test the guard clause
         const previewSection = targetElement.querySelector('#preview-section');

@@ -335,8 +335,7 @@ describe('CharacterGeneratorPanel - Save and Edit', () => {
         await setup.panel.onSaveClick();
 
         expect(textarea.value).toBe('');
-        expect(setup.panel.generatedCharacter).toBeNull();
-        expect(setup.panel.generatedLorebook).toBeNull();
+        expect(setup.panel.draft).toBeNull();
     });
 
     it('shows input section after save', async () => {
@@ -370,13 +369,12 @@ describe('CharacterGeneratorPanel - Save and Edit', () => {
 
     it('clears generated data when edit clicked', async () => {
         await generateAndShowPreview(setup);
-        expect(setup.panel.generatedCharacter).toBeTruthy();
+        expect(setup.panel.draft).toBeTruthy();
 
         const editBtn = setup.targetElement.querySelector('#edit-button');
         editBtn.click();
 
-        expect(setup.panel.generatedCharacter).toBeNull();
-        expect(setup.panel.generatedLorebook).toBeNull();
+        expect(setup.panel.draft).toBeNull();
     });
 });
 
@@ -394,7 +392,7 @@ describe('CharacterGeneratorPanel - Editable Preview', () => {
         nameInput.value = 'Modified Name';
         nameInput.dispatchEvent(new Event('change'));
 
-        expect(setup.panel.generatedCharacter.name).toBe('Modified Name');
+        expect(setup.panel.draft.character.name).toBe('Modified Name');
     });
 
     it('allows editing character description in preview', async () => {
@@ -404,7 +402,7 @@ describe('CharacterGeneratorPanel - Editable Preview', () => {
         descInput.value = 'Modified description';
         descInput.dispatchEvent(new Event('change'));
 
-        expect(setup.panel.generatedCharacter.description).toBe('Modified description');
+        expect(setup.panel.draft.character.description).toBe('Modified description');
     });
 
     it('allows editing character personality in preview', async () => {
@@ -414,7 +412,7 @@ describe('CharacterGeneratorPanel - Editable Preview', () => {
         perInput.value = 'Modified personality';
         perInput.dispatchEvent(new Event('change'));
 
-        expect(setup.panel.generatedCharacter.personality).toBe('Modified personality');
+        expect(setup.panel.draft.character.personality).toBe('Modified personality');
     });
 
     it('allows editing lorebook entry content', async () => {
@@ -424,7 +422,7 @@ describe('CharacterGeneratorPanel - Editable Preview', () => {
         contentInput.value = 'Modified entry content';
         contentInput.dispatchEvent(new Event('change'));
 
-        expect(setup.panel.generatedLorebook.entries[0].content).toBe('Modified entry content');
+        expect(setup.panel.draft.lorebook.entries[0].content).toBe('Modified entry content');
     });
 
     it('allows editing lorebook entry keys', async () => {
@@ -434,7 +432,7 @@ describe('CharacterGeneratorPanel - Editable Preview', () => {
         keysInput.value = 'newkey1, newkey2, newkey3';
         keysInput.dispatchEvent(new Event('change'));
 
-        expect(setup.panel.generatedLorebook.entries[0].keys).toEqual(['newkey1', 'newkey2', 'newkey3']);
+        expect(setup.panel.draft.lorebook.entries[0].keys).toEqual(['newkey1', 'newkey2', 'newkey3']);
     });
 
     it('saves edited character when save button clicked', async () => {
