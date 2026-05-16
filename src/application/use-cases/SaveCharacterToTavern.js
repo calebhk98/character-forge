@@ -10,13 +10,15 @@ export class SaveCharacterToTavern {
     /**
      * Construct the use case with its dependencies.
      *
-     * @param {import('../ports/ICardFormatter.js').ICardFormatter} cardFormatter - port for formatting to V3 JSON
+     * @param {import('../ports/ICardFormatter.js').ICardFormatter} cardFormatter - port for formatting to card JSON
+     * @param {import('../ports/ICardValidator.js').ICardValidator} cardValidator - port for validating card spec
      * @param {import('../ports/ICharacterRepository.js').ICharacterRepository} characterRepository - port for persisting characters
      * @param {import('../ports/INotifier.js').INotifier} notifier - port for user-facing notifications
      * @param {import('../ports/ILogger.js').ILogger} logger - port for diagnostic logging
      */
-    constructor(cardFormatter, characterRepository, notifier, logger) {
+    constructor(cardFormatter, cardValidator, characterRepository, notifier, logger) {
         this.cardFormatter = cardFormatter;
+        this.cardValidator = cardValidator;
         this.characterRepository = characterRepository;
         this.notifier = notifier;
         this.logger = logger;
@@ -33,6 +35,9 @@ export class SaveCharacterToTavern {
         try {
             this.logger.info('Formatting character card');
             const cardJson = this.cardFormatter.format(character, lorebook);
+
+            this.logger.info('Validating character card against spec');
+            this.cardValidator.validate(cardJson);
 
             this.logger.info('Saving character to SillyTavern', { characterName: character.name });
             const characterId = await this.characterRepository.save(cardJson);

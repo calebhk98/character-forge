@@ -14,14 +14,15 @@ import { Lorebook } from '../../../src/domain/entities/Lorebook.js';
  * @returns {object} use case and mocks
  */
 function createMocks(overrides = {}) {
-    const mockFormatter = overrides.formatter || { format: vi.fn().mockReturnValue({ spec: 'chara_card_v3' }) };
+    const mockFormatter = overrides.formatter || { format: vi.fn().mockReturnValue({ spec: 'chara_card_v3', spec_version: '3.0', data: { name: 'TestChar' } }) };
+    const mockValidator = overrides.validator || { validate: vi.fn() };
     const mockRepository = overrides.repository || { save: vi.fn().mockResolvedValue('test-char-id') };
     const mockNotifier = overrides.notifier || { success: vi.fn(), error: vi.fn() };
     const mockLogger = overrides.logger || { info: vi.fn(), error: vi.fn() };
 
-    const useCase = new SaveCharacterToTavern(mockFormatter, mockRepository, mockNotifier, mockLogger);
+    const useCase = new SaveCharacterToTavern(mockFormatter, mockValidator, mockRepository, mockNotifier, mockLogger);
 
-    return { useCase, mockFormatter, mockRepository, mockNotifier, mockLogger };
+    return { useCase, mockFormatter, mockValidator, mockRepository, mockNotifier, mockLogger };
 }
 
 /**
@@ -42,12 +43,13 @@ function createCharacter(overrides = {}) {
     });
 }
 
-describe('SaveCharacterToTavern', () => {
+describe('SaveCharacterToTavern - construction', () => {
     it('should construct with dependencies', () => {
-        const { useCase, mockFormatter, mockRepository, mockNotifier, mockLogger } = createMocks();
+        const { useCase, mockFormatter, mockValidator, mockRepository, mockNotifier, mockLogger } = createMocks();
 
         expect(useCase).toBeDefined();
         expect(useCase.cardFormatter).toBe(mockFormatter);
+        expect(useCase.cardValidator).toBe(mockValidator);
         expect(useCase.characterRepository).toBe(mockRepository);
         expect(useCase.notifier).toBe(mockNotifier);
         expect(useCase.logger).toBe(mockLogger);
@@ -59,9 +61,11 @@ describe('SaveCharacterToTavern', () => {
         expect(useCase.execute).toBeDefined();
         expect(typeof useCase.execute).toBe('function');
     });
+});
 
+describe('SaveCharacterToTavern - execute', () => {
     it('should format character and save it', async () => {
-        const mockCardJson = { spec: 'chara_card_v3', data: { name: 'TestChar' } };
+        const mockCardJson = { spec: 'chara_card_v3', spec_version: '3.0', data: { name: 'TestChar' } };
         const { useCase, mockFormatter, mockRepository, mockNotifier } = createMocks({
             formatter: { format: vi.fn().mockReturnValue(mockCardJson) },
         });
@@ -76,14 +80,13 @@ describe('SaveCharacterToTavern', () => {
     });
 
     it('should format character with lorebook and save it', async () => {
-        const mockCardJson = { spec: 'chara_card_v3', data: { name: 'TestChar', character_book: {} } };
+        const mockCardJson = { spec: 'chara_card_v3', spec_version: '3.0', data: { name: 'TestChar', character_book: {} } };
         const { useCase, mockFormatter, mockRepository } = createMocks({
             formatter: { format: vi.fn().mockReturnValue(mockCardJson) },
         });
 
         const character = createCharacter();
         const lorebook = new Lorebook({ name: 'TestLore' });
-
         const result = await useCase.execute(character, lorebook);
 
         expect(mockFormatter.format).toHaveBeenCalledWith(character, lorebook);
@@ -97,10 +100,56 @@ describe('SaveCharacterToTavern', () => {
             repository: { save: vi.fn().mockRejectedValue(error) },
         });
 
-        const character = createCharacter();
-
-        await expect(useCase.execute(character)).rejects.toThrow('Network error');
+        await expect(useCase.execute(createCharacter())).rejects.toThrow('Network error');
         expect(mockLogger.error).toHaveBeenCalled();
         expect(mockNotifier.error).toHaveBeenCalled();
+    });
+});
+
+describe('SaveCharacterToTavern - validation', () => {
+    it('should call validator with the formatted card JSON', async () => {
+        const mockCardJson = { spec: 'chara_card_v3', spec_version: '3.0', data: { name: 'TestChar' } };
+        const mockValidator = { validate: vi.fn() };
+        const { useCase } = createMocks({
+            formatter: { format: vi.fn().mockReturnValue(mockCardJson) },
+            validator: mockValidator,
+        });
+
+        await useCase.execute(createCharacter());
+
+        expect(mockValidator.validate).toHaveBeenCalledWith(mockCardJson);
+    });
+
+    it('should call validator before saving to the repository', async () => {
+        const callOrder = [];
+        const mockValidator = { validate: vi.fn(() => callOrder.push('validate')) };
+        const mockRepository = { save: vi.fn(() => { callOrder.push('save'); return Promise.resolve('id'); }) };
+        const { useCase } = createMocks({ validator: mockValidator, repository: mockRepository });
+
+        await useCase.execute(createCharacter());
+
+        expect(callOrder).toEqual(['validate', 'save']);
+    });
+
+    it('should not save if validation throws', async () => {
+        const validationError = new Error('Card failed V3 spec validation:\n  - spec must be "chara_card_v3"');
+        const mockRepository = { save: vi.fn() };
+        const { useCase } = createMocks({
+            validator: { validate: vi.fn().mockImplementation(() => { throw validationError; }) },
+            repository: mockRepository,
+        });
+
+        await expect(useCase.execute(createCharacter())).rejects.toThrow('Card failed V3 spec validation');
+        expect(mockRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('should notify error and rethrow when validation fails', async () => {
+        const validationError = new Error('Card failed V3 spec validation:\n  - spec must be "chara_card_v3"');
+        const { useCase, mockNotifier } = createMocks({
+            validator: { validate: vi.fn().mockImplementation(() => { throw validationError; }) },
+        });
+
+        await expect(useCase.execute(createCharacter())).rejects.toThrow();
+        expect(mockNotifier.error).toHaveBeenCalledWith(expect.stringContaining('Card failed V3 spec validation'));
     });
 });

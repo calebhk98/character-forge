@@ -66,4 +66,52 @@ export class SillyTavernCharacterRepository extends ICharacterRepository {
         const result = await response.json();
         return result.file_name || sanitizedName;
     }
+
+    /**
+     * List all character cards available in SillyTavern.
+     *
+     * Calls POST /api/characters/all which returns an array of character
+     * metadata objects. Each object contains at minimum `name` and `avatar`
+     * (the filename used as the avatar URL identifier).
+     *
+     * @returns {Promise<Array<{name: string, avatarUrl: string}>>} character stubs sorted by name
+     */
+    async list() {
+        const headers = this.ctx?.getRequestHeaders?.() ?? {};
+        const response = await fetch('/api/characters/all', {
+            method: 'POST',
+            headers,
+            body: JSON.stringify({ reset_cache: false }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to list characters: ${response.statusText}`);
+        }
+
+        const characters = await response.json();
+        return characters
+            .map((c) => ({ name: c.name, avatarUrl: c.avatar }))
+            .sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    /**
+     * Load a full character card from SillyTavern by avatar filename.
+     *
+     * Calls GET /api/characters?avatar_url=<filename> which returns the
+     * parsed Character Card V3 JSON extracted from the PNG's tEXt chunk.
+     *
+     * @param {string} avatarUrl - character avatar filename (e.g. 'Alice.png')
+     * @returns {Promise<object>} Character Card V3 JSON object
+     */
+    async load(avatarUrl) {
+        const headers = this.ctx?.getRequestHeaders?.() ?? {};
+        const url = `/api/characters?avatar_url=${encodeURIComponent(avatarUrl)}`;
+        const response = await fetch(url, { method: 'GET', headers });
+
+        if (!response.ok) {
+            throw new Error(`Failed to load character: ${response.statusText}`);
+        }
+
+        return response.json();
+    }
 }

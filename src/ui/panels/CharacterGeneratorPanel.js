@@ -6,6 +6,7 @@
 
 import { CharacterFieldRegenerator } from './CharacterFieldRegenerator.js';
 import { CharacterPreviewBuilder } from './CharacterPreviewBuilder.js';
+import { CharacterLoaderPanel } from './CharacterLoaderPanel.js';
 import { startImageGeneration } from './CharacterImageGenTrigger.js';
 import { CharacterDraft } from '../../domain/value-objects/CharacterDraft.js';
 /**
@@ -73,6 +74,7 @@ export class CharacterGeneratorPanel {
         targetElement.appendChild(panel);
         this.element = panel;
         this.attachEventListeners();
+        new CharacterLoaderPanel(panel, this.container, this).attach();
     }
 
     /**
@@ -359,6 +361,19 @@ export class CharacterGeneratorPanel {
     onEditClick() {
         this.hidePreview();
         this.draft = null;
+    }
+
+    /**
+     * Load a CharacterDraft (from an existing card) into the preview/edit flow.
+     * Uses the character's description as the AI refinement context so that
+     * field-level regeneration has meaningful context for tweaks.
+     *
+     * @param {import('../../domain/value-objects/CharacterDraft.js').CharacterDraft} draft - loaded draft
+     */
+    loadCharacterDraft(draft) {
+        this.draft = draft;
+        this.currentDescription = draft.character.description;
+        this.showPreview();
     }
 
     /**

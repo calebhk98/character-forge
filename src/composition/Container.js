@@ -7,6 +7,7 @@
 import { SillyTavernLlmProvider } from '../infrastructure/llm/SillyTavernLlmProvider.js';
 import { MockLlmProvider } from '../infrastructure/llm/MockLlmProvider.js';
 import { CardV3Formatter } from '../infrastructure/formatters/CardV3Formatter.js';
+import { CardV3Validator } from '../infrastructure/validators/CardV3Validator.js';
 import { SillyTavernCharacterRepository } from '../infrastructure/repositories/SillyTavernCharacterRepository.js';
 import { SillyTavernLorebookRepository } from '../infrastructure/repositories/SillyTavernLorebookRepository.js';
 import { DefaultPromptBuilder } from '../infrastructure/prompts/DefaultPromptBuilder.js';
@@ -23,6 +24,7 @@ import { GenerateCharacterFromDescription } from '../application/use-cases/Gener
 import { GenerateLorebookForCharacter } from '../application/use-cases/GenerateLorebookForCharacter.js';
 import { SaveCharacterToTavern } from '../application/use-cases/SaveCharacterToTavern.js';
 import { RefineCharacterField } from '../application/use-cases/RefineCharacterField.js';
+import { LoadCharacterForEditing } from '../application/use-cases/LoadCharacterForEditing.js';
 import { GenerateCharacterImages } from '../application/use-cases/GenerateCharacterImages.js';
 import { UploadGreetingImages } from '../application/use-cases/UploadGreetingImages.js';
 import { ExtractCharacterFromChat } from '../application/use-cases/ExtractCharacterFromChat.js';
@@ -58,6 +60,15 @@ const PROMPT_BUILDER_FACTORIES = {
  */
 const FORMATTER_FACTORIES = {
     'v3': () => new CardV3Formatter(),
+};
+
+/**
+ * Factory table for card validators, keyed by card format.
+ *
+ * @type {{[key: string]: Function}}
+ */
+const VALIDATOR_FACTORIES = {
+    'v3': () => new CardV3Validator(),
 };
 
 /**
@@ -97,6 +108,8 @@ export function buildContainer(config, stContext) {
     // @ts-ignore - factory return type matches port contract
     const formatter = FORMATTER_FACTORIES[config.cardFormat || 'v3']();
     // @ts-ignore - factory return type matches port contract
+    const validator = VALIDATOR_FACTORIES[config.cardFormat || 'v3']();
+    // @ts-ignore - factory return type matches port contract
     const promptBuilder = PROMPT_BUILDER_FACTORIES[config.promptTemplate || 'default']();
     const charRepository = new SillyTavernCharacterRepository(stContext);
     const lorebookRepository = new SillyTavernLorebookRepository(stContext);
@@ -114,9 +127,10 @@ export function buildContainer(config, stContext) {
     // Wire use cases
     const generateCharacter = new GenerateCharacterFromDescription(promptBuilder, llm, logger);
     const generateLorebook = new GenerateLorebookForCharacter(promptBuilder, llm, logger);
-    const saveCharacter = new SaveCharacterToTavern(formatter, charRepository, notifier, logger);
+    const saveCharacter = new SaveCharacterToTavern(formatter, validator, charRepository, notifier, logger);
     const refineCharacterField = new RefineCharacterField(promptBuilder, llm, logger);
     const extractCharacterFromChat = new ExtractCharacterFromChat(llm, logger);
+    const loadCharacterForEditing = new LoadCharacterForEditing(charRepository, logger);
     const generateCharacterImages = new GenerateCharacterImages(
         imageGenerator, charRepository, formatter, configStore, logger, notifier,
     );
@@ -125,6 +139,7 @@ export function buildContainer(config, stContext) {
     return {
         llm,
         formatter,
+        validator,
         promptBuilder,
         charRepository,
         lorebookRepository,
@@ -137,6 +152,7 @@ export function buildContainer(config, stContext) {
         generateLorebook,
         saveCharacter,
         refineCharacterField,
+        loadCharacterForEditing,
         generateCharacterImages,
         uploadGreetingImages,
         extractCharacterFromChat,
