@@ -129,11 +129,10 @@ export class CharacterGeneratorPanel {
         try {
             this.container?.logger?.info('Starting character generation', { descriptionLength: description.length });
 
-            // Generate character
-            const character = await this.container.generateCharacter.execute(description);
+            const customSystemPrompt = this.container.configStore?.get('customSystemPromptOverride', '') || undefined;
+            const character = await this.container.generateCharacter.execute(description, ...(customSystemPrompt ? [{ customSystemPrompt }] : []));
             this.generatedCharacter = character;
 
-            // Generate lorebook
             const rawCount = this.container.configStore?.get('lorebookEntryCount', 'auto');
             const entryCount = rawCount === 'auto' ? undefined : parseInt(rawCount, 10);
             const lorebook = await this.container.generateLorebook.execute(description, { entryCount });

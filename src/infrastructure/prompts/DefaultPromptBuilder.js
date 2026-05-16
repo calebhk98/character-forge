@@ -28,6 +28,7 @@ export class DefaultPromptBuilder extends IPromptBuilder {
      * @param {string} description - character or lorebook concept
      * @param {object} [options] - generation options
      * @param {number} [options.entryCount] - target lorebook entries
+     * @param {string} [options.customSystemPrompt] - verbatim system prompt; replaces default when non-empty
      * @returns {GenerationRequest} structured generation request
      */
     build(description, options = {}) {
@@ -44,12 +45,13 @@ export class DefaultPromptBuilder extends IPromptBuilder {
      *
      * @private
      * @param {object} [options] - generation options
+     * @param {string} [options.customSystemPrompt] - verbatim override; skips default when non-empty
+     * @param {number} [options.entryCount] - routes to lorebook prompt when set
      * @returns {string} system prompt text
      */
     buildSystemPrompt(options = {}) {
-        if (options.entryCount) {
-            return this.buildLorebookSystemPrompt();
-        }
+        if (options.customSystemPrompt) return options.customSystemPrompt;
+        if (options.entryCount) return this.buildLorebookSystemPrompt();
         return this.buildCharacterSystemPrompt();
     }
 
