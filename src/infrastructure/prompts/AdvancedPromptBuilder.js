@@ -212,6 +212,33 @@ Return ONLY a valid JSON object with the "entries" array. No additional text.`;
     }
 
     /**
+     * Build a request to decompose a group description into individual character descriptions.
+     * Uses chain-of-thought to surface distinct voices, roles, and relationships.
+     *
+     * @param {string} groupDescription - description of the group, ensemble, or family
+     * @param {object} [options] - decomposition options
+     * @param {number} [options.maxCharacters] - maximum number of characters to generate
+     * @returns {GenerationRequest} structured generation request
+     */
+    buildGroupDecompositionRequest(groupDescription, options = {}) {
+        const maxNote = options.maxCharacters
+            ? ` Do not exceed ${options.maxCharacters} characters.`
+            : '';
+        const systemPrompt =
+            'You are a world-building expert. Given a group or ensemble concept, identify every distinct ' +
+            'individual and write a concise but vivid character concept for each one. ' +
+            'Think step by step: first list the roles implied by the group (leader, mentor, comic relief, etc.), ' +
+            'then assign a distinct behavioral core to each role, then write the final description. ' +
+            'Output ONLY the final JSON — no reasoning, no markdown, no code fences. ' +
+            'Format: { "characters": ["description 1", "description 2", ...] }';
+        const userPrompt =
+            `Group or ensemble concept: "${groupDescription}"\n\n` +
+            'Follow the chain-of-thought steps, then return JSON with each member as a standalone ' +
+            `character description string.${maxNote}`;
+        return new GenerationRequest({ systemPrompt, userPrompt });
+    }
+
+    /**
      * Build a user prompt for lorebook generation.
      *
      * @private
