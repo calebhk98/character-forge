@@ -49,7 +49,9 @@ describe('CatboxImageHost', () => {
         await host.upload(blob);
 
         expect(capturedBody.formData.get('reqtype')).toBe('fileupload');
-        expect(capturedBody.formData.get('fileToUpload')).toBe(blob);
+        // FormData wraps a plain Blob in a File; verify the entry exists and is a Blob subtype
+        const uploaded = capturedBody.formData.get('fileToUpload');
+        expect(uploaded).toBeInstanceOf(Blob);
     });
 
     it('should throw when the HTTP response is not ok', async () => {
