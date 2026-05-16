@@ -4,6 +4,7 @@
 
 import { describe, it, expect, vi } from 'vitest';
 import { CharacterGeneratorPanel } from '../../../src/ui/panels/CharacterGeneratorPanel.js';
+import { CharacterDraft } from '../../../src/domain/value-objects/CharacterDraft.js';
 import { Character } from '../../../src/domain/entities/Character.js';
 import { Lorebook } from '../../../src/domain/entities/Lorebook.js';
 import { LorebookEntry } from '../../../src/domain/entities/LorebookEntry.js';
@@ -66,8 +67,7 @@ describe('CharacterGeneratorPanel - regenerate button presence', () => {
         const panel = new CharacterGeneratorPanel(container);
 
         panel.render(targetElement);
-        panel.generatedCharacter = createMockCharacter();
-        panel.generatedLorebook = createMockLorebook();
+        panel.draft = new CharacterDraft({ character: createMockCharacter(), lorebook: createMockLorebook() });
         panel.showPreview();
 
         const regenBtns = targetElement.querySelectorAll('.regen-btn');
@@ -88,8 +88,7 @@ describe('CharacterGeneratorPanel - regenerate form visibility', () => {
         const panel = new CharacterGeneratorPanel(container);
 
         panel.render(targetElement);
-        panel.generatedCharacter = createMockCharacter();
-        panel.generatedLorebook = createMockLorebook();
+        panel.draft = new CharacterDraft({ character: createMockCharacter(), lorebook: createMockLorebook() });
         panel.showPreview();
 
         /** @type {HTMLButtonElement} */ (
@@ -112,8 +111,7 @@ describe('CharacterGeneratorPanel - regenerate form visibility', () => {
         const panel = new CharacterGeneratorPanel(container);
 
         panel.render(targetElement);
-        panel.generatedCharacter = createMockCharacter();
-        panel.generatedLorebook = createMockLorebook();
+        panel.draft = new CharacterDraft({ character: createMockCharacter(), lorebook: createMockLorebook() });
         panel.showPreview();
 
         /** @type {HTMLElement} */ (targetElement.querySelector('.regen-btn[data-field="name"]')).click();
@@ -138,8 +136,7 @@ describe('CharacterGeneratorPanel - regenerate field confirm', () => {
         panel.currentDescription = 'A brave knight';
 
         panel.render(targetElement);
-        panel.generatedCharacter = createMockCharacter();
-        panel.generatedLorebook = createMockLorebook();
+        panel.draft = new CharacterDraft({ character: createMockCharacter(), lorebook: createMockLorebook() });
         panel.showPreview();
 
         /** @type {HTMLButtonElement} */ (
@@ -154,7 +151,7 @@ describe('CharacterGeneratorPanel - regenerate field confirm', () => {
         });
 
         expect(container.refineCharacterField.execute).toHaveBeenCalled();
-        expect(panel.generatedCharacter.first_mes).toBe('Rewritten first message');
+        expect(panel.draft.character.first_mes).toBe('Rewritten first message');
 
         targetElement.remove();
     });

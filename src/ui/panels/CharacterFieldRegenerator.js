@@ -14,7 +14,7 @@ export class CharacterFieldRegenerator {
      *
      * @param {HTMLElement} element - panel root element
      * @param {object} container - application container with wired services
-     * @param {object} panel - panel instance exposing generatedCharacter and currentDescription
+     * @param {object} panel - panel instance exposing draft and currentDescription
      */
     constructor(element, container, panel) {
         this.element = element;
@@ -93,8 +93,8 @@ export class CharacterFieldRegenerator {
             if (input) {
                 input.value = refined;
             }
-            if (this.panel.generatedCharacter) {
-                this.panel.generatedCharacter[field] = refined;
+            if (this.panel.draft?.character) {
+                this.panel.draft.character[field] = refined;
             }
             this.hideForm(field);
         } catch (error) {

@@ -137,7 +137,7 @@ describe('CharacterGeneratorPanel - Alternate Greetings', () => {
         ta0.value = 'Edited greeting.';
         ta0.dispatchEvent(new Event('change'));
 
-        expect(panel.generatedCharacter.alternate_greetings[0]).toBe('Edited greeting.');
+        expect(panel.draft.character.alternate_greetings[0]).toBe('Edited greeting.');
     });
 
     it('shows a fallback message when character has no alternate greetings', async () => {

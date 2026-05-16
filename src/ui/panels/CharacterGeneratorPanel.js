@@ -7,6 +7,7 @@
 import { CharacterFieldRegenerator } from './CharacterFieldRegenerator.js';
 import { CharacterPreviewBuilder } from './CharacterPreviewBuilder.js';
 import { startImageGeneration } from './CharacterImageGenTrigger.js';
+import { CharacterDraft } from '../../domain/value-objects/CharacterDraft.js';
 /**
  * Character generator panel component.
  */
@@ -19,8 +20,7 @@ export class CharacterGeneratorPanel {
     constructor(container) {
         this.container = container;
         this.element = null;
-        this.generatedCharacter = null;
-        this.generatedLorebook = null;
+        this.draft = null;
         this.isGenerating = false;
         this.currentDescription = null;
     }
@@ -131,12 +131,11 @@ export class CharacterGeneratorPanel {
 
             const customSystemPrompt = this.container.configStore?.get('customSystemPromptOverride', '') || undefined;
             const character = await this.container.generateCharacter.execute(description, ...(customSystemPrompt ? [{ customSystemPrompt }] : []));
-            this.generatedCharacter = character;
 
             const rawCount = this.container.configStore?.get('lorebookEntryCount', 'auto');
             const entryCount = rawCount === 'auto' ? undefined : parseInt(rawCount, 10);
             const lorebook = await this.container.generateLorebook.execute(description, { entryCount });
-            this.generatedLorebook = lorebook;
+            this.draft = new CharacterDraft({ character, lorebook });
 
             this.container?.logger?.info('Generation complete');
             // Check auto-save setting
@@ -180,7 +179,7 @@ export class CharacterGeneratorPanel {
 
         const builder = new CharacterPreviewBuilder();
         previewContent.innerHTML = builder.buildPreviewHtml(
-            this.generatedCharacter, this.generatedLorebook,
+            this.draft.character, this.draft.lorebook,
         );
         previewSection.style.display = 'block';
 
@@ -218,11 +217,11 @@ export class CharacterGeneratorPanel {
                 this.element?.querySelector(field.id)
             );
             if (input) {
-                input.value = this.generatedCharacter[field.prop];
+                input.value = this.draft.character[field.prop];
             }
         }
 
-        const greetings = this.generatedCharacter?.alternate_greetings ?? [];
+        const greetings = this.draft?.character?.alternate_greetings ?? [];
         for (let i = 0; i < greetings.length; i++) {
             const ta = /** @type {HTMLTextAreaElement} */ (
                 this.element?.querySelector(`#edit-alt-greeting-${i}`)
@@ -237,12 +236,12 @@ export class CharacterGeneratorPanel {
      * Set values for lorebook entry editable fields.
      */
     setLorebookEntryValues() {
-        if (!this.generatedLorebook?.entries?.length) {
+        if (!this.draft?.lorebook?.entries?.length) {
             return;
         }
 
-        for (let i = 0; i < this.generatedLorebook.entries.length; i++) {
-            const entry = this.generatedLorebook.entries[i];
+        for (let i = 0; i < this.draft.lorebook.entries.length; i++) {
+            const entry = this.draft.lorebook.entries[i];
             const nameInput = /** @type {HTMLInputElement} */ (
                 this.element?.querySelector(`#edit-entry-name-${i}`)
             );
@@ -282,7 +281,7 @@ export class CharacterGeneratorPanel {
             const el = this.element?.querySelector(id);
             if (el) {
                 el.addEventListener('change', (e) => {
-                    this.generatedCharacter[prop] = /** @type {HTMLInputElement} */ (e.target).value;
+                    this.draft.character[prop] = /** @type {HTMLInputElement} */ (e.target).value;
                 });
             }
         }
@@ -291,8 +290,8 @@ export class CharacterGeneratorPanel {
             input.addEventListener('change', (e) => {
                 const target = /** @type {HTMLInputElement} */ (e.target);
                 const idx = parseInt(target.dataset.index, 10);
-                if (this.generatedLorebook?.entries[idx]) {
-                    this.generatedLorebook.entries[idx].name = target.value;
+                if (this.draft?.lorebook?.entries[idx]) {
+                    this.draft.lorebook.entries[idx].name = target.value;
                 }
             });
         });
@@ -301,8 +300,8 @@ export class CharacterGeneratorPanel {
             input.addEventListener('change', (e) => {
                 const target = /** @type {HTMLInputElement} */ (e.target);
                 const idx = parseInt(target.dataset.index, 10);
-                if (this.generatedLorebook?.entries[idx]) {
-                    this.generatedLorebook.entries[idx].keys = target.value
+                if (this.draft?.lorebook?.entries[idx]) {
+                    this.draft.lorebook.entries[idx].keys = target.value
                         .split(',').map((k) => k.trim()).filter((k) => k.length > 0);
                 }
             });
@@ -312,8 +311,8 @@ export class CharacterGeneratorPanel {
             input.addEventListener('change', (e) => {
                 const target = /** @type {HTMLTextAreaElement} */ (e.target);
                 const idx = parseInt(target.dataset.index, 10);
-                if (this.generatedLorebook?.entries[idx]) {
-                    this.generatedLorebook.entries[idx].content = target.value;
+                if (this.draft?.lorebook?.entries[idx]) {
+                    this.draft.lorebook.entries[idx].content = target.value;
                 }
             });
         });
@@ -322,8 +321,8 @@ export class CharacterGeneratorPanel {
             input.addEventListener('change', (e) => {
                 const target = /** @type {HTMLTextAreaElement} */ (e.target);
                 const idx = parseInt(target.dataset.index, 10);
-                if (this.generatedCharacter?.alternate_greetings) {
-                    this.generatedCharacter.alternate_greetings[idx] = target.value;
+                if (this.draft?.character?.alternate_greetings) {
+                    this.draft.character.alternate_greetings[idx] = target.value;
                 }
             });
         });
@@ -359,8 +358,7 @@ export class CharacterGeneratorPanel {
      */
     onEditClick() {
         this.hidePreview();
-        this.generatedCharacter = null;
-        this.generatedLorebook = null;
+        this.draft = null;
     }
 
     /**
@@ -370,7 +368,7 @@ export class CharacterGeneratorPanel {
      * @returns {Promise<void>}
      */
     async onSaveClick() {
-        if (!this.generatedCharacter) {
+        if (!this.draft) {
             this.container?.notifier?.error('No character to save');
             return;
         }
@@ -383,19 +381,19 @@ export class CharacterGeneratorPanel {
         }
 
         try {
-            this.container?.logger?.info('Saving character', { name: this.generatedCharacter.name });
+            this.container?.logger?.info('Saving character', { name: this.draft.character.name });
 
-            await this.container.saveCharacter.execute(this.generatedCharacter, this.generatedLorebook);
+            await this.container.saveCharacter.execute(this.draft.character, this.draft.lorebook);
 
             this.container?.logger?.info('Character saved successfully');
             this.container?.notifier?.success('Character saved to SillyTavern');
             this.showStatus('Character saved to SillyTavern', 'success');
 
             // Fire background image generation; does not block the save path.
-            startImageGeneration(this.container, this.generatedCharacter, this.generatedLorebook);
+            startImageGeneration(this.container, this.draft.character, this.draft.lorebook);
+
             // Reset the panel
-            this.generatedCharacter = null;
-            this.generatedLorebook = null;
+            this.draft = null;
             this.hidePreview();
             const textarea = /** @type {HTMLTextAreaElement} */ (
                 this.element?.querySelector('#character-description')
