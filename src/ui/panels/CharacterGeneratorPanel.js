@@ -133,11 +133,12 @@ export class CharacterGeneratorPanel {
             this.generatedCharacter = character;
 
             // Generate lorebook
-            const lorebook = await this.container.generateLorebook.execute(description);
+            const rawCount = this.container.configStore?.get('lorebookEntryCount', 'auto');
+            const entryCount = rawCount === 'auto' ? undefined : parseInt(rawCount, 10);
+            const lorebook = await this.container.generateLorebook.execute(description, { entryCount });
             this.generatedLorebook = lorebook;
 
             this.container?.logger?.info('Generation complete');
-
             // Check auto-save setting
             const autoSaveCheckbox = /** @type {HTMLInputElement} */ (
                 this.element?.querySelector('#auto-save-checkbox')
@@ -432,7 +433,6 @@ export class CharacterGeneratorPanel {
 
             // Fire background image generation; does not block the save path.
             startImageGeneration(this.container, this.generatedCharacter, this.generatedLorebook);
-
             // Reset the panel
             this.generatedCharacter = null;
             this.generatedLorebook = null;
