@@ -188,6 +188,7 @@ export class CharacterGeneratorPanel {
 
         this.setCharacterFieldValues();
         this.setLorebookEntryValues();
+        CharacterPreviewBuilder.attachStatsListeners(previewContent);
         this.attachPreviewEditListeners();
         new CharacterFieldRegenerator(this.element, this.container, this).attach();
     }
