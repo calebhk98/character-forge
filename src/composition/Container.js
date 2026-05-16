@@ -23,6 +23,7 @@ import { GenerateCharacterFromDescription } from '../application/use-cases/Gener
 import { GenerateLorebookForCharacter } from '../application/use-cases/GenerateLorebookForCharacter.js';
 import { SaveCharacterToTavern } from '../application/use-cases/SaveCharacterToTavern.js';
 import { RefineCharacterField } from '../application/use-cases/RefineCharacterField.js';
+import { LoadCharacterForEditing } from '../application/use-cases/LoadCharacterForEditing.js';
 import { GenerateCharacterImages } from '../application/use-cases/GenerateCharacterImages.js';
 import { UploadGreetingImages } from '../application/use-cases/UploadGreetingImages.js';
 
@@ -115,6 +116,7 @@ export function buildContainer(config, stContext) {
     const generateLorebook = new GenerateLorebookForCharacter(promptBuilder, llm, logger);
     const saveCharacter = new SaveCharacterToTavern(formatter, charRepository, notifier, logger);
     const refineCharacterField = new RefineCharacterField(promptBuilder, llm, logger);
+    const loadCharacterForEditing = new LoadCharacterForEditing(charRepository, logger);
     const generateCharacterImages = new GenerateCharacterImages(
         imageGenerator, charRepository, formatter, configStore, logger, notifier,
     );
@@ -135,6 +137,7 @@ export function buildContainer(config, stContext) {
         generateLorebook,
         saveCharacter,
         refineCharacterField,
+        loadCharacterForEditing,
         generateCharacterImages,
         uploadGreetingImages,
     };
