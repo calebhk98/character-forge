@@ -45,7 +45,7 @@ function lastFetchOptions() {
     return /** @type {any} */ (globalThis.fetch).mock.calls[0][1];
 }
 
-describe('SillyTavernCharacterRepository', () => {
+describe('SillyTavernCharacterRepository - save()', () => {
     beforeEach(() => { /** @type {any} */ (globalThis).fetch = vi.fn(); });
     afterEach(() => { vi.restoreAllMocks(); });
 
@@ -124,7 +124,6 @@ describe('SillyTavernCharacterRepository', () => {
     it('should use provided pngBytes as the image carrier', async () => {
         /** @type {any} */ (globalThis).fetch.mockResolvedValue(mockOkResponse('portrait.png'));
 
-        // Provide a valid placeholder PNG so embedJsonInPng can parse it
         const { createPlaceholderPng } = await import('../../../src/infrastructure/utils/PngChunkWriter.js');
         const pngBytes = createPlaceholderPng();
 
@@ -133,5 +132,146 @@ describe('SillyTavernCharacterRepository', () => {
 
         const avatarBlob = lastFetchOptions().body.get('avatar');
         expect(avatarBlob.type).toBe('image/png');
+    });
+});
+
+describe('SillyTavernCharacterRepository - list()', () => {
+    beforeEach(() => { /** @type {any} */ (globalThis).fetch = vi.fn(); });
+    afterEach(() => { vi.restoreAllMocks(); });
+
+    it('should POST to /api/characters/all and return sorted stubs', async () => {
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue({
+            ok: true,
+            json: vi.fn().mockResolvedValue([
+                { name: 'Zara', avatar: 'Zara.png' },
+                { name: 'Alice', avatar: 'Alice.png' },
+            ]),
+        });
+
+        const result = await new SillyTavernCharacterRepository(mockContext()).list();
+
+        const [url, opts] = /** @type {any} */ (globalThis).fetch.mock.calls[0];
+        expect(url).toBe('/api/characters/all');
+        expect(opts.method).toBe('POST');
+        expect(JSON.parse(opts.body)).toEqual({ reset_cache: false });
+
+        expect(result).toEqual([
+            { name: 'Alice', avatarUrl: 'Alice.png' },
+            { name: 'Zara', avatarUrl: 'Zara.png' },
+        ]);
+    });
+
+    it('should return an empty array when no characters exist', async () => {
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue({
+            ok: true,
+            json: vi.fn().mockResolvedValue([]),
+        });
+
+        const result = await new SillyTavernCharacterRepository(mockContext()).list();
+        expect(result).toEqual([]);
+    });
+
+    it('should include CSRF token in list request headers', async () => {
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue({
+            ok: true,
+            json: vi.fn().mockResolvedValue([]),
+        });
+        const ctx = mockContext();
+        await new SillyTavernCharacterRepository(ctx).list();
+
+        expect(lastFetchOptions().headers['X-CSRF-Token']).toBe('test-token');
+    });
+
+    it('should throw when list response is not ok', async () => {
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue({ ok: false, statusText: 'Forbidden' });
+        await expect(
+            new SillyTavernCharacterRepository(mockContext()).list(),
+        ).rejects.toThrow('Failed to list characters: Forbidden');
+    });
+
+    it('should propagate network errors on list', async () => {
+        const err = new Error('Network request failed');
+        /** @type {any} */ (globalThis).fetch.mockRejectedValue(err);
+        await expect(
+            new SillyTavernCharacterRepository(mockContext()).list(),
+        ).rejects.toBe(err);
+    });
+});
+
+describe('SillyTavernCharacterRepository - load()', () => {
+    beforeEach(() => { /** @type {any} */ (globalThis).fetch = vi.fn(); });
+    afterEach(() => { vi.restoreAllMocks(); });
+
+    it('should GET /api/characters?avatar_url=<encoded> and return parsed JSON', async () => {
+        const card = mockCard('Alice');
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue({
+            ok: true,
+            json: vi.fn().mockResolvedValue(card),
+        });
+
+        const result = await new SillyTavernCharacterRepository(mockContext()).load('Alice.png');
+
+        const [url, opts] = /** @type {any} */ (globalThis).fetch.mock.calls[0];
+        expect(url).toBe('/api/characters?avatar_url=Alice.png');
+        expect(opts.method).toBe('GET');
+        expect(result).toEqual(card);
+    });
+
+    it('should percent-encode special characters in avatar_url', async () => {
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue({
+            ok: true,
+            json: vi.fn().mockResolvedValue(mockCard('My Char')),
+        });
+
+        await new SillyTavernCharacterRepository(mockContext()).load('My Char.png');
+
+        const [url] = /** @type {any} */ (globalThis).fetch.mock.calls[0];
+        expect(url).toBe('/api/characters?avatar_url=My%20Char.png');
+    });
+
+    it('should include CSRF token in load request headers', async () => {
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue({
+            ok: true,
+            json: vi.fn().mockResolvedValue(mockCard('Alice')),
+        });
+        const ctx = mockContext();
+        await new SillyTavernCharacterRepository(ctx).load('Alice.png');
+
+        expect(lastFetchOptions().headers['X-CSRF-Token']).toBe('test-token');
+    });
+
+    it('should throw when load response is 404', async () => {
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue({ ok: false, statusText: 'Not Found' });
+        await expect(
+            new SillyTavernCharacterRepository(mockContext()).load('missing.png'),
+        ).rejects.toThrow('Failed to load character: Not Found');
+    });
+
+    it('should propagate malformed JSON error from response', async () => {
+        const parseError = new SyntaxError('Unexpected token < in JSON');
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue({
+            ok: true,
+            json: vi.fn().mockRejectedValue(parseError),
+        });
+        await expect(
+            new SillyTavernCharacterRepository(mockContext()).load('broken.png'),
+        ).rejects.toBe(parseError);
+    });
+
+    it('should propagate network errors on load', async () => {
+        const err = new Error('Network request failed');
+        /** @type {any} */ (globalThis).fetch.mockRejectedValue(err);
+        await expect(
+            new SillyTavernCharacterRepository(mockContext()).load('Alice.png'),
+        ).rejects.toBe(err);
+    });
+
+    it('should work with no context on load (empty headers)', async () => {
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue({
+            ok: true,
+            json: vi.fn().mockResolvedValue(mockCard('Alice')),
+        });
+        await new SillyTavernCharacterRepository(null).load('Alice.png');
+        expect(lastFetchOptions().headers).toEqual({});
     });
 });
