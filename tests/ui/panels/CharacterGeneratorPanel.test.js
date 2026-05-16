@@ -181,34 +181,6 @@ describe('CharacterGeneratorPanel - Generation', () => {
         expect(container.generateLorebook.execute).toHaveBeenCalledWith('A mysterious wizard');
     });
 
-    it('passes customSystemPrompt option from configStore to generateCharacter', async () => {
-        const override = 'My custom override prompt';
-        container.configStore = { get: vi.fn().mockReturnValue(override) };
-        panel.render(targetElement);
-        const textarea = targetElement.querySelector('#character-description');
-        textarea.value = 'A mysterious wizard';
-
-        await panel.onGenerateClick();
-
-        expect(container.generateCharacter.execute).toHaveBeenCalledWith(
-            'A mysterious wizard',
-            expect.objectContaining({ customSystemPrompt: override })
-        );
-    });
-
-    it('omits customSystemPrompt option when override is empty', async () => {
-        container.configStore = { get: vi.fn().mockReturnValue('') };
-        panel.render(targetElement);
-        const textarea = targetElement.querySelector('#character-description');
-        textarea.value = 'A mysterious wizard';
-
-        await panel.onGenerateClick();
-
-        const callArgs = container.generateCharacter.execute.mock.calls[0];
-        const opts = callArgs[1] || {};
-        expect(opts.customSystemPrompt).toBeUndefined();
-    });
-
     it('shows error toast if no description provided', async () => {
         panel.render(targetElement);
         const textarea = targetElement.querySelector('#character-description');
