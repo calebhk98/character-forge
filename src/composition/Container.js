@@ -13,10 +13,14 @@ import { DefaultPromptBuilder } from '../infrastructure/prompts/DefaultPromptBui
 import { ExtensionSettingsConfigStore } from '../infrastructure/config/ExtensionSettingsConfigStore.js';
 import { ConsoleLogger } from '../infrastructure/logging/ConsoleLogger.js';
 import { ToastrNotifier } from '../infrastructure/notifications/ToastrNotifier.js';
+import { CatboxImageHost } from '../infrastructure/images/CatboxImageHost.js';
+import { ConfigurableImageHost } from '../infrastructure/images/ConfigurableImageHost.js';
+import { MockImageHost } from '../infrastructure/images/MockImageHost.js';
 import { GenerateCharacterFromDescription } from '../application/use-cases/GenerateCharacterFromDescription.js';
 import { GenerateLorebookForCharacter } from '../application/use-cases/GenerateLorebookForCharacter.js';
 import { SaveCharacterToTavern } from '../application/use-cases/SaveCharacterToTavern.js';
 import { RefineCharacterField } from '../application/use-cases/RefineCharacterField.js';
+import { UploadGreetingImages } from '../application/use-cases/UploadGreetingImages.js';
 
 /**
  * @typedef {(cfg: object, ctx: object) => object} LlmFactory
@@ -42,6 +46,16 @@ const FORMATTER_FACTORIES = {
 };
 
 /**
+ * Factory table for image host delegates, keyed by provider name.
+ *
+ * @type {{[key: string]: Function}}
+ */
+const IMAGE_HOST_DELEGATES = {
+    'catbox': () => new CatboxImageHost(),
+    'mock': () => new MockImageHost(),
+};
+
+/**
  * Build and wire all application services from config.
  *
  * @param {object} config configuration object with defaults applied
@@ -62,11 +76,17 @@ export function buildContainer(config, stContext) {
     const logger = new ConsoleLogger('CharacterForge');
     const notifier = new ToastrNotifier(stContext);
 
+    const imageDelegates = Object.fromEntries(
+        Object.entries(IMAGE_HOST_DELEGATES).map(([k, factory]) => [k, factory()]),
+    );
+    const imageHost = new ConfigurableImageHost(configStore, imageDelegates);
+
     // Wire use cases
     const generateCharacter = new GenerateCharacterFromDescription(promptBuilder, llm, logger);
     const generateLorebook = new GenerateLorebookForCharacter(promptBuilder, llm, logger);
     const saveCharacter = new SaveCharacterToTavern(formatter, charRepository, notifier, logger);
     const refineCharacterField = new RefineCharacterField(promptBuilder, llm, logger);
+    const uploadGreetingImages = new UploadGreetingImages(imageHost, logger);
 
     return {
         llm,
@@ -77,9 +97,11 @@ export function buildContainer(config, stContext) {
         configStore,
         logger,
         notifier,
+        imageHost,
         generateCharacter,
         generateLorebook,
         saveCharacter,
         refineCharacterField,
+        uploadGreetingImages,
     };
 }
