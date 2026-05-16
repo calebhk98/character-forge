@@ -4,16 +4,16 @@
  * character cards from the LLM. Drop-in replacement for DefaultPromptBuilder.
  */
 
-import { IPromptBuilder } from '../../application/ports/IPromptBuilder.js';
+import { BasePromptBuilder } from './BasePromptBuilder.js';
 import { GenerationRequest } from '../../domain/value-objects/GenerationRequest.js';
 
 /**
  * Advanced prompt builder. Adds chain-of-thought reasoning, explicit word-count
  * targets per field, and stricter output constraints on top of the default strategy.
  *
- * @augments IPromptBuilder
+ * @augments BasePromptBuilder
  */
-export class AdvancedPromptBuilder extends IPromptBuilder {
+export class AdvancedPromptBuilder extends BasePromptBuilder {
     /**
      * Construct the builder.
      */
@@ -28,6 +28,7 @@ export class AdvancedPromptBuilder extends IPromptBuilder {
      * @param {string} description - character or lorebook concept
      * @param {object} [options] - generation options
      * @param {number} [options.entryCount] - target lorebook entries
+     * @param {string} [options.groupDescription] - parent group concept; when set, adds group_only_greetings field
      * @returns {GenerationRequest} structured generation request
      */
     build(description, options = {}) {
@@ -194,27 +195,15 @@ Return ONLY a valid JSON object with the "entries" array. No additional text.`;
     }
 
     /**
-     * Build a refinement request that rewrites a single character field.
+     * Return the system prompt for field refinement (chain-of-thought style).
      *
-     * @param {string} description - original character concept
-     * @param {string} fieldName - character property to rewrite
-     * @param {string} currentValue - existing field text shown to the model
-     * @param {string} [feedback] - optional user direction for the rewrite
-     * @returns {GenerationRequest} structured refinement request
+     * @returns {string} system prompt text
      */
-    buildRefinementRequest(description, fieldName, currentValue, feedback = '') {
-        const systemPrompt = 'You are an expert character creator for SillyTavern. ' +
+    _buildRefinementSystemPrompt() {
+        return 'You are an expert character creator for SillyTavern. ' +
             'Think step by step: first identify what is weak in the current value, ' +
             'then plan the rewrite, then write only the final result. ' +
             'Return ONLY the rewritten field text — no JSON, no labels, no explanation, no reasoning.';
-        let userPrompt = `Character concept: "${description}"\n\n`;
-        userPrompt += `Field to rewrite: ${fieldName}\n\n`;
-        userPrompt += `Current value:\n${currentValue}\n\n`;
-        if (feedback && feedback.trim()) {
-            userPrompt += `Feedback: ${feedback.trim()}\n\n`;
-        }
-        userPrompt += `Rewrite the "${fieldName}" field only. Return just the new text, nothing else.`;
-        return new GenerationRequest({ systemPrompt, userPrompt });
     }
 
     /**

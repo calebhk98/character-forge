@@ -8,6 +8,26 @@ import { IPromptBuilder } from '../../../src/application/ports/IPromptBuilder.js
 import { ILlmProvider } from '../../../src/application/ports/ILlmProvider.js';
 import { ILogger } from '../../../src/application/ports/ILogger.js';
 import { GenerationRequest } from '../../../src/domain/value-objects/GenerationRequest.js';
+import { IJsonRepair } from '../../../src/application/ports/IJsonRepair.js';
+import { repairJson } from '../../../src/infrastructure/utils/JsonRepair.js';
+
+/**
+ * Fake JSON repair adapter for testing. Uses the real repair implementation
+ * so JSON-repair tests exercise the actual repair logic.
+ *
+ * @augments IJsonRepair
+ */
+class FakeJsonRepair extends IJsonRepair {
+    /**
+     * Repair malformed JSON using the real utility.
+     *
+     * @param {string} input - raw LLM output
+     * @returns {object|null} parsed object or null
+     */
+    repair(input) {
+        return repairJson(input);
+    }
+}
 
 /**
  * Fake prompt builder that records calls.
@@ -136,7 +156,7 @@ class FakeLogger extends ILogger {
 
 describe('DecomposeGroupDescription - happy path', () => {
     it('should return an array of character descriptions', async () => {
-        const useCase = new DecomposeGroupDescription(new FakePromptBuilder(), new FakeLlmProvider(), new FakeLogger());
+        const useCase = new DecomposeGroupDescription(new FakePromptBuilder(), new FakeLlmProvider(), new FakeLogger(), new FakeJsonRepair());
         const result = await useCase.execute('A dad who raises 3 superpowered daughters');
 
         expect(Array.isArray(result)).toBe(true);
@@ -147,7 +167,7 @@ describe('DecomposeGroupDescription - happy path', () => {
 
     it('should call prompt builder with the group description', async () => {
         const promptBuilder = new FakePromptBuilder();
-        const useCase = new DecomposeGroupDescription(promptBuilder, new FakeLlmProvider(), new FakeLogger());
+        const useCase = new DecomposeGroupDescription(promptBuilder, new FakeLlmProvider(), new FakeLogger(), new FakeJsonRepair());
         await useCase.execute('A family of four adventurers');
 
         expect(promptBuilder.lastGroupDescription).toBe('A family of four adventurers');
@@ -155,7 +175,7 @@ describe('DecomposeGroupDescription - happy path', () => {
 
     it('should call the LLM with the request from the prompt builder', async () => {
         const llmProvider = new FakeLlmProvider();
-        const useCase = new DecomposeGroupDescription(new FakePromptBuilder(), llmProvider, new FakeLogger());
+        const useCase = new DecomposeGroupDescription(new FakePromptBuilder(), llmProvider, new FakeLogger(), new FakeJsonRepair());
         await useCase.execute('A family of four adventurers');
 
         expect(llmProvider.lastRequest).toBeDefined();
@@ -164,7 +184,7 @@ describe('DecomposeGroupDescription - happy path', () => {
 
     it('should pass options to the prompt builder', async () => {
         const promptBuilder = new FakePromptBuilder();
-        const useCase = new DecomposeGroupDescription(promptBuilder, new FakeLlmProvider(), new FakeLogger());
+        const useCase = new DecomposeGroupDescription(promptBuilder, new FakeLlmProvider(), new FakeLogger(), new FakeJsonRepair());
         const options = { maxCharacters: 5 };
         await useCase.execute('A team', options);
 
@@ -175,28 +195,28 @@ describe('DecomposeGroupDescription - happy path', () => {
 describe('DecomposeGroupDescription - error handling', () => {
     it('should throw when LLM returns non-array characters field', async () => {
         const llmProvider = new FakeLlmProvider(JSON.stringify({ characters: 'not an array' }));
-        const useCase = new DecomposeGroupDescription(new FakePromptBuilder(), llmProvider, new FakeLogger());
+        const useCase = new DecomposeGroupDescription(new FakePromptBuilder(), llmProvider, new FakeLogger(), new FakeJsonRepair());
 
         await expect(useCase.execute('A family')).rejects.toThrow();
     });
 
     it('should throw when LLM returns empty characters array', async () => {
         const llmProvider = new FakeLlmProvider(JSON.stringify({ characters: [] }));
-        const useCase = new DecomposeGroupDescription(new FakePromptBuilder(), llmProvider, new FakeLogger());
+        const useCase = new DecomposeGroupDescription(new FakePromptBuilder(), llmProvider, new FakeLogger(), new FakeJsonRepair());
 
         await expect(useCase.execute('A family')).rejects.toThrow();
     });
 
     it('should throw when LLM returns invalid JSON', async () => {
         const llmProvider = new FakeLlmProvider('this is not json at all!!!');
-        const useCase = new DecomposeGroupDescription(new FakePromptBuilder(), llmProvider, new FakeLogger());
+        const useCase = new DecomposeGroupDescription(new FakePromptBuilder(), llmProvider, new FakeLogger(), new FakeJsonRepair());
 
         await expect(useCase.execute('A family')).rejects.toThrow();
     });
 
     it('should throw when all entries are filtered out', async () => {
         const llmProvider = new FakeLlmProvider(JSON.stringify({ characters: [null, 42, ''] }));
-        const useCase = new DecomposeGroupDescription(new FakePromptBuilder(), llmProvider, new FakeLogger());
+        const useCase = new DecomposeGroupDescription(new FakePromptBuilder(), llmProvider, new FakeLogger(), new FakeJsonRepair());
 
         await expect(useCase.execute('A group')).rejects.toThrow();
     });
@@ -206,7 +226,7 @@ describe('DecomposeGroupDescription - JSON repair', () => {
     it('should repair malformed JSON with markdown code fences', async () => {
         const malformedJson = `\`\`\`json\n${JSON.stringify({ characters: ['Char A', 'Char B'] })}\n\`\`\``;
         const llmProvider = new FakeLlmProvider(malformedJson);
-        const useCase = new DecomposeGroupDescription(new FakePromptBuilder(), llmProvider, new FakeLogger());
+        const useCase = new DecomposeGroupDescription(new FakePromptBuilder(), llmProvider, new FakeLogger(), new FakeJsonRepair());
         const result = await useCase.execute('A duo');
 
         expect(result).toEqual(['Char A', 'Char B']);
@@ -216,7 +236,7 @@ describe('DecomposeGroupDescription - JSON repair', () => {
         const llmProvider = new FakeLlmProvider(
             JSON.stringify({ characters: ['Valid character', null, 42, 'Another valid', ''] }),
         );
-        const useCase = new DecomposeGroupDescription(new FakePromptBuilder(), llmProvider, new FakeLogger());
+        const useCase = new DecomposeGroupDescription(new FakePromptBuilder(), llmProvider, new FakeLogger(), new FakeJsonRepair());
         const result = await useCase.execute('A mixed group');
 
         expect(result).toEqual(['Valid character', 'Another valid']);

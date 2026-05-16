@@ -70,6 +70,8 @@ export class ExtensionSettingsConfigStore extends IConfigStore {
         extSettings[this.moduleName][key] = value;
         const saveSettingsDebounced =
             ctx?.saveSettingsDebounced ?? globalThis.saveSettingsDebounced;
-        await saveSettingsDebounced?.();
+        if (saveSettingsDebounced) {
+            await saveSettingsDebounced();
+        }
     }
 }

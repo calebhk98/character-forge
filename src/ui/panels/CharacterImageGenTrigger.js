@@ -19,5 +19,5 @@ export function startImageGeneration(container, character, lorebook) {
     }
     container?.notifier?.info('Generating avatar in background…');
     container.generateCharacterImages.execute(character, lorebook)
-        .catch(() => { /* failures are logged inside the use case */ });
+        .catch((err) => container?.logger?.error('Background image generation failed', { error: err.message }));
 }
