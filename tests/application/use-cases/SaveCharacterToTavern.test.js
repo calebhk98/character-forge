@@ -43,7 +43,7 @@ function createCharacter(overrides = {}) {
     });
 }
 
-describe('SaveCharacterToTavern', () => {
+describe('SaveCharacterToTavern - construction', () => {
     it('should construct with dependencies', () => {
         const { useCase, mockFormatter, mockValidator, mockRepository, mockNotifier, mockLogger } = createMocks();
 
@@ -61,7 +61,9 @@ describe('SaveCharacterToTavern', () => {
         expect(useCase.execute).toBeDefined();
         expect(typeof useCase.execute).toBe('function');
     });
+});
 
+describe('SaveCharacterToTavern - execute', () => {
     it('should format character and save it', async () => {
         const mockCardJson = { spec: 'chara_card_v3', spec_version: '3.0', data: { name: 'TestChar' } };
         const { useCase, mockFormatter, mockRepository, mockNotifier } = createMocks({
@@ -85,7 +87,6 @@ describe('SaveCharacterToTavern', () => {
 
         const character = createCharacter();
         const lorebook = new Lorebook({ name: 'TestLore' });
-
         const result = await useCase.execute(character, lorebook);
 
         expect(mockFormatter.format).toHaveBeenCalledWith(character, lorebook);
@@ -93,6 +94,19 @@ describe('SaveCharacterToTavern', () => {
         expect(result).toBe('test-char-id');
     });
 
+    it('should handle save errors gracefully', async () => {
+        const error = new Error('Network error');
+        const { useCase, mockLogger, mockNotifier } = createMocks({
+            repository: { save: vi.fn().mockRejectedValue(error) },
+        });
+
+        await expect(useCase.execute(createCharacter())).rejects.toThrow('Network error');
+        expect(mockLogger.error).toHaveBeenCalled();
+        expect(mockNotifier.error).toHaveBeenCalled();
+    });
+});
+
+describe('SaveCharacterToTavern - validation', () => {
     it('should call validator with the formatted card JSON', async () => {
         const mockCardJson = { spec: 'chara_card_v3', spec_version: '3.0', data: { name: 'TestChar' } };
         const mockValidator = { validate: vi.fn() };
@@ -137,18 +151,5 @@ describe('SaveCharacterToTavern', () => {
 
         await expect(useCase.execute(createCharacter())).rejects.toThrow();
         expect(mockNotifier.error).toHaveBeenCalledWith(expect.stringContaining('Card failed V3 spec validation'));
-    });
-
-    it('should handle save errors gracefully', async () => {
-        const error = new Error('Network error');
-        const { useCase, mockLogger, mockNotifier } = createMocks({
-            repository: { save: vi.fn().mockRejectedValue(error) },
-        });
-
-        const character = createCharacter();
-
-        await expect(useCase.execute(character)).rejects.toThrow('Network error');
-        expect(mockLogger.error).toHaveBeenCalled();
-        expect(mockNotifier.error).toHaveBeenCalled();
     });
 });
