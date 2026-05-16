@@ -468,3 +468,4 @@ describe('CharacterGeneratorPanel - Editable Preview', () => {
         expect(savedLorebook.entries[0].content).toBe('Edited content');
     });
 });
+
