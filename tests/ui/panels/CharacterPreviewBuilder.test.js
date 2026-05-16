@@ -74,7 +74,7 @@ describe('CharacterPreviewBuilder.buildFieldHtml - stats span', () => {
         const html = builder.buildFieldHtml('edit-personality', 'Personality', 'personality', false, 3);
         const div = document.createElement('div');
         div.innerHTML = html;
-        const statsEl = div.querySelector('.preview-field .field-stats');
+        const statsEl = /** @type {HTMLElement|null} */ (div.querySelector('.preview-field .field-stats'));
         expect(statsEl).not.toBeNull();
         expect(statsEl?.dataset.for).toBe('edit-personality');
     });

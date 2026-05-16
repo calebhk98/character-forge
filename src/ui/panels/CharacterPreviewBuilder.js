@@ -29,7 +29,8 @@ export class CharacterPreviewBuilder {
     }
 
     /**
-     * Build HTML for a single preview field with an inline ↺ regenerate control.
+     * Build HTML for a single preview field with an inline ↺ regenerate control
+     * and a stats span that shows word count and token estimate.
      *
      * @param {string} id - element id for the input or textarea
      * @param {string} label - visible field label text
@@ -46,8 +47,59 @@ export class CharacterPreviewBuilder {
             '<input class="regen-feedback" placeholder="What to change (optional)..."/>' +
             `<button class="regen-confirm" data-field="${fieldName}">Rewrite</button>` +
             `<button class="regen-cancel" data-field="${fieldName}">×</button></div>`;
+        const stats = `<span class="field-stats" data-for="${id}"></span>`;
         return `<div class="preview-field"><label for="${id}"><strong>${label}:</strong></label>` +
-            `<button class="regen-btn" data-field="${fieldName}">↺</button>${regenForm}${ctl}</div>`;
+            `<button class="regen-btn" data-field="${fieldName}">↺</button>${regenForm}${ctl}${stats}</div>`;
+    }
+
+    /**
+     * Compute word count and rough token estimate for a text string.
+     * Token estimate uses the words × 1.3 heuristic.
+     *
+     * @param {string} text - text to analyse
+     * @returns {{ words: number, tokens: number }} computed stats
+     */
+    static computeStats(text) {
+        if (!text || !text.trim()) {
+            return { words: 0, tokens: 0 };
+        }
+        const words = text.trim().split(/\s+/).length;
+        const tokens = Math.round(words * 1.3);
+        return { words, tokens };
+    }
+
+    /**
+     * Update a stats span element based on the current value of its field.
+     *
+     * @param {HTMLInputElement|HTMLTextAreaElement} input - the field element
+     * @param {Element} statsEl - the paired stats span
+     */
+    static updateStats(input, statsEl) {
+        const { words, tokens } = CharacterPreviewBuilder.computeStats(input.value);
+        statsEl.textContent = `${words} words · ~${tokens} tokens`;
+        statsEl.classList.toggle('field-stats--short', words > 0 && words < 50);
+        statsEl.classList.toggle('field-stats--long', words > 500);
+    }
+
+    /**
+     * Attach input event listeners to all fields that have a paired stats span,
+     * and initialise their displayed counts from the current field values.
+     *
+     * @param {HTMLElement} container - element containing the rendered preview HTML
+     */
+    static attachStatsListeners(container) {
+        const statsEls = container.querySelectorAll('.field-stats[data-for]');
+        for (const statsEl of statsEls) {
+            const id = /** @type {HTMLElement} */ (statsEl).dataset.for;
+            const input = /** @type {HTMLInputElement|HTMLTextAreaElement|null} */ (
+                container.querySelector(`#${id}`)
+            );
+            if (!input) {
+                continue;
+            }
+            CharacterPreviewBuilder.updateStats(input, statsEl);
+            input.addEventListener('input', () => CharacterPreviewBuilder.updateStats(input, statsEl));
+        }
     }
 
     /**
