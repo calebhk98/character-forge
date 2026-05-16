@@ -6,7 +6,6 @@
 
 import { Lorebook } from '../../domain/entities/Lorebook.js';
 import { LorebookEntry } from '../../domain/entities/LorebookEntry.js';
-import { repairJson } from '../../infrastructure/utils/JsonRepair.js';
 
 /**
  * Generate a lorebook for a character.
@@ -18,11 +17,13 @@ export class GenerateLorebookForCharacter {
      * @param {import('../ports/IPromptBuilder.js').IPromptBuilder} promptBuilder - port for building generation requests
      * @param {import('../ports/ILlmProvider.js').ILlmProvider} llmProvider - port for LLM text generation
      * @param {import('../ports/ILogger.js').ILogger} logger - port for diagnostic logging
+     * @param {import('../ports/IJsonRepair.js').IJsonRepair} jsonRepair - port for JSON repair
      */
-    constructor(promptBuilder, llmProvider, logger) {
+    constructor(promptBuilder, llmProvider, logger, jsonRepair) {
         this.promptBuilder = promptBuilder;
         this.llmProvider = llmProvider;
         this.logger = logger;
+        this.jsonRepair = jsonRepair;
     }
 
     /**
@@ -42,13 +43,9 @@ export class GenerateLorebookForCharacter {
             let lorebookData;
             try {
                 lorebookData = JSON.parse(response);
-            } catch (error) {
-                this.logger.debug('Direct JSON parse failed, attempting repair', { error: error.message });
-                lorebookData = repairJson(response);
-                if (!lorebookData) {
-                    this.logger.error('Failed to parse or repair LLM response', { response, error: error.message });
-                    throw new Error('LLM returned invalid JSON and repair failed. Please try again.');
-                }
+            } catch (parseError) {
+                this.logger.debug('Direct JSON parse failed, attempting repair', { error: parseError.message });
+                lorebookData = this.jsonRepair.parseOrRepair(response, 'lorebook generation');
                 this.logger.info('Successfully repaired malformed JSON');
             }
 

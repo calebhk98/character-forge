@@ -9,6 +9,26 @@ import { ILlmProvider } from '../../../src/application/ports/ILlmProvider.js';
 import { ILogger } from '../../../src/application/ports/ILogger.js';
 import { GenerationRequest } from '../../../src/domain/value-objects/GenerationRequest.js';
 import { Lorebook } from '../../../src/domain/entities/Lorebook.js';
+import { IJsonRepair } from '../../../src/application/ports/IJsonRepair.js';
+import { repairJson } from '../../../src/infrastructure/utils/JsonRepair.js';
+
+/**
+ * Fake JSON repair adapter for testing. Uses the real repair implementation
+ * so JSON-repair tests exercise the actual repair logic.
+ *
+ * @augments IJsonRepair
+ */
+class FakeJsonRepair extends IJsonRepair {
+    /**
+     * Repair malformed JSON using the real utility.
+     *
+     * @param {string} input - raw LLM output
+     * @returns {object|null} parsed object or null
+     */
+    repair(input) {
+        return repairJson(input);
+    }
+}
 
 /**
  * Fake prompt builder for testing.
@@ -136,14 +156,14 @@ class FakeLogger extends ILogger {
 
 describe('GenerateSharedLorebook - happy path', () => {
     it('should return a Lorebook entity', async () => {
-        const useCase = new GenerateSharedLorebook(new FakePromptBuilder(), new FakeLlmProvider(), new FakeLogger());
+        const useCase = new GenerateSharedLorebook(new FakePromptBuilder(), new FakeLlmProvider(), new FakeLogger(), new FakeJsonRepair());
         const result = await useCase.execute('A team of heroes', ['Alice', 'Bob', 'Carol']);
         expect(result).toBeInstanceOf(Lorebook);
     });
 
     it('should call buildSharedLorebookRequest with group description and character names', async () => {
         const promptBuilder = new FakePromptBuilder();
-        const useCase = new GenerateSharedLorebook(promptBuilder, new FakeLlmProvider(), new FakeLogger());
+        const useCase = new GenerateSharedLorebook(promptBuilder, new FakeLlmProvider(), new FakeLogger(), new FakeJsonRepair());
         await useCase.execute('A family of four', ['Dad', 'Blossom', 'Bubbles', 'Buttercup']);
 
         expect(promptBuilder.lastGroupDescription).toBe('A family of four');
@@ -151,20 +171,20 @@ describe('GenerateSharedLorebook - happy path', () => {
     });
 
     it('should include entries from the LLM response', async () => {
-        const useCase = new GenerateSharedLorebook(new FakePromptBuilder(), new FakeLlmProvider(), new FakeLogger());
+        const useCase = new GenerateSharedLorebook(new FakePromptBuilder(), new FakeLlmProvider(), new FakeLogger(), new FakeJsonRepair());
         const lorebook = await useCase.execute('A team', ['A', 'B']);
         expect(lorebook.entries.length).toBe(3);
     });
 
     it('should use a higher default entry count than single-character lorebooks', async () => {
         const promptBuilder = new FakePromptBuilder();
-        const useCase = new GenerateSharedLorebook(promptBuilder, new FakeLlmProvider(), new FakeLogger());
+        const useCase = new GenerateSharedLorebook(promptBuilder, new FakeLlmProvider(), new FakeLogger(), new FakeJsonRepair());
         await useCase.execute('A team', ['A', 'B']);
         expect(promptBuilder.lastOptions.entryCount).toBeGreaterThan(10);
     });
 
     it('should name the lorebook after the group when LLM provides a name', async () => {
-        const useCase = new GenerateSharedLorebook(new FakePromptBuilder(), new FakeLlmProvider(), new FakeLogger());
+        const useCase = new GenerateSharedLorebook(new FakePromptBuilder(), new FakeLlmProvider(), new FakeLogger(), new FakeJsonRepair());
         const lorebook = await useCase.execute('A team', ['A', 'B']);
         expect(lorebook.name).toBe('Team Lorebook');
     });
@@ -173,14 +193,14 @@ describe('GenerateSharedLorebook - happy path', () => {
 describe('GenerateSharedLorebook - error handling', () => {
     it('should throw when LLM returns invalid JSON', async () => {
         const useCase = new GenerateSharedLorebook(
-            new FakePromptBuilder(), new FakeLlmProvider('not json'), new FakeLogger(),
+            new FakePromptBuilder(), new FakeLlmProvider('not json'), new FakeLogger(), new FakeJsonRepair(),
         );
         await expect(useCase.execute('A team', ['A'])).rejects.toThrow();
     });
 
     it('should throw when LLM response has no entries array', async () => {
         const useCase = new GenerateSharedLorebook(
-            new FakePromptBuilder(), new FakeLlmProvider(JSON.stringify({ name: 'Lorebook' })), new FakeLogger(),
+            new FakePromptBuilder(), new FakeLlmProvider(JSON.stringify({ name: 'Lorebook' })), new FakeLogger(), new FakeJsonRepair(),
         );
         await expect(useCase.execute('A team', ['A'])).rejects.toThrow();
     });
@@ -188,7 +208,7 @@ describe('GenerateSharedLorebook - error handling', () => {
     it('should repair markdown-wrapped JSON', async () => {
         const json = `\`\`\`json\n${JSON.stringify({ entries: [{ keys: ['x'], content: 'Content here.' }] })}\n\`\`\``;
         const useCase = new GenerateSharedLorebook(
-            new FakePromptBuilder(), new FakeLlmProvider(json), new FakeLogger(),
+            new FakePromptBuilder(), new FakeLlmProvider(json), new FakeLogger(), new FakeJsonRepair(),
         );
         const result = await useCase.execute('A team', ['A']);
         expect(result.entries.length).toBe(1);

@@ -10,6 +10,26 @@ import { ILogger } from '../../../src/application/ports/ILogger.js';
 import { GenerationRequest } from '../../../src/domain/value-objects/GenerationRequest.js';
 import { Lorebook } from '../../../src/domain/entities/Lorebook.js';
 import { LorebookEntry } from '../../../src/domain/entities/LorebookEntry.js';
+import { IJsonRepair } from '../../../src/application/ports/IJsonRepair.js';
+import { repairJson } from '../../../src/infrastructure/utils/JsonRepair.js';
+
+/**
+ * Fake JSON repair adapter for testing. Uses the real repair implementation
+ * so JSON-repair tests exercise the actual repair logic.
+ *
+ * @augments IJsonRepair
+ */
+class FakeJsonRepair extends IJsonRepair {
+    /**
+     * Repair malformed JSON using the real utility.
+     *
+     * @param {string} input - raw LLM output
+     * @returns {object|null} parsed object or null
+     */
+    repair(input) {
+        return repairJson(input);
+    }
+}
 
 /**
  * Fake prompt builder for testing.
@@ -145,7 +165,7 @@ describe('GenerateLorebookForCharacter - Core Functionality', () => {
         const promptBuilder = new FakePromptBuilder();
         const llmProvider = new FakeLlmProvider();
         const logger = new FakeLogger();
-        const useCase = new GenerateLorebookForCharacter(promptBuilder, llmProvider, logger);
+        const useCase = new GenerateLorebookForCharacter(promptBuilder, llmProvider, logger, new FakeJsonRepair());
         const lorebook = await useCase.execute('A brave knight');
         expect(lorebook).toBeInstanceOf(Lorebook);
         expect(lorebook.entries).toHaveLength(3);
@@ -160,7 +180,7 @@ describe('GenerateLorebookForCharacter - Core Functionality', () => {
         const promptBuilder = new FakePromptBuilder();
         const llmProvider = new FakeLlmProvider('{ invalid }');
         const logger = new FakeLogger();
-        const useCase = new GenerateLorebookForCharacter(promptBuilder, llmProvider, logger);
+        const useCase = new GenerateLorebookForCharacter(promptBuilder, llmProvider, logger, new FakeJsonRepair());
         await expect(useCase.execute('A brave knight')).rejects.toThrow();
     });
 
@@ -171,7 +191,7 @@ describe('GenerateLorebookForCharacter - Core Functionality', () => {
         const promptBuilder = new FakePromptBuilder();
         const llmProvider = new FakeLlmProvider(JSON.stringify({ name: 'Lorebook' }));
         const logger = new FakeLogger();
-        const useCase = new GenerateLorebookForCharacter(promptBuilder, llmProvider, logger);
+        const useCase = new GenerateLorebookForCharacter(promptBuilder, llmProvider, logger, new FakeJsonRepair());
         await expect(useCase.execute('A brave knight')).rejects.toThrow();
     });
 
@@ -188,7 +208,7 @@ describe('GenerateLorebookForCharacter - Core Functionality', () => {
         const promptBuilder = new FakePromptBuilder();
         const llmProvider = new FakeLlmProvider(twoEntriesResponse);
         const logger = new FakeLogger();
-        const useCase = new GenerateLorebookForCharacter(promptBuilder, llmProvider, logger);
+        const useCase = new GenerateLorebookForCharacter(promptBuilder, llmProvider, logger, new FakeJsonRepair());
         const options = { entryCount: 2 };
         const lorebook = await useCase.execute('A knight', options);
         expect(promptBuilder.lastDescription).toBe('A knight');
@@ -203,7 +223,7 @@ describe('GenerateLorebookForCharacter - Core Functionality', () => {
         const promptBuilder = new FakePromptBuilder();
         const llmProvider = new FakeLlmProvider();
         const logger = new FakeLogger();
-        const useCase = new GenerateLorebookForCharacter(promptBuilder, llmProvider, logger);
+        const useCase = new GenerateLorebookForCharacter(promptBuilder, llmProvider, logger, new FakeJsonRepair());
         await useCase.execute('A brave knight');
         expect(promptBuilder.lastDescription).toBe('A brave knight');
         expect(llmProvider.lastRequest).toBeDefined();
@@ -226,7 +246,7 @@ describe('GenerateLorebookForCharacter - JSON Repair', () => {
 \`\`\``;
         const llmProvider = new FakeLlmProvider(malformedJson);
         const logger = new FakeLogger();
-        const useCase = new GenerateLorebookForCharacter(promptBuilder, llmProvider, logger);
+        const useCase = new GenerateLorebookForCharacter(promptBuilder, llmProvider, logger, new FakeJsonRepair());
         const lorebook = await useCase.execute('A brave knight');
         expect(lorebook).toBeInstanceOf(Lorebook);
         expect(lorebook.entries).toHaveLength(1);
@@ -244,7 +264,7 @@ describe('GenerateLorebookForCharacter - JSON Repair', () => {
         }).replace(/]/, ',]');
         const llmProvider = new FakeLlmProvider(jsonWithTrailingCommas);
         const logger = new FakeLogger();
-        const useCase = new GenerateLorebookForCharacter(promptBuilder, llmProvider, logger);
+        const useCase = new GenerateLorebookForCharacter(promptBuilder, llmProvider, logger, new FakeJsonRepair());
         const lorebook = await useCase.execute('A brave knight');
         expect(lorebook).toBeInstanceOf(Lorebook);
         expect(lorebook.entries).toHaveLength(1);
@@ -264,7 +284,7 @@ describe('GenerateLorebookForCharacter - Error Handling', () => {
         });
         const llmProvider = new FakeLlmProvider(invalidEntriesJson);
         const logger = new FakeLogger();
-        const useCase = new GenerateLorebookForCharacter(promptBuilder, llmProvider, logger);
+        const useCase = new GenerateLorebookForCharacter(promptBuilder, llmProvider, logger, new FakeJsonRepair());
         await expect(useCase.execute('A brave knight')).rejects.toThrow('Lorebook data invalid');
         const warnMessage = logger.messages.find((m) => m.level === 'warn');
         expect(warnMessage).toBeDefined();

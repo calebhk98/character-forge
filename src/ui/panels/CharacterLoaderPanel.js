@@ -77,7 +77,9 @@ export class CharacterLoaderPanel {
         });
 
         loaderDiv.querySelector('#refresh-characters-btn')?.addEventListener('click', () => {
-            this.refreshCharacterList(loaderDiv).catch(() => {});
+            this.refreshCharacterList(loaderDiv).catch((err) => {
+                this.container?.logger?.error('Character list refresh failed', { error: err.message });
+            });
         });
 
         loaderDiv.querySelector('#character-select')?.addEventListener('change', (e) => {
@@ -91,7 +93,9 @@ export class CharacterLoaderPanel {
         });
 
         loaderDiv.querySelector('#load-character-btn')?.addEventListener('click', () => {
-            this.onLoadClick(loaderDiv).catch(() => {});
+            this.onLoadClick(loaderDiv).catch((err) => {
+                this.container?.logger?.error('Character load failed', { error: err.message });
+            });
         });
     }
 

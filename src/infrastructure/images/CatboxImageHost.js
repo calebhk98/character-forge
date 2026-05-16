@@ -37,13 +37,13 @@ export class CatboxImageHost extends IImageHost {
         form.set('fileToUpload', blob);
 
         const response = await this.fetch(CATBOX_ENDPOINT, { method: 'POST', body: form });
+        const body = await response.text();
 
         if (!response.ok) {
-            const body = await response.text();
             throw new Error(`Catbox upload failed (${response.status}): ${body}`);
         }
 
-        return response.text();
+        return body;
     }
 
     /**
