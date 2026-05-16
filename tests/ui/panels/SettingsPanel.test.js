@@ -14,7 +14,6 @@ function createMockConfigStore() {
     const defaults = {
         promptTemplate: 'default',
         lorebookEntryCount: 'auto',
-        generationTemperature: 0.85,
         autoSaveOnGenerate: false,
         customSystemPromptOverride: '',
     };

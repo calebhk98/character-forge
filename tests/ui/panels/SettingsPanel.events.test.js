@@ -14,7 +14,6 @@ function createMockConfigStore() {
     const defaults = {
         promptTemplate: 'default',
         lorebookEntryCount: 'auto',
-        generationTemperature: 0.85,
         autoSaveOnGenerate: false,
         customSystemPromptOverride: '',
     };
@@ -76,23 +75,6 @@ describe('SettingsPanel - Select/Slider Changes', () => {
         expect(saved.value).toBe('advanced');
     });
 
-    it('should save generationTemperature on slider change', async () => {
-        let saved = {};
-        mockContainer.configStore.set = async (key, value) => {
-            saved = { key, value };
-        };
-
-        panel.render(mockElement);
-        const slider = /** @type {HTMLInputElement} */ (
-            mockElement.querySelector('#generation-temperature-slider')
-        );
-        slider.value = '0.75';
-        slider.dispatchEvent(new Event('change'));
-
-        await new Promise(resolve => setTimeout(resolve, 50));
-        expect(saved.key).toBe('generationTemperature');
-        expect(parseFloat(saved.value)).toBeCloseTo(0.75);
-    });
 });
 
 describe('SettingsPanel - Checkbox/Input Changes', () => {

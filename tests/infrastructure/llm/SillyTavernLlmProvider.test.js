@@ -35,7 +35,6 @@ describe('SillyTavernLlmProvider', () => {
         const request = new GenerationRequest({
             systemPrompt: 'You are a character creator.',
             userPrompt: 'Create a character.',
-            temperature: 0.85,
             maxTokens: 2048,
         });
 

@@ -128,14 +128,12 @@ export class CharacterGeneratorPanel {
         try {
             this.container?.logger?.info('Starting character generation', { descriptionLength: description.length });
 
-            const temperature = this.container.configStore?.get('generationTemperature', 0.85) ?? 0.85;
-
             // Generate character
-            const character = await this.container.generateCharacter.execute(description, { temperature });
+            const character = await this.container.generateCharacter.execute(description);
             this.generatedCharacter = character;
 
             // Generate lorebook
-            const lorebook = await this.container.generateLorebook.execute(description, { temperature });
+            const lorebook = await this.container.generateLorebook.execute(description);
             this.generatedLorebook = lorebook;
 
             this.container?.logger?.info('Generation complete');

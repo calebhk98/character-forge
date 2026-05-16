@@ -42,16 +42,6 @@ describe('DefaultPromptBuilder', () => {
 
 describe('DefaultPromptBuilder - Options', () => {
     /**
-     * Test that temperature is respected in the request.
-     */
-    it('should respect temperature option', () => {
-        const builder = new DefaultPromptBuilder();
-        const request = builder.build('A wise wizard', { temperature: 0.7 });
-
-        expect(request.temperature).toBe(0.7);
-    });
-
-    /**
      * Test that entryCount option is included in the user prompt.
      */
     it('should respect entryCount option', () => {
@@ -231,10 +221,4 @@ describe('DefaultPromptBuilder - Lorebook defaults', () => {
         expect(request.systemPrompt.toLowerCase()).toContain('keys');
     });
 
-    it('should use default temperature of 0.85 when not provided', () => {
-        const builder = new DefaultPromptBuilder();
-        const request = builder.build('A character', {});
-
-        expect(request.temperature).toBe(0.85);
-    });
 });

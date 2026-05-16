@@ -39,7 +39,6 @@ class FakePromptBuilder extends IPromptBuilder {
         return new GenerationRequest({
             systemPrompt: 'Generate a lorebook',
             userPrompt: `Create lorebook for: ${description}`,
-            temperature: 0.8,
         });
     }
 }
