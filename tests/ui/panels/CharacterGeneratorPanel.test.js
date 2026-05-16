@@ -177,14 +177,8 @@ describe('CharacterGeneratorPanel - Generation', () => {
 
         await panel.onGenerateClick();
 
-        expect(container.generateCharacter.execute).toHaveBeenCalledWith(
-            'A mysterious wizard',
-            expect.objectContaining({ temperature: 0.85 }),
-        );
-        expect(container.generateLorebook.execute).toHaveBeenCalledWith(
-            'A mysterious wizard',
-            expect.objectContaining({ temperature: 0.85 }),
-        );
+        expect(container.generateCharacter.execute).toHaveBeenCalledWith('A mysterious wizard');
+        expect(container.generateLorebook.execute).toHaveBeenCalledWith('A mysterious wizard');
     });
 
     it('shows error toast if no description provided', async () => {
