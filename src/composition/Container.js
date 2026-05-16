@@ -7,6 +7,7 @@
 import { SillyTavernLlmProvider } from '../infrastructure/llm/SillyTavernLlmProvider.js';
 import { MockLlmProvider } from '../infrastructure/llm/MockLlmProvider.js';
 import { CardV3Formatter } from '../infrastructure/formatters/CardV3Formatter.js';
+import { CardV3Validator } from '../infrastructure/validators/CardV3Validator.js';
 import { SillyTavernCharacterRepository } from '../infrastructure/repositories/SillyTavernCharacterRepository.js';
 import { SillyTavernLorebookRepository } from '../infrastructure/repositories/SillyTavernLorebookRepository.js';
 import { DefaultPromptBuilder } from '../infrastructure/prompts/DefaultPromptBuilder.js';
@@ -61,6 +62,15 @@ const FORMATTER_FACTORIES = {
 };
 
 /**
+ * Factory table for card validators, keyed by card format.
+ *
+ * @type {{[key: string]: Function}}
+ */
+const VALIDATOR_FACTORIES = {
+    'v3': () => new CardV3Validator(),
+};
+
+/**
  * Factory table for image generators.
  *
  * @type {{[key: string]: Function}}
@@ -97,6 +107,8 @@ export function buildContainer(config, stContext) {
     // @ts-ignore - factory return type matches port contract
     const formatter = FORMATTER_FACTORIES[config.cardFormat || 'v3']();
     // @ts-ignore - factory return type matches port contract
+    const validator = VALIDATOR_FACTORIES[config.cardFormat || 'v3']();
+    // @ts-ignore - factory return type matches port contract
     const promptBuilder = PROMPT_BUILDER_FACTORIES[config.promptTemplate || 'default']();
     const charRepository = new SillyTavernCharacterRepository(stContext);
     const lorebookRepository = new SillyTavernLorebookRepository(stContext);
@@ -114,7 +126,7 @@ export function buildContainer(config, stContext) {
     // Wire use cases
     const generateCharacter = new GenerateCharacterFromDescription(promptBuilder, llm, logger);
     const generateLorebook = new GenerateLorebookForCharacter(promptBuilder, llm, logger);
-    const saveCharacter = new SaveCharacterToTavern(formatter, charRepository, notifier, logger);
+    const saveCharacter = new SaveCharacterToTavern(formatter, validator, charRepository, notifier, logger);
     const refineCharacterField = new RefineCharacterField(promptBuilder, llm, logger);
     const loadCharacterForEditing = new LoadCharacterForEditing(charRepository, logger);
     const generateCharacterImages = new GenerateCharacterImages(
@@ -125,6 +137,7 @@ export function buildContainer(config, stContext) {
     return {
         llm,
         formatter,
+        validator,
         promptBuilder,
         charRepository,
         lorebookRepository,
