@@ -38,7 +38,6 @@ class FakePromptBuilder extends IPromptBuilder {
         return new GenerationRequest({
             systemPrompt: 'Generate a character',
             userPrompt: `Create character: ${description}`,
-            temperature: 0.8,
         });
     }
 }
@@ -198,7 +197,7 @@ describe('GenerateCharacterFromDescription - Core Functionality', () => {
         const logger = new FakeLogger();
 
         const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger);
-        const options = { temperature: 0.7 };
+        const options = { entryCount: 5 };
         await useCase.execute('A brave knight', options);
 
         expect(promptBuilder.lastDescription).toBe('A brave knight');

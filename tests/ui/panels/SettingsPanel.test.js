@@ -14,7 +14,6 @@ function createMockConfigStore() {
     const defaults = {
         promptTemplate: 'default',
         lorebookEntryCount: 'auto',
-        generationTemperature: 0.85,
         autoSaveOnGenerate: false,
         customSystemPromptOverride: '',
     };
@@ -63,7 +62,7 @@ describe('SettingsPanel', () => {
             expect(mockElement.querySelector('#settings-panel')).toBeDefined();
             expect(mockElement.querySelector('#prompt-template-select')).toBeDefined();
             expect(mockElement.querySelector('#lorebook-entry-count-input')).toBeDefined();
-            expect(mockElement.querySelector('#generation-temperature-slider')).toBeDefined();
+            expect(mockElement.querySelector('#generation-temperature-slider')).toBeNull();
             expect(mockElement.querySelector('#auto-save-checkbox')).toBeDefined();
             expect(mockElement.querySelector('#custom-system-prompt-textarea')).toBeDefined();
         });

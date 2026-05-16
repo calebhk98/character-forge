@@ -22,18 +22,7 @@ describe('GenerationRequest', () => {
             userPrompt: 'Create a character.',
         };
         const request = new GenerationRequest(data);
-        expect(request.temperature).toBeUndefined();
         expect(request.maxTokens).toBeUndefined();
-    });
-
-    it('should accept temperature field when provided', () => {
-        const data = {
-            systemPrompt: 'You are helpful.',
-            userPrompt: 'Create a character.',
-            temperature: 0.8,
-        };
-        const request = new GenerationRequest(data);
-        expect(request.temperature).toBe(0.8);
     });
 
     it('should accept maxTokens field when provided', () => {
@@ -50,11 +39,9 @@ describe('GenerationRequest', () => {
         const data = {
             systemPrompt: 'You are helpful.',
             userPrompt: 'Create a character.',
-            temperature: 0.9,
             maxTokens: 4096,
         };
         const request = new GenerationRequest(data);
-        expect(request.temperature).toBe(0.9);
         expect(request.maxTokens).toBe(4096);
     });
 });

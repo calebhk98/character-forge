@@ -31,7 +31,7 @@ class FakePromptBuilder extends IPromptBuilder {
      * @returns {GenerationRequest} request
      */
     build(description, _options = {}) {
-        return new GenerationRequest({ systemPrompt: 'build', userPrompt: description, temperature: 0.85 });
+        return new GenerationRequest({ systemPrompt: 'build', userPrompt: description });
     }
 
     /**
@@ -48,7 +48,6 @@ class FakePromptBuilder extends IPromptBuilder {
         return new GenerationRequest({
             systemPrompt: 'Rewrite one field',
             userPrompt: `Rewrite ${fieldName}: ${currentValue}`,
-            temperature: 0.85,
         });
     }
 }

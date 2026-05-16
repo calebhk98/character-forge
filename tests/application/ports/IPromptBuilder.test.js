@@ -13,7 +13,7 @@ describe('IPromptBuilder (port)', () => {
 
     it('should throw on base class build() with options', () => {
         const builder = new IPromptBuilder();
-        expect(() => builder.build('test description', { temperature: 0.8 })).toThrow('IPromptBuilder.build must be implemented by subclass');
+        expect(() => builder.build('test description', { entryCount: 5 })).toThrow('IPromptBuilder.build must be implemented by subclass');
     });
 
     it('should throw on base class buildRefinementRequest()', () => {

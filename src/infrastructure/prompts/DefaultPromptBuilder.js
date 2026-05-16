@@ -28,7 +28,6 @@ export class DefaultPromptBuilder extends IPromptBuilder {
      * @param {string} description - character or lorebook concept
      * @param {object} [options] - generation options
      * @param {number} [options.entryCount] - target lorebook entries
-     * @param {number} [options.temperature] - LLM temperature
      * @returns {GenerationRequest} structured generation request
      */
     build(description, options = {}) {
@@ -36,13 +35,8 @@ export class DefaultPromptBuilder extends IPromptBuilder {
         const userPrompt = options.entryCount
             ? this.buildLorebookUserPrompt(description, options)
             : this.buildUserPrompt(description, options);
-        const temperature = options.temperature ?? 0.85;
 
-        return new GenerationRequest({
-            systemPrompt,
-            userPrompt,
-            temperature,
-        });
+        return new GenerationRequest({ systemPrompt, userPrompt });
     }
 
     /**
@@ -200,7 +194,7 @@ Return ONLY a valid JSON object with the "entries" array. No additional text.`;
             userPrompt += `Feedback: ${feedback.trim()}\n\n`;
         }
         userPrompt += `Rewrite the "${fieldName}" field only. Return just the new text, nothing else.`;
-        return new GenerationRequest({ systemPrompt, userPrompt, temperature: 0.85 });
+        return new GenerationRequest({ systemPrompt, userPrompt });
     }
 
     /**

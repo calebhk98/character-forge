@@ -92,6 +92,7 @@ describe('ToastrNotifier - error deduplication', () => {
     });
 
     it('should reset after toast is dismissed and open a fresh one', () => {
+        /** @type {Function} */
         let onHidden;
         const { element: fakeToast } = makeFakeToast();
         // @ts-ignore

@@ -46,9 +46,11 @@ export function repairJson(input) {
         // Continue with repairs
     }
 
-    // Escape unescaped newlines within quoted strings
-    // This regex finds quoted strings and escapes literal newlines
-    json = json.replace(/"([^"]*?)"/g, (match, content) => {
+    // Escape unescaped newlines within quoted strings.
+    // The pattern (?:[^"\\]|\\.)* matches any char except " and \, or any
+    // backslash-escaped pair, so \" inside a string is not treated as the
+    // closing delimiter.
+    json = json.replace(/"((?:[^"\\]|\\.)*)"/g, (match, content) => {
         const escaped = content.replace(/\n/g, '\\n').replace(/\r/g, '\\r').replace(/\t/g, '\\t');
         return `"${escaped}"`;
     });
