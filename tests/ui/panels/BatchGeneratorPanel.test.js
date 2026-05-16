@@ -369,3 +369,51 @@ describe('BatchGeneratorPanel - shared lorebook generation', () => {
         expect(summary.textContent).toContain('saved');
     });
 });
+
+describe('BatchGeneratorPanel - creator_notes for group mode', () => {
+    it('should set creator_notes on each character when in group mode', async () => {
+        const container = createMockContainer();
+        const panel = new BatchGeneratorPanel(container);
+        const target = document.createElement('div');
+        panel.render(target);
+
+        target.querySelector('#group-description-input').value = 'A family of four heroes';
+        await panel.onDecomposeClick();
+        await panel.onGenerateAllClick();
+
+        const savedCalls = container.saveCharacter.execute.mock.calls;
+        for (const [character] of savedCalls) {
+            expect(typeof character.creator_notes).toBe('string');
+            expect(character.creator_notes.length).toBeGreaterThan(0);
+            expect(character.creator_notes).toContain('shared lorebook');
+        }
+    });
+
+    it('should include the group description in creator_notes', async () => {
+        const container = createMockContainer();
+        const panel = new BatchGeneratorPanel(container);
+        const target = document.createElement('div');
+        panel.render(target);
+
+        target.querySelector('#group-description-input').value = 'A family of four heroes';
+        await panel.onDecomposeClick();
+        await panel.onGenerateAllClick();
+
+        const [character] = container.saveCharacter.execute.mock.calls[0];
+        expect(character.creator_notes).toContain('A family of four heroes');
+    });
+
+    it('should NOT set creator_notes in list mode', async () => {
+        const container = createMockContainer();
+        const panel = new BatchGeneratorPanel(container);
+        const target = document.createElement('div');
+        panel.render(target);
+
+        target.querySelector('[data-tab="list"]').click();
+        target.querySelector('#list-descriptions-input').value = 'A lone knight';
+        await panel.onGenerateAllClick();
+
+        const [character] = container.saveCharacter.execute.mock.calls[0];
+        expect(character.creator_notes).toBeUndefined();
+    });
+});
