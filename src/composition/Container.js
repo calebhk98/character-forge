@@ -10,6 +10,7 @@ import { CardV3Formatter } from '../infrastructure/formatters/CardV3Formatter.js
 import { SillyTavernCharacterRepository } from '../infrastructure/repositories/SillyTavernCharacterRepository.js';
 import { SillyTavernLorebookRepository } from '../infrastructure/repositories/SillyTavernLorebookRepository.js';
 import { DefaultPromptBuilder } from '../infrastructure/prompts/DefaultPromptBuilder.js';
+import { AdvancedPromptBuilder } from '../infrastructure/prompts/AdvancedPromptBuilder.js';
 import { ExtensionSettingsConfigStore } from '../infrastructure/config/ExtensionSettingsConfigStore.js';
 import { ConsoleLogger } from '../infrastructure/logging/ConsoleLogger.js';
 import { ToastrNotifier } from '../infrastructure/notifications/ToastrNotifier.js';
@@ -37,6 +38,16 @@ import { UploadGreetingImages } from '../application/use-cases/UploadGreetingIma
 const LLM_FACTORIES = {
     'silly-tavern': (cfg, _ctx) => new SillyTavernLlmProvider(_ctx),
     'mock': (cfg, _ctx) => new MockLlmProvider(cfg.mockResponses),
+};
+
+/**
+ * Factory table for prompt builders. Maps promptTemplate config keys to constructors.
+ *
+ * @type {{[key: string]: Function}}
+ */
+const PROMPT_BUILDER_FACTORIES = {
+    'default': () => new DefaultPromptBuilder(),
+    'advanced': () => new AdvancedPromptBuilder(),
 };
 
 /**
@@ -74,6 +85,7 @@ const IMAGE_HOST_DELEGATES = {
  * @param {object} config configuration object with defaults applied
  * @param {string} config.llmProvider which LLM adapter to use
  * @param {string} config.cardFormat which card formatter to use
+ * @param {string} [config.promptTemplate] which prompt builder to use ('default' | 'advanced')
  * @param {string} [config.imageGenerator] which image generator adapter to use
  * @param {object} stContext SillyTavern context object from getContext()
  * @returns {object} container with all wired services
@@ -83,7 +95,8 @@ export function buildContainer(config, stContext) {
     const llm = LLM_FACTORIES[config.llmProvider || 'silly-tavern'](config, stContext);
     // @ts-ignore - factory return type matches port contract
     const formatter = FORMATTER_FACTORIES[config.cardFormat || 'v3']();
-    const promptBuilder = new DefaultPromptBuilder();
+    // @ts-ignore - factory return type matches port contract
+    const promptBuilder = PROMPT_BUILDER_FACTORIES[config.promptTemplate || 'default']();
     const charRepository = new SillyTavernCharacterRepository(stContext);
     const lorebookRepository = new SillyTavernLorebookRepository(stContext);
     const configStore = new ExtensionSettingsConfigStore('character-forge', stContext);
