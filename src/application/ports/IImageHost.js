@@ -19,6 +19,7 @@ export class IImageHost {
         throw new Error('IImageHost.upload must be implemented by subclass');
     }
 
+    // eslint-disable-next-line jsdoc/require-returns-check
     /**
      * Return whether this host is ready to accept uploads.
      * Subclasses must override this and return a boolean.
