@@ -12,40 +12,37 @@ import { ILlmProvider } from '../../application/ports/ILlmProvider.js';
  */
 export class SillyTavernLlmProvider extends ILlmProvider {
     /**
-     * Construct with SillyTavern context.
+     * Construct with the generateRaw function exported from SillyTavern's script.js.
      *
-     * @param {object} stContext - result of getContext()
+     * generateRaw is a named export from script.js, not a property of the object
+     * returned by getContext(). It is injected here so the adapter stays testable
+     * without a real ST environment.
+     *
+     * @param {Function} generateRaw - SillyTavern's generateRaw export
      */
-    constructor(stContext) {
+    constructor(generateRaw) {
         super();
-        this.ctx = stContext;
+        this._generateRaw = generateRaw;
     }
 
     /**
      * Generate text via SillyTavern's active connection.
      *
-     * Uses generateRaw (exposed on the context from st-context.js) because it
-     * accepts a systemPrompt parameter. generateQuietPrompt does not support
-     * per-call system prompts. Temperature is controlled by ST's global
-     * settings and cannot be overridden per-call through this API.
+     * Uses generateRaw because it accepts a systemPrompt parameter.
+     * generateQuietPrompt does not support per-call system prompts.
      *
      * @param {import('../../application/ports/ILlmProvider.js').GenerationRequest} request - generation parameters
      * @returns {Promise<string>} generated text response
      */
     async generate(request) {
-        // ST may expose generateRaw on the context object or as a window global
-        // depending on version; try both before giving up.
-        const generateRaw = this.ctx?.generateRaw ?? globalThis.generateRaw;
-        if (typeof generateRaw !== 'function') {
+        if (typeof this._generateRaw !== 'function') {
             throw new Error('generateRaw is not available — ensure a connection is configured in SillyTavern');
         }
 
-        const response = await generateRaw({
+        return await this._generateRaw({
             prompt: request.userPrompt,
             systemPrompt: request.systemPrompt || '',
             responseLength: request.maxTokens,
         });
-
-        return response;
     }
 }

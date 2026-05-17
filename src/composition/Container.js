@@ -34,7 +34,7 @@ import { GenerateSharedLorebook } from '../application/use-cases/GenerateSharedL
 import { ExtractCharacterFromChat } from '../application/use-cases/ExtractCharacterFromChat.js';
 
 /**
- * @typedef {(cfg: object, ctx: object) => object} LlmFactory
+ * @typedef {(cfg: object, ctx: object, globals: object) => object} LlmFactory
  */
 
 /**
@@ -43,7 +43,7 @@ import { ExtractCharacterFromChat } from '../application/use-cases/ExtractCharac
  * @type {{[key: string]: LlmFactory}}
  */
 const LLM_FACTORIES = {
-    'silly-tavern': (cfg, _ctx) => new SillyTavernLlmProvider(_ctx),
+    'silly-tavern': (cfg, _ctx, globals) => new SillyTavernLlmProvider(globals.generateRaw),
     'mock': (cfg, _ctx) => new MockLlmProvider(cfg.mockResponses),
 };
 
@@ -105,11 +105,13 @@ const IMAGE_HOST_DELEGATES = {
  * @param {string} [config.promptTemplate] which prompt builder to use ('default' | 'advanced')
  * @param {string} [config.imageGenerator] which image generator adapter to use
  * @param {object} stContext SillyTavern context object from getContext()
+ * @param {object} [stGlobals] SillyTavern module-level exports (e.g. generateRaw)
+ * @param {Function} [stGlobals.generateRaw] generateRaw export from script.js
  * @returns {object} container with all wired services
  */
-export function buildContainer(config, stContext) {
+export function buildContainer(config, stContext, stGlobals = {}) {
     // @ts-ignore - factory return types match port contracts
-    const llm = LLM_FACTORIES[config.llmProvider || 'silly-tavern'](config, stContext);
+    const llm = LLM_FACTORIES[config.llmProvider || 'silly-tavern'](config, stContext, stGlobals);
     // @ts-ignore - factory return type matches port contract
     const formatter = FORMATTER_FACTORIES[config.cardFormat || 'v3']();
     // @ts-ignore - factory return type matches port contract

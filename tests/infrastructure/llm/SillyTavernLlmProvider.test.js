@@ -8,19 +8,17 @@ import { ILlmProvider } from '../../../src/application/ports/ILlmProvider.js';
 import { GenerationRequest } from '../../../src/domain/value-objects/GenerationRequest.js';
 
 describe('SillyTavernLlmProvider', () => {
-    let mockContext;
+    let mockGenerateRaw;
 
     beforeEach(() => {
-        mockContext = {
-            generateRaw: vi.fn(),
-        };
+        mockGenerateRaw = vi.fn();
     });
 
     /**
      * Test that provider extends ILlmProvider.
      */
     it('should extend ILlmProvider', () => {
-        const provider = new SillyTavernLlmProvider(mockContext);
+        const provider = new SillyTavernLlmProvider(mockGenerateRaw);
         expect(provider).toBeInstanceOf(ILlmProvider);
     });
 
@@ -29,9 +27,9 @@ describe('SillyTavernLlmProvider', () => {
      */
     it('should call generateRaw with prompt, systemPrompt, and responseLength', async () => {
         const expectedResponse = 'Generated response text';
-        mockContext.generateRaw.mockResolvedValue(expectedResponse);
+        mockGenerateRaw.mockResolvedValue(expectedResponse);
 
-        const provider = new SillyTavernLlmProvider(mockContext);
+        const provider = new SillyTavernLlmProvider(mockGenerateRaw);
         const request = new GenerationRequest({
             systemPrompt: 'You are a character creator.',
             userPrompt: 'Create a character.',
@@ -40,7 +38,7 @@ describe('SillyTavernLlmProvider', () => {
 
         const response = await provider.generate(request);
 
-        expect(mockContext.generateRaw).toHaveBeenCalledWith({
+        expect(mockGenerateRaw).toHaveBeenCalledWith({
             prompt: 'Create a character.',
             systemPrompt: 'You are a character creator.',
             responseLength: 2048,
@@ -53,9 +51,9 @@ describe('SillyTavernLlmProvider', () => {
      */
     it('should return response from generateRaw', async () => {
         const responseText = 'JSON character data';
-        mockContext.generateRaw.mockResolvedValue(responseText);
+        mockGenerateRaw.mockResolvedValue(responseText);
 
-        const provider = new SillyTavernLlmProvider(mockContext);
+        const provider = new SillyTavernLlmProvider(mockGenerateRaw);
         const request = new GenerationRequest({
             systemPrompt: 'System',
             userPrompt: 'User',
@@ -70,9 +68,9 @@ describe('SillyTavernLlmProvider', () => {
      */
     it('should propagate errors from generateRaw', async () => {
         const testError = new Error('Connection failed');
-        mockContext.generateRaw.mockRejectedValue(testError);
+        mockGenerateRaw.mockRejectedValue(testError);
 
-        const provider = new SillyTavernLlmProvider(mockContext);
+        const provider = new SillyTavernLlmProvider(mockGenerateRaw);
         const request = new GenerationRequest({
             systemPrompt: 'System',
             userPrompt: 'User',
@@ -86,9 +84,9 @@ describe('SillyTavernLlmProvider', () => {
      * undefined maxTokens is passed through as responseLength.
      */
     it('should coerce missing systemPrompt to empty string', async () => {
-        mockContext.generateRaw.mockResolvedValue('Response');
+        mockGenerateRaw.mockResolvedValue('Response');
 
-        const provider = new SillyTavernLlmProvider(mockContext);
+        const provider = new SillyTavernLlmProvider(mockGenerateRaw);
         const request = new GenerationRequest({
             systemPrompt: '',
             userPrompt: 'User',
@@ -96,7 +94,7 @@ describe('SillyTavernLlmProvider', () => {
 
         await provider.generate(request);
 
-        expect(mockContext.generateRaw).toHaveBeenCalledWith({
+        expect(mockGenerateRaw).toHaveBeenCalledWith({
             prompt: 'User',
             systemPrompt: '',
             responseLength: undefined,
