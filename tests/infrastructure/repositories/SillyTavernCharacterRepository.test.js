@@ -275,3 +275,22 @@ describe('SillyTavernCharacterRepository - load()', () => {
         expect(lastFetchOptions().headers).toEqual({});
     });
 });
+
+describe('SillyTavernCharacterRepository - save() header handling', () => {
+    beforeEach(() => { /** @type {any} */ (globalThis).fetch = vi.fn(); });
+    afterEach(() => { vi.restoreAllMocks(); });
+
+    it('should strip Content-Type even when getRequestHeaders returns it (older ST versions)', async () => {
+        /** @type {any} */ (globalThis).fetch.mockResolvedValue(mockOkResponse('t.png'));
+        const ctx = {
+            getRequestHeaders: vi.fn().mockReturnValue({
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': 'test-token',
+            }),
+        };
+        await new SillyTavernCharacterRepository(ctx).save(mockCard('Test'));
+
+        expect(lastFetchOptions().headers['Content-Type']).toBeUndefined();
+        expect(lastFetchOptions().headers['X-CSRF-Token']).toBe('test-token');
+    });
+});

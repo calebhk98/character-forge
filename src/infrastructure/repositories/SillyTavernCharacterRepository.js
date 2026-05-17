@@ -51,7 +51,11 @@ export class SillyTavernCharacterRepository extends ICharacterRepository {
         formData.append('avatar', blob, `${sanitizedName}.png`);
         formData.append('file_type', 'png');
 
-        const headers = this.ctx?.getRequestHeaders?.({ omitContentType: true }) ?? {};
+        // Older ST versions ignore omitContentType and always return Content-Type:
+        // application/json. Stripping it lets the browser set the correct
+        // multipart/form-data boundary; without this multer can't parse the body.
+        const headers = { ...(this.ctx?.getRequestHeaders?.({ omitContentType: true }) ?? {}) };
+        delete headers['Content-Type'];
 
         const response = await fetch('/api/characters/import', {
             method: 'POST',
