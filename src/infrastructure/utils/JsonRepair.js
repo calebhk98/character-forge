@@ -85,6 +85,14 @@ export function repairJson(input) {
     // Trim whitespace
     json = json.trim();
 
+    // Extract JSON object boundaries — handles preamble/postamble text that
+    // the LLM emits around the JSON (e.g. "Here is your character: {...} Note: …")
+    const jsonStart = json.indexOf('{');
+    const jsonEnd = json.lastIndexOf('}');
+    if (jsonStart !== -1 && jsonEnd > jsonStart) {
+        json = json.slice(jsonStart, jsonEnd + 1);
+    }
+
     // Try direct parse first
     try {
         return JSON.parse(json);

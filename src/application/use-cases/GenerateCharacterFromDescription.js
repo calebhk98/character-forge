@@ -43,7 +43,7 @@ export class GenerateCharacterFromDescription {
             try {
                 characterData = JSON.parse(response);
             } catch (parseError) {
-                this.logger.debug('Direct JSON parse failed, attempting repair', { error: parseError.message });
+                this.logger.debug('Direct JSON parse failed, attempting repair', { error: parseError.message, responsePreview: response?.slice(0, 300) });
                 characterData = this.jsonRepair.parseOrRepair(response, 'character generation');
                 this.logger.info('Successfully repaired malformed JSON');
             }
