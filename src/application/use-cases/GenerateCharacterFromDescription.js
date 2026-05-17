@@ -6,6 +6,70 @@
 
 import { Character } from '../../domain/entities/Character.js';
 
+const STRING_EXTRACT_KEYS = ['content', 'text', 'message', 'greeting'];
+
+/**
+ * Coerce a single value to a string, trying common object field names first.
+ *
+ * @param {unknown} value - value to coerce
+ * @returns {string} string representation
+ */
+function coerceToString(value) {
+    if (typeof value === 'string') return value;
+    if (value && typeof value === 'object') {
+        for (const key of STRING_EXTRACT_KEYS) {
+            if (typeof value[key] === 'string') return value[key];
+        }
+        return JSON.stringify(value);
+    }
+    return String(value);
+}
+
+/**
+ * Normalise an array-of-strings field from raw LLM output, filtering nulls and
+ * converting non-string elements to strings.
+ *
+ * @param {unknown} value - raw field value
+ * @returns {string[]|undefined} normalised array, or undefined when value is undefined
+ */
+function normaliseStringArray(value) {
+    if (value === undefined) return undefined;
+    if (!Array.isArray(value)) return value;
+    return value
+        .filter(item => item !== null && item !== undefined)
+        .map(coerceToString);
+}
+
+/**
+ * Normalise raw LLM character data before domain construction.
+ * Converts non-string mes_example and non-string array elements that the LLM
+ * occasionally returns despite explicit prompt instructions.
+ *
+ * @param {object} data - raw parsed LLM character data
+ * @returns {object} normalised data safe to pass to the Character constructor
+ */
+function normaliseCharacterData(data) {
+    if (!data || typeof data !== 'object') return data;
+
+    const result = { ...data };
+
+    if (typeof result.mes_example !== 'string') {
+        if (Array.isArray(result.mes_example)) {
+            result.mes_example = result.mes_example.map(coerceToString).join('\n\n');
+        } else if (result.mes_example !== undefined) {
+            result.mes_example = coerceToString(result.mes_example);
+        }
+    }
+
+    const arrayFields = ['alternate_greetings', 'group_only_greetings'];
+    for (const field of arrayFields) {
+        const normalised = normaliseStringArray(result[field]);
+        if (normalised !== undefined) result[field] = normalised;
+    }
+
+    return result;
+}
+
 /**
  * Generate a character from a text description.
  */
@@ -48,7 +112,7 @@ export class GenerateCharacterFromDescription {
                 this.logger.info('Successfully repaired malformed JSON');
             }
 
-            const character = new Character(characterData);
+            const character = new Character(normaliseCharacterData(characterData));
             this.logger.info('Character generated successfully', { name: character.name });
 
             return character;

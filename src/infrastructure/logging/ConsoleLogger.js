@@ -28,7 +28,11 @@ export class ConsoleLogger extends ILogger {
      * @returns {void}
      */
     debug(message, data) {
-        console.debug(`[${this.prefix}] ${message}`, data);
+        if (data !== undefined) {
+            console.debug(`[${this.prefix}] ${message}`, data);
+        } else {
+            console.debug(`[${this.prefix}] ${message}`);
+        }
     }
 
     /**
@@ -39,7 +43,11 @@ export class ConsoleLogger extends ILogger {
      * @returns {void}
      */
     info(message, data) {
-        console.info(`[${this.prefix}] ${message}`, data);
+        if (data !== undefined) {
+            console.info(`[${this.prefix}] ${message}`, data);
+        } else {
+            console.info(`[${this.prefix}] ${message}`);
+        }
     }
 
     /**
@@ -50,7 +58,11 @@ export class ConsoleLogger extends ILogger {
      * @returns {void}
      */
     warn(message, data) {
-        console.warn(`[${this.prefix}] ${message}`, data);
+        if (data !== undefined) {
+            console.warn(`[${this.prefix}] ${message}`, data);
+        } else {
+            console.warn(`[${this.prefix}] ${message}`);
+        }
     }
 
     /**
@@ -61,6 +73,10 @@ export class ConsoleLogger extends ILogger {
      * @returns {void}
      */
     error(message, data) {
-        console.error(`[${this.prefix}] ${message}`, data);
+        if (data !== undefined) {
+            console.error(`[${this.prefix}] ${message}`, data);
+        } else {
+            console.error(`[${this.prefix}] ${message}`);
+        }
     }
 }

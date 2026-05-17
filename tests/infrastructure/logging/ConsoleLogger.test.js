@@ -30,23 +30,25 @@ describe('ConsoleLogger', () => {
         expect(logger).toBeInstanceOf(ILogger);
     });
 
-    it('should call console.debug with prefix and message', () => {
+    it('should call console.debug with prefix and message only (no trailing undefined)', () => {
         const spyDebug = vi.spyOn(console, 'debug').mockImplementation(() => {});
         const logger = new ConsoleLogger('Test');
 
         logger.debug('test message');
 
-        expect(spyDebug).toHaveBeenCalledWith('[Test] test message', undefined);
+        expect(spyDebug).toHaveBeenCalledWith('[Test] test message');
+        expect(spyDebug).not.toHaveBeenCalledWith('[Test] test message', undefined);
         spyDebug.mockRestore();
     });
 
-    it('should call console.info with prefix and message', () => {
+    it('should call console.info with prefix and message only (no trailing undefined)', () => {
         const spyInfo = vi.spyOn(console, 'info').mockImplementation(() => {});
         const logger = new ConsoleLogger('Test');
 
         logger.info('test message');
 
-        expect(spyInfo).toHaveBeenCalledWith('[Test] test message', undefined);
+        expect(spyInfo).toHaveBeenCalledWith('[Test] test message');
+        expect(spyInfo).not.toHaveBeenCalledWith('[Test] test message', undefined);
         spyInfo.mockRestore();
     });
 });
@@ -56,23 +58,25 @@ describe('ConsoleLogger warn and error', () => {
         vi.clearAllMocks();
     });
 
-    it('should call console.warn with prefix and message', () => {
+    it('should call console.warn with prefix and message only (no trailing undefined)', () => {
         const spyWarn = vi.spyOn(console, 'warn').mockImplementation(() => {});
         const logger = new ConsoleLogger('Test');
 
         logger.warn('test message');
 
-        expect(spyWarn).toHaveBeenCalledWith('[Test] test message', undefined);
+        expect(spyWarn).toHaveBeenCalledWith('[Test] test message');
+        expect(spyWarn).not.toHaveBeenCalledWith('[Test] test message', undefined);
         spyWarn.mockRestore();
     });
 
-    it('should call console.error with prefix and message', () => {
+    it('should call console.error with prefix and message only (no trailing undefined)', () => {
         const spyError = vi.spyOn(console, 'error').mockImplementation(() => {});
         const logger = new ConsoleLogger('Test');
 
         logger.error('test message');
 
-        expect(spyError).toHaveBeenCalledWith('[Test] test message', undefined);
+        expect(spyError).toHaveBeenCalledWith('[Test] test message');
+        expect(spyError).not.toHaveBeenCalledWith('[Test] test message', undefined);
         spyError.mockRestore();
     });
 
