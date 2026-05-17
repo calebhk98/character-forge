@@ -33,6 +33,17 @@ async function setup() {
         console.warn('[Character Forge] SillyTavern context not available, using defaults');
     }
 
+    // generateRaw is a named export from script.js, not on the context object.
+    // vite-ignore suppresses static-analysis resolution; the try/catch handles
+    // environments (tests, dev tooling) where script.js is absent.
+    let generateRaw;
+    try {
+        // @ts-ignore - script.js is part of ST's installation, absent in this repo
+        ({ generateRaw } = await import(/* @vite-ignore */ '../../../../script.js'));
+    } catch {
+        // Non-ST environment — generateRaw stays undefined.
+    }
+
     const configStore = new ExtensionSettingsConfigStore(MODULE_NAME, stContext);
 
     const userConfig = {
@@ -44,7 +55,7 @@ async function setup() {
         customSystemPromptOverride: configStore.get('customSystemPromptOverride', ''),
     };
 
-    const container = buildContainer(userConfig, stContext);
+    const container = buildContainer(userConfig, stContext, { generateRaw });
 
     new SlashCommandHandler(container, stContext).register();
 
