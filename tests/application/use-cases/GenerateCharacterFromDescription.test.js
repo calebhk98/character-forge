@@ -278,6 +278,95 @@ describe('GenerateCharacterFromDescription - alternate_greetings', () => {
     });
 });
 
+describe('GenerateCharacterFromDescription - LLM Output Normalisation', () => {
+    it('should join mes_example array of strings into a single string', async () => {
+        const promptBuilder = new FakePromptBuilder();
+        const responseWithArrayMesExample = JSON.stringify({
+            name: 'TestCharacter',
+            description: 'A test character',
+            personality: 'Cheerful',
+            scenario: 'In a test world',
+            first_mes: 'Hello from test!',
+            mes_example: [
+                '<START>\n{{char}}: Hello!\n{{user}}: Hi.\n{{char}}: Nice to meet you.',
+                '<START>\n{{char}}: How are you?\n{{user}}: Fine.\n{{char}}: Great.',
+            ],
+        });
+        const llmProvider = new FakeLlmProvider(responseWithArrayMesExample);
+        const logger = new FakeLogger();
+
+        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
+        const character = await useCase.execute('A brave knight');
+
+        expect(typeof character.mes_example).toBe('string');
+        expect(character.mes_example).toContain('<START>');
+    });
+
+    it('should filter null and undefined elements from alternate_greetings', async () => {
+        const promptBuilder = new FakePromptBuilder();
+        const responseWithNullGreeting = JSON.stringify({
+            name: 'TestCharacter',
+            description: 'A test character',
+            personality: 'Cheerful',
+            scenario: 'In a test world',
+            first_mes: 'Hello from test!',
+            mes_example: 'This is a test message.',
+            alternate_greetings: ['Valid greeting one.', null, 'Valid greeting two.'],
+        });
+        const llmProvider = new FakeLlmProvider(responseWithNullGreeting);
+        const logger = new FakeLogger();
+
+        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
+        const character = await useCase.execute('A brave knight');
+
+        expect(character.alternate_greetings).toEqual(['Valid greeting one.', 'Valid greeting two.']);
+    });
+
+    it('should extract string from object element in alternate_greetings using common keys', async () => {
+        const promptBuilder = new FakePromptBuilder();
+        const responseWithObjectGreeting = JSON.stringify({
+            name: 'TestCharacter',
+            description: 'A test character',
+            personality: 'Cheerful',
+            scenario: 'In a test world',
+            first_mes: 'Hello from test!',
+            mes_example: 'This is a test message.',
+            alternate_greetings: [
+                'Normal greeting.',
+                { content: 'Extracted from content key.' },
+                'Another normal greeting.',
+            ],
+        });
+        const llmProvider = new FakeLlmProvider(responseWithObjectGreeting);
+        const logger = new FakeLogger();
+
+        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
+        const character = await useCase.execute('A brave knight');
+
+        expect(character.alternate_greetings[1]).toBe('Extracted from content key.');
+    });
+
+    it('should handle mes_example as non-string non-array by converting to string', async () => {
+        const promptBuilder = new FakePromptBuilder();
+        const responseWithObjectMesExample = JSON.stringify({
+            name: 'TestCharacter',
+            description: 'A test character',
+            personality: 'Cheerful',
+            scenario: 'In a test world',
+            first_mes: 'Hello from test!',
+            mes_example: { text: 'Example exchange text.' },
+        });
+        const llmProvider = new FakeLlmProvider(responseWithObjectMesExample);
+        const logger = new FakeLogger();
+
+        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
+        const character = await useCase.execute('A brave knight');
+
+        expect(typeof character.mes_example).toBe('string');
+        expect(character.mes_example.length).toBeGreaterThan(0);
+    });
+});
+
 describe('GenerateCharacterFromDescription - JSON Repair', () => {
     /**
      * Test JSON repair for malformed markdown-wrapped JSON.
