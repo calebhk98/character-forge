@@ -28,8 +28,10 @@ export class SillyTavernLlmProvider extends ILlmProvider {
     /**
      * Generate text via SillyTavern's active connection.
      *
-     * Uses generateRaw because it accepts a systemPrompt parameter.
-     * generateQuietPrompt does not support per-call system prompts.
+     * Delegates to generateRaw(prompt, api, instructOverride, quietToConsole,
+     * systemPrompt, responseLength) — SillyTavern's positional-argument API.
+     * api=undefined uses the currently active connection.
+     * quietToConsole=true suppresses output to the chat window.
      *
      * @param {import('../../application/ports/ILlmProvider.js').GenerationRequest} request - generation parameters
      * @returns {Promise<string>} generated text response
@@ -39,10 +41,13 @@ export class SillyTavernLlmProvider extends ILlmProvider {
             throw new Error('generateRaw is not available — ensure a connection is configured in SillyTavern');
         }
 
-        return await this._generateRaw({
-            prompt: request.userPrompt,
-            systemPrompt: request.systemPrompt || '',
-            responseLength: request.maxTokens,
-        });
+        return await this._generateRaw(
+            request.userPrompt,
+            undefined,
+            false,
+            true,
+            request.systemPrompt || '',
+            request.maxTokens || 0,
+        );
     }
 }

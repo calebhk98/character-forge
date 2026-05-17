@@ -14,18 +14,14 @@ describe('SillyTavernLlmProvider', () => {
         mockGenerateRaw = vi.fn();
     });
 
-    /**
-     * Test that provider extends ILlmProvider.
-     */
+    /** Provider is a valid ILlmProvider subclass. */
     it('should extend ILlmProvider', () => {
         const provider = new SillyTavernLlmProvider(mockGenerateRaw);
         expect(provider).toBeInstanceOf(ILlmProvider);
     });
 
-    /**
-     * Test that generateRaw is called with prompt, systemPrompt, and responseLength.
-     */
-    it('should call generateRaw with prompt, systemPrompt, and responseLength', async () => {
+    /** generateRaw receives positional args matching ST's actual signature. */
+    it('should call generateRaw with positional args matching ST signature', async () => {
         const expectedResponse = 'Generated response text';
         mockGenerateRaw.mockResolvedValue(expectedResponse);
 
@@ -38,17 +34,18 @@ describe('SillyTavernLlmProvider', () => {
 
         const response = await provider.generate(request);
 
-        expect(mockGenerateRaw).toHaveBeenCalledWith({
-            prompt: 'Create a character.',
-            systemPrompt: 'You are a character creator.',
-            responseLength: 2048,
-        });
+        expect(mockGenerateRaw).toHaveBeenCalledWith(
+            'Create a character.',
+            undefined,
+            false,
+            true,
+            'You are a character creator.',
+            2048,
+        );
         expect(response).toBe(expectedResponse);
     });
 
-    /**
-     * Test that the provider returns the response as-is.
-     */
+    /** Return value from generateRaw is passed through unchanged. */
     it('should return response from generateRaw', async () => {
         const responseText = 'JSON character data';
         mockGenerateRaw.mockResolvedValue(responseText);
@@ -63,9 +60,7 @@ describe('SillyTavernLlmProvider', () => {
         expect(result).toBe(responseText);
     });
 
-    /**
-     * Test that errors from generateRaw are propagated.
-     */
+    /** Errors from generateRaw propagate to the caller. */
     it('should propagate errors from generateRaw', async () => {
         const testError = new Error('Connection failed');
         mockGenerateRaw.mockRejectedValue(testError);
@@ -79,11 +74,8 @@ describe('SillyTavernLlmProvider', () => {
         await expect(provider.generate(request)).rejects.toBe(testError);
     });
 
-    /**
-     * Test that undefined systemPrompt is coerced to empty string, and
-     * undefined maxTokens is passed through as responseLength.
-     */
-    it('should coerce missing systemPrompt to empty string', async () => {
+    /** Empty systemPrompt passes as-is; missing maxTokens coerces to 0. */
+    it('should coerce missing systemPrompt to empty string and maxTokens to 0', async () => {
         mockGenerateRaw.mockResolvedValue('Response');
 
         const provider = new SillyTavernLlmProvider(mockGenerateRaw);
@@ -94,10 +86,13 @@ describe('SillyTavernLlmProvider', () => {
 
         await provider.generate(request);
 
-        expect(mockGenerateRaw).toHaveBeenCalledWith({
-            prompt: 'User',
-            systemPrompt: '',
-            responseLength: undefined,
-        });
+        expect(mockGenerateRaw).toHaveBeenCalledWith(
+            'User',
+            undefined,
+            false,
+            true,
+            '',
+            0,
+        );
     });
 });
