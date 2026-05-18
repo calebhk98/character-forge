@@ -187,6 +187,7 @@ export class CharacterGeneratorPanel {
             this.draft.character, this.draft.lorebook,
         );
         previewSection.style.display = 'block';
+        this.clearStatus();
 
         this.setCharacterFieldValues();
         this.setLorebookEntryValues();
@@ -216,6 +217,8 @@ export class CharacterGeneratorPanel {
             { id: '#edit-scenario', prop: 'scenario' },
             { id: '#edit-first-mes', prop: 'first_mes' },
             { id: '#edit-mes-example', prop: 'mes_example' },
+            { id: '#edit-creator-notes', prop: 'creator_notes' },
+            { id: '#edit-tags', prop: 'tags', transform: (v) => (Array.isArray(v) ? v.join(', ') : (v || '')) },
         ];
 
         for (const field of fields) {
@@ -223,7 +226,7 @@ export class CharacterGeneratorPanel {
                 this.element?.querySelector(field.id)
             );
             if (input) {
-                input.value = this.draft.character[field.prop];
+                input.value = field.transform ? field.transform(this.draft.character[field.prop]) : this.draft.character[field.prop];
             }
         }
 
@@ -282,6 +285,7 @@ export class CharacterGeneratorPanel {
             { id: '#edit-scenario', prop: 'scenario' },
             { id: '#edit-first-mes', prop: 'first_mes' },
             { id: '#edit-mes-example', prop: 'mes_example' },
+            { id: '#edit-creator-notes', prop: 'creator_notes' },
         ];
         for (const { id, prop } of charFields) {
             const el = this.element?.querySelector(id);
@@ -332,6 +336,14 @@ export class CharacterGeneratorPanel {
                 }
             });
         });
+
+        const tagsEl = this.element?.querySelector('#edit-tags');
+        if (tagsEl) {
+            tagsEl.addEventListener('change', (e) => {
+                const value = /** @type {HTMLInputElement} */ (e.target).value;
+                this.draft.character.tags = value.split(',').map((t) => t.trim()).filter(Boolean);
+            });
+        }
     }
 
     /**
