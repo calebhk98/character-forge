@@ -62,7 +62,16 @@ function createMockLorebook() {
  */
 function createMockContainer(character) {
     return {
-        generateCharacter: { execute: vi.fn().mockResolvedValue(character) },
+        generateCharacter: {
+            execute: vi.fn().mockImplementation(async (_desc, _opts, onProgress) => {
+                onProgress?.('metadata', { name: character.name, creator_notes: character.creator_notes ?? '', tags: character.tags ?? [] });
+                onProgress?.('behavior', { description: character.description, personality: character.personality });
+                onProgress?.('scene', { scenario: character.scenario, first_mes: character.first_mes });
+                onProgress?.('dialogue', { mes_example: character.mes_example });
+                onProgress?.('greetings', { alternate_greetings: character.alternate_greetings ?? [] });
+                return character;
+            }),
+        },
         generateLorebook: { execute: vi.fn().mockResolvedValue(createMockLorebook()) },
         saveCharacter: { execute: vi.fn().mockResolvedValue('saved-id') },
         logger: { info: vi.fn(), debug: vi.fn(), error: vi.fn() },
