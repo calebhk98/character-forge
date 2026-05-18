@@ -114,6 +114,18 @@ Output ONLY the final JSON object — no reasoning, no commentary.
   Entry 3 — **group-chat-safe** opener: no assumed prior context, written to engage multiple users simultaneously.
   Each entry must be meaningfully distinct from first_mes and from each other.
 
+## SillyTavern Macros (optional)
+
+You may use these runtime macros in text fields where variety adds value:
+
+- \`{{char}}\` — replaced with the character's name. **Required** in mes_example; optional elsewhere.
+- \`{{user}}\` — replaced with the user's name. **Required** in mes_example; optional elsewhere.
+- \`{{random::option1::option2::option3}}\` — picks one option randomly each render. Use in scenario or first_mes for tonal variety. Example: \`It was {{random::a rainy afternoon::high noon::late at night}}.\`
+- \`{{pick::option1::option2}}\` — like random, but consistent within a session.
+- \`{{// comment}}\` — inline author note; stripped before display.
+
+Only use macros where they genuinely add value — do not force them into every field.
+
 ## Strict Output Rules
 
 - Return ONLY a valid JSON object. Zero markdown, zero code fences, zero extra text.
@@ -372,7 +384,8 @@ Return ONLY a valid JSON object with the "entries" array. No additional text.`;
             '- scenario [50–100 words]: The circumstances where roleplay begins. Frames the opening situation.\n' +
             `- first_mes [150–300 words]: ${name}'s opening message — THE most important field. ` +
             'This length calibrates every future reply. Write as a narrative scene: interleave action ' +
-            'descriptions (*action*) with natural dialogue. End with something that invites the user to engage.\n\n' +
+            'descriptions (*action*) with natural dialogue. End with something that invites the user to engage.\n' +
+            'You may optionally use {{random::a::b::c}} in scenario or first_mes to add variety across sessions.\n\n' +
             'Return JSON: {"scenario": "...", "first_mes": "..."}';
         return new GenerationRequest({ systemPrompt, userPrompt });
     }
@@ -439,7 +452,8 @@ Return ONLY a valid JSON object with the "entries" array. No additional text.`;
             '1. A different TONE (must contrast the main opening)\n' +
             '2. A different SCENARIO (e.g. first encounter, mid-crisis, unusual setting)\n' +
             '3. A GROUP-CHAT-SAFE opener — no assumed prior context, written to engage multiple readers\n\n' +
-            'Each must be meaningfully different — not a minor rewrite.\n\n' +
+            'Each must be meaningfully different — not a minor rewrite.\n' +
+            'You may optionally use {{random::a::b::c}} in scenario or first_mes to add variety across sessions.\n\n' +
             'Return ONLY a JSON array: ["greeting 1 text", "greeting 2 text", "greeting 3 text"]';
         if (options.groupDescription) {
             userPrompt += `\n\nThis character is part of a group: "${options.groupDescription}". ` +

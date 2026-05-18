@@ -53,6 +53,18 @@ Output ONLY the final JSON object — no reasoning, no commentary.
   Entry 3 — **group-chat-safe** opener: no assumed prior context, written to engage multiple users simultaneously.
   Each entry must be meaningfully distinct from first_mes and from each other.
 
+## SillyTavern Macros (optional)
+
+You may use these runtime macros in text fields where variety adds value:
+
+- \`{{char}}\` — replaced with the character's name. **Required** in mes_example; optional elsewhere.
+- \`{{user}}\` — replaced with the user's name. **Required** in mes_example; optional elsewhere.
+- \`{{random::option1::option2::option3}}\` — picks one option randomly each render. Use in scenario or first_mes for tonal variety. Example: \`It was {{random::a rainy afternoon::high noon::late at night}}.\`
+- \`{{pick::option1::option2}}\` — like random, but consistent within a session.
+- \`{{// comment}}\` — inline author note; stripped before display.
+
+Only use macros where they genuinely add value — do not force them into every field.
+
 ## Strict Output Rules
 
 - Return ONLY a valid JSON object. Zero markdown, zero code fences, zero extra text.
