@@ -1,86 +1,90 @@
 /**
- * @file Use case: generate a character from a natural-language description.
- * Takes a description, builds a prompt, calls the LLM, parses the response,
- * and returns a Character entity.
+ * @file Use case: generate a character from a natural-language description
+ * using a five-step field-by-field pipeline. Each step calls the LLM once
+ * with a focused prompt, returning plain text or a small JSON object.
+ * Results are assembled into a Character entity.
  */
 
 import { Character } from '../../domain/entities/Character.js';
 
-const STRING_EXTRACT_KEYS = ['content', 'text', 'message', 'greeting'];
-
 /**
- * Coerce a single value to a string, trying common object field names first.
+ * Fix common mes_example format violations produced by the LLM.
  *
- * @param {unknown} value - value to coerce
- * @returns {string} string representation
+ * @param {string} text - raw LLM dialogue output
+ * @param {string} characterName - character's name for {{char}} substitution
+ * @returns {string} repaired dialogue text
  */
-function coerceToString(value) {
-    if (typeof value === 'string') return value;
-    if (value && typeof value === 'object') {
-        for (const key of STRING_EXTRACT_KEYS) {
-            if (typeof value[key] === 'string') return value[key];
-        }
-        return JSON.stringify(value);
+function repairMesExample(text, characterName) {
+    if (!text || typeof text !== 'string') return text;
+    let result = text;
+    result = result.replace(/^START\b/gm, '<START>');
+    result = result.replace(/^SillyTavern\s+System:/gm, '{{char}}:');
+    if (characterName) {
+        const escaped = characterName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        result = result.replace(new RegExp(`^${escaped}:`, 'gm'), '{{char}}:');
     }
-    return String(value);
-}
-
-/**
- * Normalise an array-of-strings field from raw LLM output, filtering nulls and
- * converting non-string elements to strings.
- *
- * @param {unknown} value - raw field value
- * @returns {string[]|undefined} normalised array, or undefined when value is undefined
- */
-function normaliseStringArray(value) {
-    if (value === undefined) return undefined;
-    if (!Array.isArray(value)) return value;
-    return value
-        .filter(item => item !== null && item !== undefined)
-        .map(coerceToString);
-}
-
-/**
- * Normalise raw LLM character data before domain construction.
- * Converts non-string mes_example and non-string array elements that the LLM
- * occasionally returns despite explicit prompt instructions.
- *
- * @param {object} data - raw parsed LLM character data
- * @returns {object} normalised data safe to pass to the Character constructor
- */
-function normaliseCharacterData(data) {
-    if (!data || typeof data !== 'object') return data;
-
-    const result = { ...data };
-
-    if (typeof result.mes_example !== 'string') {
-        if (Array.isArray(result.mes_example)) {
-            result.mes_example = result.mes_example.map(coerceToString).join('\n\n');
-        } else if (result.mes_example !== undefined) {
-            result.mes_example = coerceToString(result.mes_example);
-        }
-    }
-
-    const arrayFields = ['alternate_greetings', 'group_only_greetings'];
-    for (const field of arrayFields) {
-        const normalised = normaliseStringArray(result[field]);
-        if (normalised !== undefined) result[field] = normalised;
-    }
-
     return result;
 }
 
 /**
- * Generate a character from a text description.
+ * Parse a step JSON response, falling back to repair on parse failure.
+ *
+ * @param {string} response - raw LLM output
+ * @param {string} context - step name for error messages
+ * @param {string[]} required - required field names to validate
+ * @param {import('../ports/IJsonRepair.js').IJsonRepair} jsonRepair
+ * @param {import('../ports/ILogger.js').ILogger} logger
+ * @returns {object} parsed data object
+ */
+function parseStepJson(response, context, required, jsonRepair, logger) {
+    let data;
+    try {
+        data = JSON.parse(response);
+    } catch {
+        logger.debug(`Direct JSON parse failed for ${context}, attempting repair`);
+        data = jsonRepair.parseOrRepair(response, context);
+    }
+    for (const field of required) {
+        if (!data[field]) {
+            throw new Error(`${context}: LLM response missing required field "${field}"`);
+        }
+    }
+    return data;
+}
+
+/**
+ * Parse an alternate greetings response into a string array.
+ *
+ * @param {string} response - raw LLM output (expected JSON array)
+ * @param {import('../ports/IJsonRepair.js').IJsonRepair} jsonRepair
+ * @param {import('../ports/ILogger.js').ILogger} logger
+ * @returns {string[]} greetings array
+ */
+function parseGreetingsArray(response, jsonRepair, logger) {
+    let parsed;
+    try {
+        parsed = JSON.parse(response);
+    } catch {
+        logger.debug('Direct JSON parse failed for greetings, attempting repair');
+        parsed = jsonRepair.parseOrRepair(response, 'alternate greetings');
+    }
+    const arr = Array.isArray(parsed) ? parsed : (parsed?.alternate_greetings ?? []);
+    return arr
+        .filter((item) => item !== null && item !== undefined)
+        .map((item) => (typeof item === 'string' ? item : String(item)));
+}
+
+/**
+ * Generate a character from a text description using a five-step pipeline.
  */
 export class GenerateCharacterFromDescription {
     /**
      * Construct the use case with its dependencies.
      *
-     * @param {import('../ports/IPromptBuilder.js').IPromptBuilder} promptBuilder - port for building generation requests
-     * @param {import('../ports/ILlmProvider.js').ILlmProvider} llmProvider - port for LLM text generation
-     * @param {import('../ports/ILogger.js').ILogger} logger - port for diagnostic logging
-     * @param {import('../ports/IJsonRepair.js').IJsonRepair} jsonRepair - port for JSON repair
+     * @param {import('../ports/IPromptBuilder.js').IPromptBuilder} promptBuilder
+     * @param {import('../ports/ILlmProvider.js').ILlmProvider} llmProvider
+     * @param {import('../ports/ILogger.js').ILogger} logger
+     * @param {import('../ports/IJsonRepair.js').IJsonRepair} jsonRepair
      */
     constructor(promptBuilder, llmProvider, logger, jsonRepair) {
         this.promptBuilder = promptBuilder;
@@ -90,38 +94,125 @@ export class GenerateCharacterFromDescription {
     }
 
     /**
-     * Execute the use case.
+     * Execute the five-step generation pipeline.
      *
-     * @param {string} description - character concept in plain language
+     * @param {string} description - character concept
      * @param {object} [options] - generation options
-     * @returns {Promise<import('../../domain/entities/Character.js').Character>} generated character entity
+     * @param {string} [options.groupDescription] - parent group concept
+     * @param {Function} [onProgress] - optional callback(step, data) fired after each step
+     * @returns {Promise<import('../../domain/entities/Character.js').Character>}
      */
-    async execute(description, options = {}) {
-        this.logger.debug('Generating character from description', { description });
+    async execute(description, options = {}, onProgress = null) {
+        this.logger.debug('Starting field-by-field character generation', { description });
 
-        try {
-            const request = this.promptBuilder.build(description, options);
-            const response = await this.llmProvider.generate(request);
+        const metadata = await this._generateMetadata(description);
+        onProgress?.('metadata', metadata);
 
-            let characterData;
-            try {
-                characterData = JSON.parse(response);
-            } catch (parseError) {
-                this.logger.debug('Direct JSON parse failed, attempting repair', { error: parseError.message, responsePreview: response?.slice(0, 300) });
-                characterData = this.jsonRepair.parseOrRepair(response, 'character generation');
-                this.logger.info('Successfully repaired malformed JSON');
-            }
+        const behavior = await this._generateBehavior(description, metadata);
+        onProgress?.('behavior', behavior);
 
-            const character = new Character(normaliseCharacterData(characterData));
-            this.logger.info('Character generated successfully', { name: character.name });
+        const sceneCtx = { name: metadata.name, description: behavior.description, personality: behavior.personality };
+        const scene = await this._generateScene(description, sceneCtx);
+        onProgress?.('scene', scene);
 
-            return character;
-        } catch (error) {
-            if (error.message.startsWith('Invalid character data')) {
-                this.logger.warn('Character validation failed', { error: error.message });
-                throw new Error(`Character data invalid: ${error.message}`);
-            }
-            throw error;
-        }
+        const dialogueCtx = { name: metadata.name, personality: behavior.personality, first_mes: scene.first_mes };
+        const mes_example = await this._generateDialogue(description, dialogueCtx, metadata.name);
+        onProgress?.('dialogue', { mes_example });
+
+        const greetingsCtx = { name: metadata.name, first_mes: scene.first_mes, scenario: scene.scenario };
+        const alternate_greetings = await this._generateGreetings(description, greetingsCtx, options);
+        onProgress?.('greetings', { alternate_greetings });
+
+        const character = new Character({
+            name: metadata.name,
+            description: behavior.description,
+            personality: behavior.personality,
+            scenario: scene.scenario,
+            first_mes: scene.first_mes,
+            mes_example,
+            alternate_greetings,
+            creator_notes: metadata.creator_notes || '',
+            tags: Array.isArray(metadata.tags) ? metadata.tags : [],
+            talkativeness: metadata.talkativeness,
+        });
+
+        this.logger.info('Character generated successfully', { name: character.name });
+        return character;
+    }
+
+    /**
+     * Step 1: name, creator_notes, tags, talkativeness.
+     *
+     * @private
+     * @param {string} description
+     * @returns {Promise<object>}
+     */
+    async _generateMetadata(description) {
+        this.logger.debug('Step 1: generating metadata');
+        const request = this.promptBuilder.buildMetadataRequest(description);
+        const response = await this.llmProvider.generate(request);
+        return parseStepJson(response, 'metadata', ['name'], this.jsonRepair, this.logger);
+    }
+
+    /**
+     * Step 2: description and personality.
+     *
+     * @private
+     * @param {string} description
+     * @param {{name: string}} context
+     * @returns {Promise<object>}
+     */
+    async _generateBehavior(description, context) {
+        this.logger.debug('Step 2: generating behavior');
+        const request = this.promptBuilder.buildBehaviorRequest(description, context);
+        const response = await this.llmProvider.generate(request);
+        return parseStepJson(response, 'behavior', ['description', 'personality'], this.jsonRepair, this.logger);
+    }
+
+    /**
+     * Step 3: scenario and first_mes.
+     *
+     * @private
+     * @param {string} description
+     * @param {object} context
+     * @returns {Promise<object>}
+     */
+    async _generateScene(description, context) {
+        this.logger.debug('Step 3: generating scene');
+        const request = this.promptBuilder.buildSceneRequest(description, context);
+        const response = await this.llmProvider.generate(request);
+        return parseStepJson(response, 'scene', ['scenario', 'first_mes'], this.jsonRepair, this.logger);
+    }
+
+    /**
+     * Step 4: mes_example as plain text.
+     *
+     * @private
+     * @param {string} description
+     * @param {object} context
+     * @param {string} characterName
+     * @returns {Promise<string>}
+     */
+    async _generateDialogue(description, context, characterName) {
+        this.logger.debug('Step 4: generating dialogue');
+        const request = this.promptBuilder.buildDialogueRequest(description, context);
+        const rawText = await this.llmProvider.generate(request);
+        return repairMesExample(rawText.trim(), characterName);
+    }
+
+    /**
+     * Step 5: alternate_greetings as a string array.
+     *
+     * @private
+     * @param {string} description
+     * @param {object} context
+     * @param {object} options
+     * @returns {Promise<string[]>}
+     */
+    async _generateGreetings(description, context, options) {
+        this.logger.debug('Step 5: generating greetings');
+        const request = this.promptBuilder.buildGreetingsRequest(description, context, options);
+        const response = await this.llmProvider.generate(request);
+        return parseGreetingsArray(response, this.jsonRepair, this.logger);
     }
 }

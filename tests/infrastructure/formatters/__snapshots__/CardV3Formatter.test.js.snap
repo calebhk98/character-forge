@@ -14,7 +14,9 @@ exports[`CardV3Formatter (snapshots) > should produce valid V3 structure snapsho
     },
     "creator_notes": undefined,
     "description": "A mysterious mage",
-    "extensions": {},
+    "extensions": {
+      "talkativeness": "0.5",
+    },
     "first_mes": "Welcome, traveler.",
     "group_only_greetings": [],
     "mes_example": "How can I assist you?",
@@ -66,7 +68,9 @@ exports[`CardV3Formatter (snapshots) > should produce valid V3 structure with lo
     },
     "creator_notes": undefined,
     "description": "A mysterious mage",
-    "extensions": {},
+    "extensions": {
+      "talkativeness": "0.5",
+    },
     "first_mes": "Welcome, traveler.",
     "group_only_greetings": [],
     "mes_example": "How can I assist you?",
@@ -96,7 +100,9 @@ exports[`CardV3Formatter (snapshots) > should produce valid V3 structure with op
     },
     "creator_notes": "Created by user",
     "description": "A mysterious mage",
-    "extensions": {},
+    "extensions": {
+      "talkativeness": "0.5",
+    },
     "first_mes": "Welcome, traveler.",
     "group_only_greetings": [],
     "mes_example": "How can I assist you?",

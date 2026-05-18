@@ -283,4 +283,153 @@ Return ONLY a valid JSON object with the "entries" array. No additional text.`;
         prompt += 'Return only valid JSON with the entries array. No markdown, no code blocks.';
         return prompt;
     }
+
+    /**
+     * Build a request for step 1: metadata fields.
+     *
+     * @param {string} description - character concept
+     * @returns {GenerationRequest}
+     */
+    buildMetadataRequest(description) {
+        const systemPrompt = 'You are a character card creator for SillyTavern. ' +
+            'Return a JSON object with EXACTLY these 4 fields: name, creator_notes, tags, talkativeness. ' +
+            'No other fields. No markdown. No preamble. No explanation.';
+        const userPrompt =
+            `Character concept: "${description}"\n\n` +
+            'Generate metadata fields:\n' +
+            '- name: The character\'s full name (1–4 words)\n' +
+            '- creator_notes: A 2–4 sentence back-cover blurb for the character browser. ' +
+            'Who is this character? What makes conversations with them interesting? What tone does the roleplay take?\n' +
+            '- tags: Array of 3–8 lowercase descriptive tags. Include genre, relationship type, tone, and notable traits.\n' +
+            '- talkativeness: String "0.0"–"1.0". How likely the character sends unsolicited messages. ' +
+            'Match to energy level ("0.2" = quiet, "0.5" = default, "0.8" = chatty).\n\n' +
+            'Return JSON: {"name": "...", "creator_notes": "...", "tags": [...], "talkativeness": "..."}';
+        return new GenerationRequest({ systemPrompt, userPrompt });
+    }
+
+    /**
+     * Build a request for step 2: behavioral fields.
+     *
+     * @param {string} description - character concept
+     * @param {{name: string}} context - metadata from step 1
+     * @returns {GenerationRequest}
+     */
+    buildBehaviorRequest(description, context) {
+        const { name } = context;
+        const systemPrompt =
+            'You are a character card writer for SillyTavern. ' +
+            'Write the description and personality fields for a character card. ' +
+            'Return a JSON object with EXACTLY 2 fields: description and personality. ' +
+            'No markdown, no preamble, no other fields.';
+        const userPrompt =
+            `Character concept: "${description}"\n` +
+            `Character name: ${name}\n\n` +
+            'Write:\n' +
+            '- description [150–250 words]: Physical appearance, backstory, and defining characteristics. ' +
+            'Prioritize behavioral patterns — how does this character act and why? ' +
+            'Every sentence should shape AI behavior, not just state facts.\n' +
+            '- personality [80–150 words]: A behavioral brief — NOT an adjective list. ' +
+            'Write the WHY and WHEN behind each trait. Include at least one contradiction. ' +
+            'An actor should be able to play 10 different scenes from this description alone.\n\n' +
+            'Return JSON: {"description": "...", "personality": "..."}';
+        return new GenerationRequest({ systemPrompt, userPrompt });
+    }
+
+    /**
+     * Build a request for step 3: scene fields.
+     *
+     * @param {string} description - character concept
+     * @param {{name: string, description: string, personality: string}} context - prior step output
+     * @returns {GenerationRequest}
+     */
+    buildSceneRequest(description, context) {
+        const charDescription = context.description;
+        const { name, personality } = context;
+        const systemPrompt =
+            'You are a character card writer for SillyTavern. ' +
+            'Write the scenario and first_mes fields for a character card. ' +
+            'Return a JSON object with EXACTLY 2 fields: scenario and first_mes. ' +
+            'No markdown, no preamble, no other fields.';
+        const userPrompt =
+            `Character concept: "${description}"\n` +
+            `Character name: ${name}\n` +
+            `Character description: ${charDescription}\n` +
+            `Character personality: ${personality}\n\n` +
+            'Write:\n' +
+            '- scenario [50–100 words]: The circumstances where roleplay begins. Frames the opening situation.\n' +
+            `- first_mes [150–300 words]: ${name}'s opening message — THE most important field. ` +
+            'This length calibrates every future reply. Write as a narrative scene: interleave action ' +
+            'descriptions (*action*) with natural dialogue. End with something that invites the user to engage.\n\n' +
+            'Return JSON: {"scenario": "...", "first_mes": "..."}';
+        return new GenerationRequest({ systemPrompt, userPrompt });
+    }
+
+    /**
+     * Build a request for step 4: example dialogue as plain text (no JSON).
+     *
+     * @param {string} description - character concept
+     * @param {{name: string, personality: string, first_mes: string}} context - prior step output
+     * @returns {GenerationRequest}
+     */
+    buildDialogueRequest(description, context) {
+        const { name, personality, first_mes } = context;
+        const systemPrompt =
+            'You are writing the mes_example field for a SillyTavern character card. ' +
+            'Return ONLY the formatted dialogue — nothing else. ' +
+            'No JSON wrapper, no explanation, no preamble, no sign-off.';
+        const userPrompt =
+            `Character concept: "${description}"\n` +
+            `Character name: ${name}\n` +
+            `Character personality: ${personality}\n\n` +
+            `Reference opening message:\n${first_mes}\n\n` +
+            `Write 2–3 example dialogue exchanges showing ${name}'s authentic voice.\n\n` +
+            'Use this EXACT format for each exchange:\n' +
+            '<START>\n' +
+            '{{char}}: *action in asterisks* "spoken dialogue"\n' +
+            '{{user}}: [a short open-ended question or statement]\n' +
+            '{{char}}: *different action* "follow-up dialogue"\n\n' +
+            'Rules you MUST follow:\n' +
+            '• Begin EVERY exchange with <START> on its own line\n' +
+            `• Use {{char}} ONLY — never "${name}" or any other name\n` +
+            '• Use {{user}} ONLY — never "User", "Human", "Player", or any other label\n' +
+            '• Use DIFFERENT action verbs in each example — never repeat the same verb\n' +
+            '• Quotation marks for spoken words ONLY — never wrap thoughts in quotes\n' +
+            '• Each exchange must be open-ended — the user should want to respond\n\n' +
+            'Return ONLY the dialogue blocks starting with the first <START>. Nothing before or after.';
+        return new GenerationRequest({ systemPrompt, userPrompt });
+    }
+
+    /**
+     * Build a request for step 5: alternate greetings as a JSON array.
+     *
+     * @param {string} description - character concept
+     * @param {{name: string, first_mes: string, scenario: string}} context - prior step output
+     * @param {object} [options] - generation options
+     * @param {string} [options.groupDescription] - parent group concept for group_only_greetings
+     * @returns {GenerationRequest}
+     */
+    buildGreetingsRequest(description, context, options = {}) {
+        const { name, first_mes, scenario } = context;
+        const systemPrompt =
+            'You are writing alternate_greetings for a SillyTavern character card. ' +
+            'Return a JSON array of EXACTLY 3 strings. ' +
+            'No markdown, no wrapper object — just the raw JSON array.';
+        let userPrompt =
+            `Character concept: "${description}"\n` +
+            `Character name: ${name}\n` +
+            `Scenario: ${scenario}\n\n` +
+            `Main opening message (for reference):\n${first_mes}\n\n` +
+            'Write 3 alternate opening messages, each 150–300 words. ' +
+            'Same quality bar as the main opening (narrative scene, action + dialogue, ends with hook):\n' +
+            '1. A different TONE (must contrast the main opening)\n' +
+            '2. A different SCENARIO (e.g. first encounter, mid-crisis, unusual setting)\n' +
+            '3. A GROUP-CHAT-SAFE opener — no assumed prior context, written to engage multiple readers\n\n' +
+            'Each must be meaningfully different — not a minor rewrite.\n\n' +
+            'Return ONLY a JSON array: ["greeting 1 text", "greeting 2 text", "greeting 3 text"]';
+        if (options.groupDescription) {
+            userPrompt += `\n\nThis character is part of a group: "${options.groupDescription}". ` +
+                'Greeting 3 should reference the shared group context.';
+        }
+        return new GenerationRequest({ systemPrompt, userPrompt });
+    }
 }

@@ -1,5 +1,5 @@
 /**
- * @file Tests for GenerateCharacterFromDescription use case.
+ * @file Tests for GenerateCharacterFromDescription use case (five-step pipeline).
  */
 
 import { describe, it, expect } from 'vitest';
@@ -12,9 +12,15 @@ import { Character } from '../../../src/domain/entities/Character.js';
 import { IJsonRepair } from '../../../src/application/ports/IJsonRepair.js';
 import { repairJson } from '../../../src/infrastructure/utils/JsonRepair.js';
 
+// Standard step responses for a typical happy-path test
+const META = JSON.stringify({ name: 'TestChar', creator_notes: 'A test.', tags: ['test'], talkativeness: '0.5' });
+const BEHAVIOR = JSON.stringify({ description: 'A test character.', personality: 'Cheerful.' });
+const SCENE = JSON.stringify({ scenario: 'In a test world.', first_mes: 'Hello from test!' });
+const DIALOGUE = '<START>\n{{char}}: *waves* "Hello!"\n{{user}}: Hi there.\n{{char}}: *smiles* "Nice to meet you."';
+const GREETINGS = JSON.stringify(['Greeting one.', 'Greeting two.', 'Greeting three.']);
+
 /**
- * Fake JSON repair adapter for testing. Uses the real repair implementation
- * so JSON-repair tests exercise the actual repair logic.
+ * Fake JSON repair adapter for testing. Uses the real repair implementation.
  *
  * @augments IJsonRepair
  */
@@ -31,7 +37,37 @@ class FakeJsonRepair extends IJsonRepair {
 }
 
 /**
- * Fake prompt builder for testing.
+ * LLM provider that returns queued responses in order.
+ *
+ * @augments ILlmProvider
+ */
+class QueuedLlmProvider extends ILlmProvider {
+    /**
+     * Construct the provider with a list of responses.
+     *
+     * @param {string[]} responses - responses to return in order
+     */
+    constructor(responses) {
+        super();
+        this.responses = [...responses];
+        this.calls = [];
+    }
+
+    /**
+     * Return the next queued response.
+     *
+     * @param {GenerationRequest} request - generation request
+     * @returns {Promise<string>} next response
+     */
+    async generate(request) {
+        this.calls.push(request);
+        if (this.responses.length === 0) throw new Error('No more responses queued');
+        return this.responses.shift();
+    }
+}
+
+/**
+ * Fake prompt builder implementing all IPromptBuilder methods.
  *
  * @augments IPromptBuilder
  */
@@ -41,60 +77,118 @@ class FakePromptBuilder extends IPromptBuilder {
      */
     constructor() {
         super();
-        this.lastDescription = null;
-        this.lastOptions = null;
+        this.calls = [];
     }
 
     /**
-     * Build a generation request from description.
+     * Build a basic generation request.
      *
      * @param {string} description - character description
      * @param {object} [options] - generation options
      * @returns {GenerationRequest} generation request
      */
     build(description, options = {}) {
-        this.lastDescription = description;
-        this.lastOptions = options;
-        return new GenerationRequest({
-            systemPrompt: 'Generate a character',
-            userPrompt: `Create character: ${description}`,
-        });
-    }
-}
-
-/**
- * Fake LLM provider for testing.
- *
- * @augments ILlmProvider
- */
-class FakeLlmProvider extends ILlmProvider {
-    /**
-     * Construct the fake provider.
-     *
-     * @param {string} [responseJson] - JSON to return
-     */
-    constructor(responseJson = null) {
-        super();
-        this.responseJson = responseJson || JSON.stringify({
-            name: 'TestCharacter',
-            description: 'A test character',
-            personality: 'Cheerful',
-            scenario: 'In a test world',
-            first_mes: 'Hello from test!',
-            mes_example: 'This is a test message.',
-        });
-        this.lastRequest = null;
+        this.calls.push({ method: 'build', description, options });
+        return new GenerationRequest({ systemPrompt: 'sys', userPrompt: `build:${description}` });
     }
 
     /**
-     * Generate text by returning the mocked response.
+     * Build a refinement request.
      *
-     * @param {import('../../../src/application/ports/ILlmProvider.js').GenerationRequest} request - generation request
-     * @returns {Promise<string>} mocked JSON response
+     * @param {string} description - description
+     * @param {string} fieldName - field name
+     * @param {string} currentValue - current value
+     * @param {string} [feedback] - feedback
+     * @returns {GenerationRequest} request
      */
-    async generate(request) {
-        this.lastRequest = request;
-        return this.responseJson;
+    buildRefinementRequest(description, fieldName, currentValue, feedback = '') {
+        this.calls.push({ method: 'buildRefinementRequest', description, fieldName, currentValue, feedback });
+        return new GenerationRequest({ systemPrompt: 'sys', userPrompt: `refine:${fieldName}` });
+    }
+
+    /**
+     * Build a shared lorebook request.
+     *
+     * @param {string} groupDescription - group description
+     * @param {string[]} characterNames - character names
+     * @param {object} [options] - options
+     * @returns {GenerationRequest} request
+     */
+    buildSharedLorebookRequest(groupDescription, characterNames, options = {}) {
+        this.calls.push({ method: 'buildSharedLorebookRequest', groupDescription, characterNames, options });
+        return new GenerationRequest({ systemPrompt: 'sys', userPrompt: `shared:${groupDescription}` });
+    }
+
+    /**
+     * Build a group decomposition request.
+     *
+     * @param {string} groupDescription - group description
+     * @param {object} [options] - options
+     * @returns {GenerationRequest} request
+     */
+    buildGroupDecompositionRequest(groupDescription, options = {}) {
+        this.calls.push({ method: 'buildGroupDecompositionRequest', groupDescription, options });
+        return new GenerationRequest({ systemPrompt: 'sys', userPrompt: `decompose:${groupDescription}` });
+    }
+
+    /**
+     * Build metadata request.
+     *
+     * @param {string} description - description
+     * @returns {GenerationRequest} request
+     */
+    buildMetadataRequest(description) {
+        this.calls.push({ method: 'buildMetadataRequest', description });
+        return new GenerationRequest({ systemPrompt: 'meta-sys', userPrompt: `meta:${description}` });
+    }
+
+    /**
+     * Build behavior request.
+     *
+     * @param {string} description - description
+     * @param {object} context - context
+     * @returns {GenerationRequest} request
+     */
+    buildBehaviorRequest(description, context) {
+        this.calls.push({ method: 'buildBehaviorRequest', description, context });
+        return new GenerationRequest({ systemPrompt: 'behavior-sys', userPrompt: `behavior:${description}` });
+    }
+
+    /**
+     * Build scene request.
+     *
+     * @param {string} description - description
+     * @param {object} context - context
+     * @returns {GenerationRequest} request
+     */
+    buildSceneRequest(description, context) {
+        this.calls.push({ method: 'buildSceneRequest', description, context });
+        return new GenerationRequest({ systemPrompt: 'scene-sys', userPrompt: `scene:${description}` });
+    }
+
+    /**
+     * Build dialogue request.
+     *
+     * @param {string} description - description
+     * @param {object} context - context
+     * @returns {GenerationRequest} request
+     */
+    buildDialogueRequest(description, context) {
+        this.calls.push({ method: 'buildDialogueRequest', description, context });
+        return new GenerationRequest({ systemPrompt: 'dialogue-sys', userPrompt: `dialogue:${description}` });
+    }
+
+    /**
+     * Build greetings request.
+     *
+     * @param {string} description - description
+     * @param {object} context - context
+     * @param {object} [options] - options
+     * @returns {GenerationRequest} request
+     */
+    buildGreetingsRequest(description, context, options = {}) {
+        this.calls.push({ method: 'buildGreetingsRequest', description, context, options });
+        return new GenerationRequest({ systemPrompt: 'greetings-sys', userPrompt: `greetings:${description}` });
     }
 }
 
@@ -115,304 +209,220 @@ class FakeLogger extends ILogger {
     /**
      * Log debug message.
      *
-     * @param {string} message - debug message
-     * @param {*} [data] - optional data
+     * @param {string} message - message
+     * @param {*} [data] - data
      * @returns {void}
      */
-    debug(message, data) {
-        this.messages.push({ level: 'debug', message, data });
-    }
+    debug(message, data) { this.messages.push({ level: 'debug', message, data }); }
 
     /**
      * Log info message.
      *
-     * @param {string} message - info message
-     * @param {*} [data] - optional data
+     * @param {string} message - message
+     * @param {*} [data] - data
      * @returns {void}
      */
-    info(message, data) {
-        this.messages.push({ level: 'info', message, data });
-    }
+    info(message, data) { this.messages.push({ level: 'info', message, data }); }
 
     /**
-     * Log warning message.
+     * Log warn message.
      *
-     * @param {string} message - warning message
-     * @param {*} [data] - optional data
+     * @param {string} message - message
+     * @param {*} [data] - data
      * @returns {void}
      */
-    warn(message, data) {
-        this.messages.push({ level: 'warn', message, data });
-    }
+    warn(message, data) { this.messages.push({ level: 'warn', message, data }); }
 
     /**
      * Log error message.
      *
-     * @param {string} message - error message
-     * @param {*} [data] - optional data
+     * @param {string} message - message
+     * @param {*} [data] - data
      * @returns {void}
      */
-    error(message, data) {
-        this.messages.push({ level: 'error', message, data });
-    }
+    error(message, data) { this.messages.push({ level: 'error', message, data }); }
 }
 
-describe('GenerateCharacterFromDescription - Core Functionality', () => {
-    /**
-     * Test happy path generation.
-     */
-    it('should generate a character from description', async () => {
-        const promptBuilder = new FakePromptBuilder();
-        const llmProvider = new FakeLlmProvider();
-        const logger = new FakeLogger();
+/**
+ * Build a standard use case with queued responses.
+ *
+ * @param {string[]} responses - queued LLM responses
+ * @returns {{ useCase: GenerateCharacterFromDescription, llm: QueuedLlmProvider, logger: FakeLogger, promptBuilder: FakePromptBuilder }}
+ */
+function buildUseCase(responses) {
+    const promptBuilder = new FakePromptBuilder();
+    const llm = new QueuedLlmProvider(responses);
+    const logger = new FakeLogger();
+    const jsonRepair = new FakeJsonRepair();
+    const useCase = new GenerateCharacterFromDescription(promptBuilder, llm, logger, jsonRepair);
+    return { useCase, llm, logger, promptBuilder };
+}
 
-        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
+describe('GenerateCharacterFromDescription - Happy Path', () => {
+    it('should return a Character with all fields assembled from 5 steps', async () => {
+        const { useCase } = buildUseCase([META, BEHAVIOR, SCENE, DIALOGUE, GREETINGS]);
         const character = await useCase.execute('A brave knight');
 
         expect(character).toBeInstanceOf(Character);
-        expect(character.name).toBe('TestCharacter');
-        expect(character.description).toBe('A test character');
-        expect(character.personality).toBe('Cheerful');
-        expect(character.scenario).toBe('In a test world');
+        expect(character.name).toBe('TestChar');
+        expect(character.description).toBe('A test character.');
+        expect(character.personality).toBe('Cheerful.');
+        expect(character.scenario).toBe('In a test world.');
         expect(character.first_mes).toBe('Hello from test!');
-        expect(character.mes_example).toBe('This is a test message.');
+        expect(typeof character.mes_example).toBe('string');
+        expect(character.alternate_greetings).toEqual(['Greeting one.', 'Greeting two.', 'Greeting three.']);
+        expect(character.tags).toEqual(['test']);
+        expect(character.talkativeness).toBe('0.5');
     });
 
-    /**
-     * Test error handling for invalid JSON.
-     */
-    it('should throw when LLM returns invalid JSON', async () => {
-        const promptBuilder = new FakePromptBuilder();
-        const llmProvider = new FakeLlmProvider('{ invalid json }');
-        const logger = new FakeLogger();
-
-        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
-
-        await expect(useCase.execute('A brave knight')).rejects.toThrow();
-    });
-
-    /**
-     * Test error handling for missing required fields.
-     */
-    it('should throw when LLM response missing required fields', async () => {
-        const promptBuilder = new FakePromptBuilder();
-        const invalidResponse = JSON.stringify({
-            name: 'TestCharacter',
-            description: 'A test character',
-        });
-        const llmProvider = new FakeLlmProvider(invalidResponse);
-        const logger = new FakeLogger();
-
-        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
-
-        await expect(useCase.execute('A brave knight')).rejects.toThrow();
-    });
-
-    /**
-     * Test that prompt builder is called with correct arguments.
-     */
-    it('should call prompt builder with description and options', async () => {
-        const promptBuilder = new FakePromptBuilder();
-        const llmProvider = new FakeLlmProvider();
-        const logger = new FakeLogger();
-
-        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
-        const options = { entryCount: 5 };
-        await useCase.execute('A brave knight', options);
-
-        expect(promptBuilder.lastDescription).toBe('A brave knight');
-        expect(promptBuilder.lastOptions).toEqual(options);
-    });
-
-    /**
-     * Test that LLM provider is called with request from prompt builder.
-     */
-    it('should call LLM provider with request from prompt builder', async () => {
-        const promptBuilder = new FakePromptBuilder();
-        const llmProvider = new FakeLlmProvider();
-        const logger = new FakeLogger();
-
-        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
+    it('should make exactly 5 LLM calls in order', async () => {
+        const { useCase, llm } = buildUseCase([META, BEHAVIOR, SCENE, DIALOGUE, GREETINGS]);
         await useCase.execute('A brave knight');
 
-        expect(llmProvider.lastRequest).toBeDefined();
-        expect(llmProvider.lastRequest.systemPrompt).toBe('Generate a character');
-        expect(llmProvider.lastRequest.userPrompt).toContain('A brave knight');
+        expect(llm.calls).toHaveLength(5);
     });
-});
 
-describe('GenerateCharacterFromDescription - alternate_greetings', () => {
-    it('should pass through alternate_greetings from LLM response', async () => {
-        const promptBuilder = new FakePromptBuilder();
-        const responseWithAlternates = JSON.stringify({
-            name: 'TestCharacter',
-            description: 'A test character',
-            personality: 'Cheerful',
-            scenario: 'In a test world',
-            first_mes: 'Hello from test!',
-            mes_example: 'This is a test message.',
-            alternate_greetings: ['Alternate one.', 'Alternate two.', 'Alternate three.'],
-        });
-        const llmProvider = new FakeLlmProvider(responseWithAlternates);
-        const logger = new FakeLogger();
+    it('should call the correct prompt builder methods', async () => {
+        const { useCase, promptBuilder } = buildUseCase([META, BEHAVIOR, SCENE, DIALOGUE, GREETINGS]);
+        await useCase.execute('A brave knight');
 
-        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
-        const character = await useCase.execute('A brave knight');
-
-        expect(character.alternate_greetings).toEqual([
-            'Alternate one.',
-            'Alternate two.',
-            'Alternate three.',
+        const methods = promptBuilder.calls.map((c) => c.method);
+        expect(methods).toEqual([
+            'buildMetadataRequest',
+            'buildBehaviorRequest',
+            'buildSceneRequest',
+            'buildDialogueRequest',
+            'buildGreetingsRequest',
         ]);
     });
+});
 
-    it('should default alternate_greetings to empty array when LLM omits the field', async () => {
-        const promptBuilder = new FakePromptBuilder();
-        const llmProvider = new FakeLlmProvider();
-        const logger = new FakeLogger();
+describe('GenerateCharacterFromDescription - onProgress callback', () => {
+    it('should call onProgress 5 times with correct step names', async () => {
+        const { useCase } = buildUseCase([META, BEHAVIOR, SCENE, DIALOGUE, GREETINGS]);
+        const steps = [];
+        await useCase.execute('A brave knight', {}, (step, data) => steps.push({ step, data }));
 
-        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
-        const character = await useCase.execute('A brave knight');
+        expect(steps).toHaveLength(5);
+        expect(steps[0].step).toBe('metadata');
+        expect(steps[1].step).toBe('behavior');
+        expect(steps[2].step).toBe('scene');
+        expect(steps[3].step).toBe('dialogue');
+        expect(steps[4].step).toBe('greetings');
+    });
 
-        expect(character.alternate_greetings).toEqual([]);
+    it('should pass correct data to onProgress for each step', async () => {
+        const { useCase } = buildUseCase([META, BEHAVIOR, SCENE, DIALOGUE, GREETINGS]);
+        const steps = [];
+        await useCase.execute('A brave knight', {}, (step, data) => steps.push({ step, data }));
+
+        expect(steps[0].data.name).toBe('TestChar');
+        expect(steps[1].data.description).toBe('A test character.');
+        expect(steps[2].data.scenario).toBe('In a test world.');
+        expect(steps[3].data.mes_example).toBeDefined();
+        expect(steps[4].data.alternate_greetings).toHaveLength(3);
     });
 });
 
-describe('GenerateCharacterFromDescription - LLM Output Normalisation', () => {
-    it('should join mes_example array of strings into a single string', async () => {
-        const promptBuilder = new FakePromptBuilder();
-        const responseWithArrayMesExample = JSON.stringify({
-            name: 'TestCharacter',
-            description: 'A test character',
-            personality: 'Cheerful',
-            scenario: 'In a test world',
-            first_mes: 'Hello from test!',
-            mes_example: [
-                '<START>\n{{char}}: Hello!\n{{user}}: Hi.\n{{char}}: Nice to meet you.',
-                '<START>\n{{char}}: How are you?\n{{user}}: Fine.\n{{char}}: Great.',
-            ],
-        });
-        const llmProvider = new FakeLlmProvider(responseWithArrayMesExample);
-        const logger = new FakeLogger();
-
-        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
+describe('GenerateCharacterFromDescription - repairMesExample', () => {
+    it('should replace "START\\n" with "<START>\\n"', async () => {
+        const rawDialogue = 'START\n{{char}}: *waves* "Hello!"';
+        const { useCase } = buildUseCase([
+            META, BEHAVIOR, SCENE, rawDialogue, GREETINGS,
+        ]);
         const character = await useCase.execute('A brave knight');
-
-        expect(typeof character.mes_example).toBe('string');
         expect(character.mes_example).toContain('<START>');
+        expect(character.mes_example).not.toMatch(/^START\b/m);
     });
 
-    it('should filter null and undefined elements from alternate_greetings', async () => {
-        const promptBuilder = new FakePromptBuilder();
-        const responseWithNullGreeting = JSON.stringify({
-            name: 'TestCharacter',
-            description: 'A test character',
-            personality: 'Cheerful',
-            scenario: 'In a test world',
-            first_mes: 'Hello from test!',
-            mes_example: 'This is a test message.',
-            alternate_greetings: ['Valid greeting one.', null, 'Valid greeting two.'],
-        });
-        const llmProvider = new FakeLlmProvider(responseWithNullGreeting);
-        const logger = new FakeLogger();
-
-        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
+    it('should replace "SillyTavern System:" with "{{char}}:"', async () => {
+        const rawDialogue = '<START>\nSillyTavern System: "Hello!"\n{{user}}: Hi.';
+        const { useCase } = buildUseCase([
+            META, BEHAVIOR, SCENE, rawDialogue, GREETINGS,
+        ]);
         const character = await useCase.execute('A brave knight');
-
-        expect(character.alternate_greetings).toEqual(['Valid greeting one.', 'Valid greeting two.']);
+        expect(character.mes_example).toContain('{{char}}:');
+        expect(character.mes_example).not.toContain('SillyTavern System:');
     });
 
-    it('should extract string from object element in alternate_greetings using common keys', async () => {
-        const promptBuilder = new FakePromptBuilder();
-        const responseWithObjectGreeting = JSON.stringify({
-            name: 'TestCharacter',
-            description: 'A test character',
-            personality: 'Cheerful',
-            scenario: 'In a test world',
-            first_mes: 'Hello from test!',
-            mes_example: 'This is a test message.',
-            alternate_greetings: [
-                'Normal greeting.',
-                { content: 'Extracted from content key.' },
-                'Another normal greeting.',
-            ],
-        });
-        const llmProvider = new FakeLlmProvider(responseWithObjectGreeting);
-        const logger = new FakeLogger();
-
-        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
+    it('should replace character name with {{char}} at line start', async () => {
+        const rawDialogue = '<START>\nTestChar: *waves* "Hello!"';
+        const { useCase } = buildUseCase([
+            META, BEHAVIOR, SCENE, rawDialogue, GREETINGS,
+        ]);
         const character = await useCase.execute('A brave knight');
+        expect(character.mes_example).toContain('{{char}}:');
+        expect(character.mes_example).not.toMatch(/^TestChar:/m);
+    });
+});
 
-        expect(character.alternate_greetings[1]).toBe('Extracted from content key.');
+describe('GenerateCharacterFromDescription - Error handling', () => {
+    it('should throw when step 1 metadata missing "name" field', async () => {
+        const badMeta = JSON.stringify({ creator_notes: 'A test.', tags: [], talkativeness: '0.5' });
+        const { useCase } = buildUseCase([badMeta]);
+        await expect(useCase.execute('A brave knight')).rejects.toThrow('metadata');
     });
 
-    it('should handle mes_example as non-string non-array by converting to string', async () => {
-        const promptBuilder = new FakePromptBuilder();
-        const responseWithObjectMesExample = JSON.stringify({
-            name: 'TestCharacter',
-            description: 'A test character',
-            personality: 'Cheerful',
-            scenario: 'In a test world',
-            first_mes: 'Hello from test!',
-            mes_example: { text: 'Example exchange text.' },
-        });
-        const llmProvider = new FakeLlmProvider(responseWithObjectMesExample);
-        const logger = new FakeLogger();
+    it('should throw when step 2 behavior missing "description" field', async () => {
+        const badBehavior = JSON.stringify({ personality: 'Cheerful.' });
+        const { useCase } = buildUseCase([META, badBehavior]);
+        await expect(useCase.execute('A brave knight')).rejects.toThrow('behavior');
+    });
 
-        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
-        const character = await useCase.execute('A brave knight');
+    it('should throw when step 2 behavior missing "personality" field', async () => {
+        const badBehavior = JSON.stringify({ description: 'A test character.' });
+        const { useCase } = buildUseCase([META, badBehavior]);
+        await expect(useCase.execute('A brave knight')).rejects.toThrow('behavior');
+    });
 
-        expect(typeof character.mes_example).toBe('string');
-        expect(character.mes_example.length).toBeGreaterThan(0);
+    it('should throw when step 3 scene missing "scenario" field', async () => {
+        const badScene = JSON.stringify({ first_mes: 'Hello!' });
+        const { useCase } = buildUseCase([META, BEHAVIOR, badScene]);
+        await expect(useCase.execute('A brave knight')).rejects.toThrow('scene');
+    });
+
+    it('should throw when step 3 scene missing "first_mes" field', async () => {
+        const badScene = JSON.stringify({ scenario: 'In a test world.' });
+        const { useCase } = buildUseCase([META, BEHAVIOR, badScene]);
+        await expect(useCase.execute('A brave knight')).rejects.toThrow('scene');
     });
 });
 
 describe('GenerateCharacterFromDescription - JSON Repair', () => {
-    /**
-     * Test JSON repair for malformed markdown-wrapped JSON.
-     */
-    it('should repair malformed JSON with markdown code blocks', async () => {
-        const promptBuilder = new FakePromptBuilder();
-        const malformedJson = `\`\`\`json
-{
-    "name": "TestCharacter",
-    "description": "A test character",
-    "personality": "Cheerful",
-    "scenario": "In a test world",
-    "first_mes": "Hello from test!",
-    "mes_example": "This is a test message.",
-}
-\`\`\``;
-        const llmProvider = new FakeLlmProvider(malformedJson);
-        const logger = new FakeLogger();
-
-        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
+    it('should repair malformed JSON in step 1 using jsonRepair', async () => {
+        const malformedMeta = '```json\n{"name": "TestChar", "creator_notes": "A test.", "tags": ["test"], "talkativeness": "0.5"}\n```';
+        const { useCase } = buildUseCase([malformedMeta, BEHAVIOR, SCENE, DIALOGUE, GREETINGS]);
         const character = await useCase.execute('A brave knight');
+        expect(character.name).toBe('TestChar');
+    });
+});
 
-        expect(character).toBeInstanceOf(Character);
-        expect(character.name).toBe('TestCharacter');
+describe('GenerateCharacterFromDescription - Field defaults', () => {
+    it('should default tags to [] when LLM omits them', async () => {
+        const metaNoTags = JSON.stringify({ name: 'TestChar', creator_notes: 'A test.', talkativeness: '0.5' });
+        const { useCase } = buildUseCase([metaNoTags, BEHAVIOR, SCENE, DIALOGUE, GREETINGS]);
+        const character = await useCase.execute('A brave knight');
+        expect(character.tags).toEqual([]);
     });
 
-    /**
-     * Test JSON repair for trailing commas.
-     */
-    it('should repair JSON with trailing commas', async () => {
-        const promptBuilder = new FakePromptBuilder();
-        const jsonWithTrailingCommas = JSON.stringify({
-            name: 'TestCharacter',
-            description: 'A test character',
-            personality: 'Cheerful',
-            scenario: 'In a test world',
-            first_mes: 'Hello from test!',
-            mes_example: 'This is a test message.',
-        }).replace(/}$/, ',}');
-        const llmProvider = new FakeLlmProvider(jsonWithTrailingCommas);
-        const logger = new FakeLogger();
-
-        const useCase = new GenerateCharacterFromDescription(promptBuilder, llmProvider, logger, new FakeJsonRepair());
+    it('should parse alternate_greetings from a JSON array response', async () => {
+        const { useCase } = buildUseCase([META, BEHAVIOR, SCENE, DIALOGUE, GREETINGS]);
         const character = await useCase.execute('A brave knight');
+        expect(character.alternate_greetings).toEqual(['Greeting one.', 'Greeting two.', 'Greeting three.']);
+    });
 
-        expect(character).toBeInstanceOf(Character);
-        expect(character.name).toBe('TestCharacter');
+    it('should parse alternate_greetings from {alternate_greetings: [...]} object fallback', async () => {
+        const wrappedGreetings = JSON.stringify({
+            alternate_greetings: ['Greeting one.', 'Greeting two.', 'Greeting three.'],
+        });
+        const { useCase } = buildUseCase([META, BEHAVIOR, SCENE, DIALOGUE, wrappedGreetings]);
+        const character = await useCase.execute('A brave knight');
+        expect(character.alternate_greetings).toEqual(['Greeting one.', 'Greeting two.', 'Greeting three.']);
+    });
+
+    it('should set creator_notes on the character', async () => {
+        const { useCase } = buildUseCase([META, BEHAVIOR, SCENE, DIALOGUE, GREETINGS]);
+        const character = await useCase.execute('A brave knight');
+        expect(character.creator_notes).toBe('A test.');
     });
 });

@@ -40,7 +40,7 @@ export class CardV3Formatter extends ICardFormatter {
                 alternate_greetings: character.alternate_greetings ?? [],
                 group_only_greetings: character.group_only_greetings ?? [],
                 tags: character.tags ?? [],
-                extensions: {},
+                extensions: { talkativeness: character.talkativeness ?? '0.5' },
                 character_book: {
                     name: charBook.name,
                     description: charBook.description,

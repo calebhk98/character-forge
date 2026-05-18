@@ -139,3 +139,84 @@ Create approximately 5 diverse lorebook entries covering:
 
 Remember: only the content field is injected into the AI's context. Use specific, distinctive trigger keywords — not common words. Return only valid JSON with the entries array. No markdown, no code blocks."
 `;
+
+exports[`DefaultPromptBuilder - field-by-field step method snapshots > buildBehaviorRequest snapshot 1`] = `
+"Character concept: "A wise wizard"
+Character name: Aldric
+
+Write:
+- description [150–250 words]: Physical appearance, backstory, and defining characteristics. Prioritize behavioral patterns — how does this character act and why? Every sentence should shape AI behavior, not just state facts.
+- personality [80–150 words]: A behavioral brief — NOT an adjective list. Write the WHY and WHEN behind each trait. Include at least one contradiction. An actor should be able to play 10 different scenes from this description alone.
+
+Return JSON: {"description": "...", "personality": "..."}"
+`;
+
+exports[`DefaultPromptBuilder - field-by-field step method snapshots > buildDialogueRequest snapshot 1`] = `
+"Character concept: "A wise wizard"
+Character name: Aldric
+Character personality: Calm and wise.
+
+Reference opening message:
+Greetings, traveler.
+
+Write 2–3 example dialogue exchanges showing Aldric's authentic voice.
+
+Use this EXACT format for each exchange:
+<START>
+{{char}}: *action in asterisks* "spoken dialogue"
+{{user}}: [a short open-ended question or statement]
+{{char}}: *different action* "follow-up dialogue"
+
+Rules you MUST follow:
+• Begin EVERY exchange with <START> on its own line
+• Use {{char}} ONLY — never "Aldric" or any other name
+• Use {{user}} ONLY — never "User", "Human", "Player", or any other label
+• Use DIFFERENT action verbs in each example — never repeat the same verb
+• Quotation marks for spoken words ONLY — never wrap thoughts in quotes
+• Each exchange must be open-ended — the user should want to respond
+
+Return ONLY the dialogue blocks starting with the first <START>. Nothing before or after."
+`;
+
+exports[`DefaultPromptBuilder - field-by-field step method snapshots > buildGreetingsRequest snapshot 1`] = `
+"Character concept: "A wise wizard"
+Character name: Aldric
+Scenario: In a library.
+
+Main opening message (for reference):
+Greetings, traveler.
+
+Write 3 alternate opening messages, each 150–300 words. Same quality bar as the main opening (narrative scene, action + dialogue, ends with hook):
+1. A different TONE (must contrast the main opening)
+2. A different SCENARIO (e.g. first encounter, mid-crisis, unusual setting)
+3. A GROUP-CHAT-SAFE opener — no assumed prior context, written to engage multiple readers
+
+Each must be meaningfully different — not a minor rewrite.
+
+Return ONLY a JSON array: ["greeting 1 text", "greeting 2 text", "greeting 3 text"]"
+`;
+
+exports[`DefaultPromptBuilder - field-by-field step method snapshots > buildMetadataRequest snapshot 1`] = `
+"Character concept: "A wise wizard"
+
+Generate metadata fields:
+- name: The character's full name (1–4 words)
+- creator_notes: A 2–4 sentence back-cover blurb for the character browser. Who is this character? What makes conversations with them interesting? What tone does the roleplay take?
+- tags: Array of 3–8 lowercase descriptive tags. Include genre, relationship type, tone, and notable traits.
+- talkativeness: String "0.0"–"1.0". How likely the character sends unsolicited messages. Match to energy level ("0.2" = quiet, "0.5" = default, "0.8" = chatty).
+
+Return JSON: {"name": "...", "creator_notes": "...", "tags": [...], "talkativeness": "..."}"
+`;
+
+exports[`DefaultPromptBuilder - field-by-field step method snapshots > buildSceneRequest snapshot 1`] = `
+"Character concept: "A wise wizard"
+Character name: Aldric
+Character description: A tall mage.
+Character personality: Calm and wise.
+
+Write:
+- scenario [50–100 words]: The circumstances where roleplay begins. Frames the opening situation.
+- first_mes [150–300 words]: Aldric's opening message — THE most important field. This length calibrates every future reply. Write as a narrative scene: interleave action descriptions (*action*) with natural dialogue. End with something that invites the user to engage.
+
+Return JSON: {"scenario": "...", "first_mes": "..."}"
+`;

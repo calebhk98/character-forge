@@ -313,3 +313,108 @@ describe('DefaultPromptBuilder - group_only_greetings in character prompt', () =
         expect(request.userPrompt).not.toContain('group_only_greetings');
     });
 });
+
+describe('DefaultPromptBuilder - field-by-field step methods', () => {
+    it('buildMetadataRequest returns a GenerationRequest with name and creator_notes in user prompt', () => {
+        const builder = new DefaultPromptBuilder();
+        const request = builder.buildMetadataRequest('A wizard');
+
+        expect(request).toBeInstanceOf(GenerationRequest);
+        expect(request.userPrompt).toContain('name');
+        expect(request.userPrompt).toContain('creator_notes');
+        expect(request.userPrompt).toContain('A wizard');
+    });
+
+    it('buildBehaviorRequest returns a GenerationRequest with description and personality in user prompt', () => {
+        const builder = new DefaultPromptBuilder();
+        const request = builder.buildBehaviorRequest('A wizard', { name: 'Aldric' });
+
+        expect(request).toBeInstanceOf(GenerationRequest);
+        expect(request.userPrompt).toContain('description');
+        expect(request.userPrompt).toContain('personality');
+        expect(request.userPrompt).toContain('Aldric');
+    });
+
+    it('buildSceneRequest returns a GenerationRequest with scenario and first_mes in user prompt', () => {
+        const builder = new DefaultPromptBuilder();
+        const ctx = { name: 'Aldric', description: 'A tall mage', personality: 'Calm' };
+        const request = builder.buildSceneRequest('A wizard', ctx);
+
+        expect(request).toBeInstanceOf(GenerationRequest);
+        expect(request.userPrompt).toContain('scenario');
+        expect(request.userPrompt).toContain('first_mes');
+        expect(request.userPrompt).toContain('Aldric');
+    });
+
+    it('buildDialogueRequest returns a GenerationRequest with {{char}} and {{user}} and <START> in user prompt', () => {
+        const builder = new DefaultPromptBuilder();
+        const ctx = { name: 'Aldric', personality: 'Calm', first_mes: 'Greetings, traveler.' };
+        const request = builder.buildDialogueRequest('A wizard', ctx);
+
+        expect(request).toBeInstanceOf(GenerationRequest);
+        expect(request.userPrompt).toContain('{{char}}');
+        expect(request.userPrompt).toContain('{{user}}');
+        expect(request.userPrompt).toContain('<START>');
+    });
+
+    it('buildDialogueRequest system prompt says "Return ONLY the formatted dialogue"', () => {
+        const builder = new DefaultPromptBuilder();
+        const ctx = { name: 'Aldric', personality: 'Calm', first_mes: 'Greetings, traveler.' };
+        const request = builder.buildDialogueRequest('A wizard', ctx);
+
+        expect(request.systemPrompt).toContain('Return ONLY the formatted dialogue');
+    });
+
+    it('buildGreetingsRequest returns a GenerationRequest with "3" and "JSON array" in prompts', () => {
+        const builder = new DefaultPromptBuilder();
+        const ctx = { name: 'Aldric', first_mes: 'Greetings, traveler.', scenario: 'In a library.' };
+        const request = builder.buildGreetingsRequest('A wizard', ctx);
+
+        expect(request).toBeInstanceOf(GenerationRequest);
+        expect(request.userPrompt).toContain('3');
+        expect(request.systemPrompt.toLowerCase()).toContain('json array');
+    });
+
+    it('buildGreetingsRequest includes groupDescription in user prompt when provided', () => {
+        const builder = new DefaultPromptBuilder();
+        const ctx = { name: 'Aldric', first_mes: 'Greetings.', scenario: 'In a library.' };
+        const request = builder.buildGreetingsRequest('A wizard', ctx, { groupDescription: 'A trio of mages' });
+
+        expect(request.userPrompt).toContain('A trio of mages');
+    });
+});
+
+describe('DefaultPromptBuilder - field-by-field step method snapshots', () => {
+    it('buildMetadataRequest snapshot', () => {
+        const builder = new DefaultPromptBuilder();
+        const request = builder.buildMetadataRequest('A wise wizard');
+        expect(request.userPrompt).toMatchSnapshot();
+    });
+
+    it('buildBehaviorRequest snapshot', () => {
+        const builder = new DefaultPromptBuilder();
+        const request = builder.buildBehaviorRequest('A wise wizard', { name: 'Aldric' });
+        expect(request.userPrompt).toMatchSnapshot();
+    });
+
+    it('buildSceneRequest snapshot', () => {
+        const builder = new DefaultPromptBuilder();
+        const ctx = { name: 'Aldric', description: 'A tall mage.', personality: 'Calm and wise.' };
+        const request = builder.buildSceneRequest('A wise wizard', ctx);
+        expect(request.userPrompt).toMatchSnapshot();
+    });
+
+    it('buildDialogueRequest snapshot', () => {
+        const builder = new DefaultPromptBuilder();
+        const ctx = { name: 'Aldric', personality: 'Calm and wise.', first_mes: 'Greetings, traveler.' };
+        const request = builder.buildDialogueRequest('A wise wizard', ctx);
+        expect(request.userPrompt).toMatchSnapshot();
+    });
+
+    it('buildGreetingsRequest snapshot', () => {
+        const builder = new DefaultPromptBuilder();
+        const ctx = { name: 'Aldric', first_mes: 'Greetings, traveler.', scenario: 'In a library.' };
+        const request = builder.buildGreetingsRequest('A wise wizard', ctx);
+        expect(request.userPrompt).toMatchSnapshot();
+    });
+});

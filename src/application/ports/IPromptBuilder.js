@@ -113,13 +113,15 @@ export class IPromptBuilder {
 
     // eslint-disable-next-line jsdoc/require-returns-check
     /**
-     * Build a request to generate alternate greetings for a character.
+     * Build a request for step 5: alternate_greetings as a JSON array.
      *
-     * @param {string} _description - character concept in plain language
-     * @param {{ name: string, first_mes: string, scenario: string }} _character - core character data so far
-     * @returns {import('../../domain/value-objects/GenerationRequest.js').GenerationRequest} generation request
+     * @param {string} _description - character concept
+     * @param {{name: string, first_mes: string, scenario: string}} _context - prior step output
+     * @param {object} [_options] - generation options
+     * @param {string} [_options.groupDescription] - parent group concept for group_only_greetings
+     * @returns {import('../../domain/value-objects/GenerationRequest.js').GenerationRequest}
      */
-    buildGreetingsRequest(_description, _character) {
+    buildGreetingsRequest(_description, _context, _options = {}) {
         throw new Error('IPromptBuilder.buildGreetingsRequest must be implemented by subclass');
     }
 }

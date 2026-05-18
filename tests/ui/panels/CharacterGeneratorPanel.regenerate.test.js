@@ -71,7 +71,7 @@ describe('CharacterGeneratorPanel - regenerate button presence', () => {
         panel.showPreview();
 
         const regenBtns = targetElement.querySelectorAll('.regen-btn');
-        expect(regenBtns.length).toBe(6);
+        expect(regenBtns.length).toBe(8);
 
         targetElement.remove();
     });

@@ -22,6 +22,8 @@ export class CharacterPreviewBuilder {
             this.buildFieldHtml('edit-scenario', 'Scenario', 'scenario', false, 3),
             this.buildFieldHtml('edit-first-mes', 'First Message', 'first_mes', false, 2),
             this.buildFieldHtml('edit-mes-example', 'Example Dialogue', 'mes_example', false, 3),
+            this.buildFieldHtml('edit-creator-notes', 'Creator Notes', 'creator_notes', false, 2),
+            this.buildFieldHtml('edit-tags', 'Tags (comma-separated)', 'tags', true),
         ].join('');
         return `<div class="preview-character">${fields}</div>` +
             this.buildAlternateGreetingsHtml(character) +

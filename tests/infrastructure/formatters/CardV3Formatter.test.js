@@ -305,9 +305,16 @@ describe('CardV3Formatter - null/undefined optional field fallbacks', () => {
         expect(result.data.tags).toEqual(['fantasy', 'mage']);
     });
 
-    it('should always output extensions as an empty object', () => {
+    it('should include talkativeness in extensions', () => {
         const formatter = new CardV3Formatter();
         const result = formatter.format(makePlainCharacter());
-        expect(result.data.extensions).toEqual({});
+        expect(result.data.extensions).toHaveProperty('talkativeness');
+        expect(result.data.extensions.talkativeness).toBe('0.5'); // default
+    });
+
+    it('should use character talkativeness when provided', () => {
+        const formatter = new CardV3Formatter();
+        const result = formatter.format(makePlainCharacter({ talkativeness: '0.8' }));
+        expect(result.data.extensions.talkativeness).toBe('0.8');
     });
 });
