@@ -388,6 +388,30 @@ Two prompt builders ship. Both extend `BasePromptBuilder`, which provides the sh
 
 The system prompt content in each builder is static text. Updating community best practices means editing the string in the relevant builder class.
 
+## Character Generation Pipeline
+
+Character generation uses a **five-step sequential pipeline** rather than a single JSON-blob LLM call. Each step calls the LLM once with a focused, minimal prompt:
+
+| Step | Fields | LLM Output Format |
+|---|---|---|
+| 1 · Metadata | `name`, `creator_notes`, `tags`, `talkativeness` | Small JSON (4 fields) |
+| 2 · Behavior | `description`, `personality` | Small JSON (2 fields) |
+| 3 · Scene | `scenario`, `first_mes` | Small JSON (2 fields) |
+| 4 · Dialogue | `mes_example` | **Plain text** — no JSON |
+| 5 · Greetings | `alternate_greetings` | JSON array of 3 strings |
+
+### Rationale
+
+- **Reliability**: each JSON response is tiny and trivially parseable; format violations are far less likely.
+- **Quality**: focused prompts with targeted context outperform one monolithic prompt for most fields.
+- **Dialogue format**: `mes_example` is the most format-sensitive field (requires `<START>`, `{{char}}:`, `{{user}}:`). Returning it as plain text eliminates JSON-escaping ambiguity and allows direct format enforcement.
+- **Progressive UI**: the `execute(description, options, onProgress)` callback fires after each step, allowing the UI to populate form fields incrementally as generation proceeds.
+- **Future extensibility**: adding a new field means adding one step method to `IPromptBuilder` and one `await` in the pipeline — no changes to other steps.
+
+### Trade-offs
+
+This approach makes ~5 LLM calls per character instead of 1, which is slower. The quality and reliability improvement justifies this cost for an interactive tool where the user is waiting and reviewing the result.
+
 ## Testing strategy
 
 | Layer | What to test | How |

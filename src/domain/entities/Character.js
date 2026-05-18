@@ -104,6 +104,9 @@ export class Character {
     /** @type {string[]} genre, role, and character-type tags */
     tags;
 
+    /** @type {string|undefined} optional talkativeness value ("0.0"–"1.0") */
+    talkativeness;
+
     /**
      * Construct a Character from raw data. Validates required fields.
      *
@@ -120,6 +123,7 @@ export class Character {
      * @param {string[]} [data.alternate_greetings] - optional alternate opening messages
      * @param {string[]} [data.group_only_greetings] - optional group-chat-specific opening messages
      * @param {string[]} [data.tags] - optional genre/role/character-type tags
+     * @param {string} [data.talkativeness] - optional talkativeness value ("0.0"–"1.0")
      */
     constructor(data) {
         const required = ['name', 'description', 'personality', 'scenario', 'first_mes', 'mes_example'];
@@ -145,5 +149,6 @@ export class Character {
         this.alternate_greetings = data.alternate_greetings ?? [];
         this.group_only_greetings = data.group_only_greetings ?? [];
         this.tags = data.tags ?? [];
+        this.talkativeness = data.talkativeness ?? undefined;
     }
 }

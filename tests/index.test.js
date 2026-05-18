@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { buildInlineDrawer } from '../index.js';
+import { buildInlineDrawer, injectSidebarButton } from '../index.js';
 
 describe('index.js entry point', () => {
     let originalDocument;
@@ -107,5 +107,79 @@ describe('buildInlineDrawer', () => {
         const drawer = buildInlineDrawer(createMockContainer());
         expect(drawer.querySelector('#settings-panel')).not.toBeNull();
         expect(drawer.querySelector('#character-forge-panel')).not.toBeNull();
+    });
+});
+
+describe('injectSidebarButton', () => {
+    /** @type {HTMLElement} */
+    let createButton;
+    /** @type {HTMLElement} */
+    let drawer;
+    /** @type {HTMLElement} */
+    let drawerContent;
+
+    beforeEach(() => {
+        // Set up a minimal DOM with ST's #create_button and the forge drawer
+        createButton = document.createElement('button');
+        createButton.id = 'create_button';
+        document.body.appendChild(createButton);
+
+        drawer = document.createElement('div');
+        drawer.id = 'character-forge-extension-drawer';
+        drawer.className = 'inline_drawer';
+
+        drawerContent = document.createElement('div');
+        drawerContent.className = 'inline_drawer_content';
+        drawerContent.style.display = 'none';
+        drawer.appendChild(drawerContent);
+
+        document.body.appendChild(drawer);
+    });
+
+    afterEach(() => {
+        document.body.innerHTML = '';
+    });
+
+    it('inserts #character-forge-sidebar-btn after #create_button when it exists', () => {
+        injectSidebarButton(drawer);
+
+        const btn = document.getElementById('character-forge-sidebar-btn');
+        expect(btn).not.toBeNull();
+        expect(btn?.tagName).toBe('BUTTON');
+        expect(btn?.textContent).toBe('✦ Generate');
+        expect(btn?.classList.contains('menu_button')).toBe(true);
+    });
+
+    it('places the sidebar button immediately after #create_button in the DOM', () => {
+        injectSidebarButton(drawer);
+
+        const btn = document.getElementById('character-forge-sidebar-btn');
+        expect(btn?.previousElementSibling?.id).toBe('create_button');
+    });
+
+    it('opens the drawer content when the sidebar button is clicked', () => {
+        injectSidebarButton(drawer);
+
+        const btn = /** @type {HTMLElement} */ (document.getElementById('character-forge-sidebar-btn'));
+        expect(drawerContent.style.display).toBe('none');
+
+        btn.click();
+
+        expect(drawerContent.style.display).toBe('block');
+    });
+
+    it('does not inject a button when #create_button is absent', () => {
+        document.body.removeChild(createButton);
+
+        injectSidebarButton(drawer);
+
+        const btn = document.getElementById('character-forge-sidebar-btn');
+        expect(btn).toBeNull();
+    });
+
+    it('does not throw when #create_button is absent', () => {
+        document.body.removeChild(createButton);
+
+        expect(() => injectSidebarButton(drawer)).not.toThrow();
     });
 });

@@ -9,6 +9,7 @@ import { CharacterPreviewBuilder } from './CharacterPreviewBuilder.js';
 import { CharacterLoaderPanel } from './CharacterLoaderPanel.js';
 import { startImageGeneration } from './CharacterImageGenTrigger.js';
 import { CharacterDraft } from '../../domain/value-objects/CharacterDraft.js';
+
 /**
  * Character generator panel component.
  */
@@ -82,112 +83,190 @@ export class CharacterGeneratorPanel {
      */
     attachEventListeners() {
         const generateBtn = this.element?.querySelector('#generate-button');
-        if (generateBtn) {
-            generateBtn.addEventListener('click', () => this.onGenerateClick());
-        }
-
+        if (generateBtn) generateBtn.addEventListener('click', () => this.onGenerateClick());
         const saveBtn = this.element?.querySelector('#save-button');
-        if (saveBtn) {
-            saveBtn.addEventListener('click', () => this.onSaveClick());
-        }
-
+        if (saveBtn) saveBtn.addEventListener('click', () => this.onSaveClick());
         const editBtn = this.element?.querySelector('#edit-button');
-        if (editBtn) {
-            editBtn.addEventListener('click', () => this.onEditClick());
-        }
+        if (editBtn) editBtn.addEventListener('click', () => this.onEditClick());
     }
 
     /**
-     * Handle the generate button click. Calls use cases to generate character
-     * and lorebook, then shows preview or saves based on auto-save setting.
+     * Handle the generate button click. Shows skeleton preview immediately,
+     * then populates fields progressively as each generation step completes.
      *
      * @returns {Promise<void>}
      */
     async onGenerateClick() {
-        if (this.isGenerating) {
-            return;
-        }
-
+        if (this.isGenerating) return;
         const textarea = /** @type {HTMLTextAreaElement} */ (
             this.element?.querySelector('#character-description')
         );
         const description = textarea?.value.trim();
-
         if (!description) {
             this.container?.notifier?.error('Please enter a character description');
             return;
         }
-
         this.isGenerating = true;
         this.currentDescription = description;
-        this.clearStatus();
         const generateBtn = /** @type {HTMLButtonElement} */ (
             this.element?.querySelector('#generate-button')
         );
-        if (generateBtn) {
-            generateBtn.disabled = true;
-        }
-
+        if (generateBtn) generateBtn.disabled = true;
+        this.showSkeletonPreview();
         try {
             this.container?.logger?.info('Starting character generation', { descriptionLength: description.length });
-            this.showStatus('Generating character…', 'info');
-
             const customSystemPrompt = this.container.configStore?.get('customSystemPromptOverride', '') || undefined;
             const options = customSystemPrompt ? { customSystemPrompt } : {};
-            const character = await this.container.generateCharacter.execute(description, options);
-
-            this.showStatus('Generating lorebook…', 'info');
+            const character = await this.container.generateCharacter.execute(
+                description, options, (step, data) => this._fillProgressFields(step, data),
+            );
             const rawCount = this.container.configStore?.get('lorebookEntryCount', 'auto');
             const entryCount = rawCount === 'auto' ? undefined : parseInt(rawCount, 10);
             const lorebook = await this.container.generateLorebook.execute(description, { entryCount });
             this.draft = new CharacterDraft({ character, lorebook });
-
             this.container?.logger?.info('Generation complete');
-            // Check auto-save setting
+            this._rebuildLorebookSection();
+            this.setLorebookEntryValues();
+            this._enablePreviewActions();
             const autoSaveCheckbox = /** @type {HTMLInputElement} */ (
                 this.element?.querySelector('#auto-save-checkbox')
             );
-            if (autoSaveCheckbox?.checked) {
-                await this.onSaveClick();
-            } else {
-                this.showPreview();
-            }
+            if (autoSaveCheckbox?.checked) await this.onSaveClick();
+            this.clearStatus();
         } catch (error) {
             this.container?.logger?.error('Generation failed', { error: error.message });
             this.container?.notifier?.error(`Generation failed: ${error.message}`);
             this.showStatus(`Generation failed: ${error.message}`, 'error');
         } finally {
             this.isGenerating = false;
-            if (generateBtn) {
-                generateBtn.disabled = false;
-            }
+            if (generateBtn) generateBtn.disabled = false;
         }
     }
 
     /**
+     * Show an empty skeleton preview before any LLM awaits. Hides inputs,
+     * renders blank fields, disables actions, attaches listeners.
+     */
+    showSkeletonPreview() {
+        const previewSection = /** @type {HTMLElement} */ (this.element?.querySelector('#preview-section'));
+        const previewContent = /** @type {HTMLElement} */ (this.element?.querySelector('#preview-content'));
+        if (!previewSection || !previewContent) return;
+        this.hideInputSections();
+        const skeleton = {
+            name: '', description: '', personality: '', scenario: '',
+            first_mes: '', mes_example: '', creator_notes: '', tags: [],
+            talkativeness: '', alternate_greetings: ['', '', ''],
+        };
+        previewContent.innerHTML = new CharacterPreviewBuilder().buildPreviewHtml(
+            /** @type {any} */ (skeleton), null,
+        );
+        previewSection.style.display = 'block';
+        CharacterPreviewBuilder.attachStatsListeners(previewContent);
+        this._disablePreviewActions();
+        this.attachPreviewEditListeners();
+        new CharacterFieldRegenerator(this.element, this.container, this).attach();
+    }
+
+    /**
+     * Fill preview fields as each generation step completes.
+     * Called via the onProgress callback from GenerateCharacterFromDescription.
+     *
+     * @param {string} step - step name: 'metadata'|'behavior'|'scene'|'dialogue'|'greetings'
+     * @param {object} data - step result data
+     */
+    _fillProgressFields(step, data) {
+        const fill = (id, value) => {
+            const el = /** @type {HTMLInputElement|HTMLTextAreaElement|null} */ (
+                this.element?.querySelector(id)
+            );
+            if (el) el.value = value ?? '';
+        };
+        if (step === 'metadata') {
+            fill('#edit-name', data.name);
+            fill('#edit-creator-notes', data.creator_notes);
+            fill('#edit-tags', Array.isArray(data.tags) ? data.tags.join(', ') : '');
+        } else if (step === 'behavior') {
+            fill('#edit-description', data.description);
+            fill('#edit-personality', data.personality);
+        } else if (step === 'scene') {
+            fill('#edit-scenario', data.scenario);
+            fill('#edit-first-mes', data.first_mes);
+        } else if (step === 'dialogue') {
+            fill('#edit-mes-example', data.mes_example);
+        } else if (step === 'greetings') {
+            this._fillGreetingsStep(data, fill);
+        }
+        const pc = /** @type {HTMLElement} */ (this.element?.querySelector('#preview-content'));
+        if (pc) CharacterPreviewBuilder.attachStatsListeners(pc);
+    }
+
+    /**
+     * Fill alternate greetings step fields, rebuilding the greetings HTML section.
+     *
+     * @param {object} data - step data with alternate_greetings array
+     * @param {Function} fill - helper to set an input value by selector
+     */
+    _fillGreetingsStep(data, fill) {
+        const greetings = data.alternate_greetings ?? [];
+        const section = this.element?.querySelector('.preview-alternate-greetings');
+        if (section) {
+            const wrapper = document.createElement('div');
+            wrapper.innerHTML = new CharacterPreviewBuilder().buildAlternateGreetingsHtml(
+                /** @type {any} */ ({ alternate_greetings: greetings }),
+            );
+            section.replaceWith(wrapper.firstElementChild);
+            this.attachPreviewEditListeners();
+        }
+        for (let i = 0; i < greetings.length; i++) fill('#edit-alt-greeting-' + i, greetings[i] ?? '');
+    }
+
+    /**
+     * Rebuild lorebook section after lorebook generation, replacing the
+     * skeleton placeholder and re-attaching change listeners.
+     */
+    _rebuildLorebookSection() {
+        const section = this.element?.querySelector('.preview-lorebook');
+        if (!section || !this.draft?.lorebook) return;
+        const wrapper = document.createElement('div');
+        wrapper.innerHTML = new CharacterPreviewBuilder().buildLorebookHtml(this.draft.lorebook);
+        section.replaceWith(wrapper.firstElementChild);
+        this.attachPreviewEditListeners();
+    }
+
+    /**
+     * Disable save and edit buttons during progressive generation.
+     */
+    _disablePreviewActions() {
+        const saveBtn = /** @type {HTMLButtonElement} */ (this.element?.querySelector('#save-button'));
+        const editBtn = /** @type {HTMLButtonElement} */ (this.element?.querySelector('#edit-button'));
+        if (saveBtn) saveBtn.disabled = true;
+        if (editBtn) editBtn.disabled = true;
+    }
+
+    /**
+     * Enable save and edit buttons once generation is complete.
+     */
+    _enablePreviewActions() {
+        const saveBtn = /** @type {HTMLButtonElement} */ (this.element?.querySelector('#save-button'));
+        const editBtn = /** @type {HTMLButtonElement} */ (this.element?.querySelector('#edit-button'));
+        if (saveBtn) saveBtn.disabled = false;
+        if (editBtn) editBtn.disabled = false;
+    }
+
+    /**
      * Show the preview section with generated character and lorebook.
-     * Renders fields as editable inputs.
+     * Used when loading an existing character for editing.
      */
     showPreview() {
-        const previewSection = /** @type {HTMLElement} */ (
-            this.element?.querySelector('#preview-section')
-        );
-        const previewContent = /** @type {HTMLElement} */ (
-            this.element?.querySelector('#preview-content')
-        );
-
-        if (!previewSection || !previewContent) {
-            return;
-        }
-
+        const previewSection = /** @type {HTMLElement} */ (this.element?.querySelector('#preview-section'));
+        const previewContent = /** @type {HTMLElement} */ (this.element?.querySelector('#preview-content'));
+        if (!previewSection || !previewContent) return;
         this.hideInputSections();
-
-        const builder = new CharacterPreviewBuilder();
-        previewContent.innerHTML = builder.buildPreviewHtml(
+        previewContent.innerHTML = new CharacterPreviewBuilder().buildPreviewHtml(
             this.draft.character, this.draft.lorebook,
         );
         previewSection.style.display = 'block';
-
+        this.clearStatus();
         this.setCharacterFieldValues();
         this.setLorebookEntryValues();
         CharacterPreviewBuilder.attachStatsListeners(previewContent);
@@ -206,7 +285,7 @@ export class CharacterGeneratorPanel {
     }
 
     /**
-     * Set values for character editable fields.
+     * Set character editable field values from the current draft.
      */
     setCharacterFieldValues() {
         const fields = [
@@ -216,63 +295,46 @@ export class CharacterGeneratorPanel {
             { id: '#edit-scenario', prop: 'scenario' },
             { id: '#edit-first-mes', prop: 'first_mes' },
             { id: '#edit-mes-example', prop: 'mes_example' },
+            { id: '#edit-creator-notes', prop: 'creator_notes' },
+            { id: '#edit-tags', prop: 'tags', transform: (v) => (Array.isArray(v) ? v.join(', ') : (v || '')) },
         ];
-
         for (const field of fields) {
             const input = /** @type {HTMLInputElement|HTMLTextAreaElement} */ (
                 this.element?.querySelector(field.id)
             );
             if (input) {
-                input.value = this.draft.character[field.prop];
+                input.value = field.transform
+                    ? field.transform(this.draft.character[field.prop])
+                    : this.draft.character[field.prop];
             }
         }
-
         const greetings = this.draft?.character?.alternate_greetings ?? [];
         for (let i = 0; i < greetings.length; i++) {
             const ta = /** @type {HTMLTextAreaElement} */ (
-                this.element?.querySelector(`#edit-alt-greeting-${i}`)
+                this.element?.querySelector('#edit-alt-greeting-' + i)
             );
-            if (ta) {
-                ta.value = greetings[i];
-            }
+            if (ta) ta.value = greetings[i];
         }
     }
 
     /**
-     * Set values for lorebook entry editable fields.
+     * Set lorebook entry editable field values from the current draft.
      */
     setLorebookEntryValues() {
-        if (!this.draft?.lorebook?.entries?.length) {
-            return;
-        }
-
+        if (!this.draft?.lorebook?.entries?.length) return;
         for (let i = 0; i < this.draft.lorebook.entries.length; i++) {
             const entry = this.draft.lorebook.entries[i];
-            const nameInput = /** @type {HTMLInputElement} */ (
-                this.element?.querySelector(`#edit-entry-name-${i}`)
-            );
-            if (nameInput) {
-                nameInput.value = entry.name || '';
-            }
-
-            const keysInput = /** @type {HTMLInputElement} */ (
-                this.element?.querySelector(`#edit-entry-keys-${i}`)
-            );
-            if (keysInput) {
-                keysInput.value = entry.keys.join(', ');
-            }
-
-            const contentInput = /** @type {HTMLTextAreaElement} */ (
-                this.element?.querySelector(`#edit-entry-content-${i}`)
-            );
-            if (contentInput) {
-                contentInput.value = entry.content;
-            }
+            const nameInput = /** @type {HTMLInputElement} */ (this.element?.querySelector('#edit-entry-name-' + i));
+            if (nameInput) nameInput.value = entry.name || '';
+            const keysInput = /** @type {HTMLInputElement} */ (this.element?.querySelector('#edit-entry-keys-' + i));
+            if (keysInput) keysInput.value = entry.keys.join(', ');
+            const contentInput = /** @type {HTMLTextAreaElement} */ (this.element?.querySelector('#edit-entry-content-' + i));
+            if (contentInput) contentInput.value = entry.content;
         }
     }
 
     /**
-     * Attach listeners to editable preview fields to track changes.
+     * Attach listeners to editable preview fields to track draft changes.
      */
     attachPreviewEditListeners() {
         const charFields = [
@@ -282,6 +344,7 @@ export class CharacterGeneratorPanel {
             { id: '#edit-scenario', prop: 'scenario' },
             { id: '#edit-first-mes', prop: 'first_mes' },
             { id: '#edit-mes-example', prop: 'mes_example' },
+            { id: '#edit-creator-notes', prop: 'creator_notes' },
         ];
         for (const { id, prop } of charFields) {
             const el = this.element?.querySelector(id);
@@ -291,17 +354,13 @@ export class CharacterGeneratorPanel {
                 });
             }
         }
-
         this.element?.querySelectorAll('.edit-entry-name').forEach((input) => {
             input.addEventListener('change', (e) => {
                 const target = /** @type {HTMLInputElement} */ (e.target);
                 const idx = parseInt(target.dataset.index, 10);
-                if (this.draft?.lorebook?.entries[idx]) {
-                    this.draft.lorebook.entries[idx].name = target.value;
-                }
+                if (this.draft?.lorebook?.entries[idx]) this.draft.lorebook.entries[idx].name = target.value;
             });
         });
-
         this.element?.querySelectorAll('.edit-entry-keys').forEach((input) => {
             input.addEventListener('change', (e) => {
                 const target = /** @type {HTMLInputElement} */ (e.target);
@@ -312,17 +371,13 @@ export class CharacterGeneratorPanel {
                 }
             });
         });
-
         this.element?.querySelectorAll('.edit-entry-content').forEach((input) => {
             input.addEventListener('change', (e) => {
                 const target = /** @type {HTMLTextAreaElement} */ (e.target);
                 const idx = parseInt(target.dataset.index, 10);
-                if (this.draft?.lorebook?.entries[idx]) {
-                    this.draft.lorebook.entries[idx].content = target.value;
-                }
+                if (this.draft?.lorebook?.entries[idx]) this.draft.lorebook.entries[idx].content = target.value;
             });
         });
-
         this.element?.querySelectorAll('.edit-alt-greeting').forEach((input) => {
             input.addEventListener('change', (e) => {
                 const target = /** @type {HTMLTextAreaElement} */ (e.target);
@@ -332,31 +387,25 @@ export class CharacterGeneratorPanel {
                 }
             });
         });
+        const tagsEl = this.element?.querySelector('#edit-tags');
+        if (tagsEl) {
+            tagsEl.addEventListener('change', (e) => {
+                const value = /** @type {HTMLInputElement} */ (e.target).value;
+                this.draft.character.tags = value.split(',').map((t) => t.trim()).filter(Boolean);
+            });
+        }
     }
 
     /**
      * Hide the preview section and show input again.
      */
     hidePreview() {
-        const previewSection = /** @type {HTMLElement} */ (
-            this.element?.querySelector('#preview-section')
-        );
-        const inputSection = /** @type {HTMLElement} */ (
-            this.element?.querySelector('.input-section')
-        );
-        const controlsSection = /** @type {HTMLElement} */ (
-            this.element?.querySelector('.controls-section')
-        );
-
-        if (previewSection) {
-            previewSection.style.display = 'none';
-        }
-        if (inputSection) {
-            inputSection.style.display = 'block';
-        }
-        if (controlsSection) {
-            controlsSection.style.display = 'block';
-        }
+        const previewSection = /** @type {HTMLElement} */ (this.element?.querySelector('#preview-section'));
+        const inputSection = /** @type {HTMLElement} */ (this.element?.querySelector('.input-section'));
+        const controlsSection = /** @type {HTMLElement} */ (this.element?.querySelector('.controls-section'));
+        if (previewSection) previewSection.style.display = 'none';
+        if (inputSection) inputSection.style.display = 'block';
+        if (controlsSection) controlsSection.style.display = 'block';
     }
 
     /**
@@ -368,9 +417,7 @@ export class CharacterGeneratorPanel {
     }
 
     /**
-     * Load a CharacterDraft (from an existing card) into the preview/edit flow.
-     * Uses the character's description as the AI refinement context so that
-     * field-level regeneration has meaningful context for tweaks.
+     * Load a CharacterDraft into the preview/edit flow.
      *
      * @param {import('../../domain/value-objects/CharacterDraft.js').CharacterDraft} draft - loaded draft
      */
@@ -391,43 +438,27 @@ export class CharacterGeneratorPanel {
             this.container?.notifier?.error('No character to save');
             return;
         }
-
-        const saveBtn = /** @type {HTMLButtonElement} */ (
-            this.element?.querySelector('#save-button')
-        );
-        if (saveBtn) {
-            saveBtn.disabled = true;
-        }
-
+        const saveBtn = /** @type {HTMLButtonElement} */ (this.element?.querySelector('#save-button'));
+        if (saveBtn) saveBtn.disabled = true;
         try {
             this.container?.logger?.info('Saving character', { name: this.draft.character.name });
-
             await this.container.saveCharacter.execute(this.draft.character, this.draft.lorebook);
-
             this.container?.logger?.info('Character saved successfully');
             this.container?.notifier?.success('Character saved to SillyTavern');
             this.showStatus('Character saved to SillyTavern', 'success');
-
-            // Fire background image generation; does not block the save path.
             startImageGeneration(this.container, this.draft.character, this.draft.lorebook);
-
-            // Reset the panel
             this.draft = null;
             this.hidePreview();
             const textarea = /** @type {HTMLTextAreaElement} */ (
                 this.element?.querySelector('#character-description')
             );
-            if (textarea) {
-                textarea.value = '';
-            }
+            if (textarea) textarea.value = '';
         } catch (error) {
             this.container?.logger?.error('Save failed', { error: error.message });
             this.container?.notifier?.error(`Save failed: ${error.message}`);
             this.showStatus(`Save failed: ${error.message}`, 'error');
         } finally {
-            if (saveBtn) {
-                saveBtn.disabled = false;
-            }
+            if (saveBtn) saveBtn.disabled = false;
         }
     }
 
@@ -438,15 +469,11 @@ export class CharacterGeneratorPanel {
      * @param {'error'|'success'|'info'} [type] - visual style
      */
     showStatus(message, type = 'info') {
-        const section = /** @type {HTMLElement} */ (
-            this.element?.querySelector('#status-section')
-        );
-        if (!section) {
-            return;
-        }
+        const section = /** @type {HTMLElement} */ (this.element?.querySelector('#status-section'));
+        if (!section) return;
         section.innerHTML = '';
         const msg = document.createElement('div');
-        msg.className = `status-message status-${type}`;
+        msg.className = 'status-message status-' + type;
         msg.textContent = message;
         section.appendChild(msg);
     }
@@ -455,12 +482,8 @@ export class CharacterGeneratorPanel {
      * Clear the status section.
      */
     clearStatus() {
-        const section = /** @type {HTMLElement} */ (
-            this.element?.querySelector('#status-section')
-        );
-        if (section) {
-            section.innerHTML = '';
-        }
+        const section = /** @type {HTMLElement} */ (this.element?.querySelector('#status-section'));
+        if (section) section.innerHTML = '';
     }
 
     /**

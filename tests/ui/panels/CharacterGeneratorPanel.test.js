@@ -50,9 +50,17 @@ function createMockLorebook() {
  * @returns {object} mock container
  */
 function createMockContainer() {
+    const mockCharacter = createMockCharacter();
     return {
         generateCharacter: {
-            execute: vi.fn().mockResolvedValue(createMockCharacter()),
+            execute: vi.fn().mockImplementation(async (_desc, _opts, onProgress) => {
+                onProgress?.('metadata', { name: mockCharacter.name, creator_notes: '', tags: [] });
+                onProgress?.('behavior', { description: mockCharacter.description, personality: mockCharacter.personality });
+                onProgress?.('scene', { scenario: mockCharacter.scenario, first_mes: mockCharacter.first_mes });
+                onProgress?.('dialogue', { mes_example: mockCharacter.mes_example });
+                onProgress?.('greetings', { alternate_greetings: mockCharacter.alternate_greetings ?? [] });
+                return mockCharacter;
+            }),
         },
         generateLorebook: {
             execute: vi.fn().mockResolvedValue(createMockLorebook()),
@@ -183,7 +191,7 @@ describe('CharacterGeneratorPanel - Generation', () => {
 
         await panel.onGenerateClick();
 
-        expect(container.generateCharacter.execute).toHaveBeenCalledWith('A mysterious wizard', {});
+        expect(container.generateCharacter.execute).toHaveBeenCalledWith('A mysterious wizard', {}, expect.any(Function));
         expect(container.generateLorebook.execute).toHaveBeenCalledWith('A mysterious wizard', { entryCount: undefined });
     });
 
@@ -276,16 +284,19 @@ describe('CharacterGeneratorPanel - Preview', () => {
     });
 
     it('safely handles HTML in character preview inputs', async () => {
-        setup.container.generateCharacter.execute.mockResolvedValue(
-            new Character({
-                name: '<script>alert("xss")</script>',
-                description: '<img src=x onerror="alert(1)">',
-                personality: 'test',
-                scenario: 'test',
-                first_mes: 'test',
-                mes_example: 'test',
-            }),
-        );
+        const xssChar = new Character({
+            name: '<script>alert("xss")</script>',
+            description: '<img src=x onerror="alert(1)">',
+            personality: 'test',
+            scenario: 'test',
+            first_mes: 'test',
+            mes_example: 'test',
+        });
+        setup.container.generateCharacter.execute.mockImplementation(async (_d, _o, onProgress) => {
+            onProgress?.('metadata', { name: xssChar.name, creator_notes: '', tags: [] });
+            onProgress?.('behavior', { description: xssChar.description, personality: xssChar.personality });
+            return xssChar;
+        });
 
         await generateAndShowPreview(setup);
 

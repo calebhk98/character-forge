@@ -96,6 +96,7 @@ describe('CharacterGeneratorPanel - customSystemPrompt override', () => {
         expect(container.generateCharacter.execute).toHaveBeenCalledWith(
             'A mysterious wizard',
             expect.objectContaining({ customSystemPrompt: override }),
+            expect.any(Function),
         );
     });
 

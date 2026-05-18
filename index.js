@@ -66,6 +66,7 @@ async function setup() {
     if (settingsRoot) {
         const drawer = buildInlineDrawer(container);
         settingsRoot.appendChild(drawer);
+        injectSidebarButton(drawer);
     }
 
     console.log('[Character Forge] Extension loaded');
@@ -120,6 +121,47 @@ export function buildInlineDrawer(container) {
     drawer.appendChild(content);
 
     return drawer;
+}
+
+/**
+ * Inject a "✦ Generate" shortcut button directly into SillyTavern's character
+ * management sidebar, immediately after ST's own `#create_button`. Clicking
+ * the button opens the Character Forge drawer so users can reach it without
+ * navigating to the Extensions menu.
+ *
+ * If `#create_button` is not present (e.g. non-ST environments or test runners
+ * that do not render ST's HTML), the function exits silently without modifying
+ * the DOM.
+ *
+ * @param {HTMLElement} drawer - the forge inline-drawer element to open on click
+ * @returns {void}
+ */
+export function injectSidebarButton(drawer) {
+    const createButton = document.getElementById('create_button');
+    if (!createButton) {
+        return;
+    }
+
+    const btn = document.createElement('button');
+    btn.id = 'character-forge-sidebar-btn';
+    btn.className = 'menu_button';
+    btn.textContent = '✦ Generate';
+
+    btn.addEventListener('click', () => {
+        const content = drawer.querySelector('.inline_drawer_content');
+        if (content instanceof HTMLElement && content.style.display === 'none') {
+            content.style.display = 'block';
+            const icon = drawer.querySelector('.inline_drawer_icon');
+            if (icon) {
+                icon.className = 'inline_drawer_icon fa-solid fa-circle-chevron-up';
+            }
+        }
+        if (typeof drawer.scrollIntoView === 'function') {
+            drawer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    });
+
+    createButton.insertAdjacentElement('afterend', btn);
 }
 
 // ST loads extensions by injecting a <script type="module"> tag pointing at the

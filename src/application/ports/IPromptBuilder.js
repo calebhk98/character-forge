@@ -63,4 +63,65 @@ export class IPromptBuilder {
     buildGroupDecompositionRequest(_groupDescription, _options = {}) {
         throw new Error('IPromptBuilder.buildGroupDecompositionRequest must be implemented by subclass');
     }
+
+    // eslint-disable-next-line jsdoc/require-returns-check
+    /**
+     * Build a request to generate character metadata (name, creator notes).
+     *
+     * @param {string} _description - character concept in plain language
+     * @returns {import('../../domain/value-objects/GenerationRequest.js').GenerationRequest} generation request
+     */
+    buildMetadataRequest(_description) {
+        throw new Error('IPromptBuilder.buildMetadataRequest must be implemented by subclass');
+    }
+
+    // eslint-disable-next-line jsdoc/require-returns-check
+    /**
+     * Build a request to generate character behavior (description, personality).
+     *
+     * @param {string} _description - character concept in plain language
+     * @param {{ name: string }} _metadata - previously generated metadata
+     * @returns {import('../../domain/value-objects/GenerationRequest.js').GenerationRequest} generation request
+     */
+    buildBehaviorRequest(_description, _metadata) {
+        throw new Error('IPromptBuilder.buildBehaviorRequest must be implemented by subclass');
+    }
+
+    // eslint-disable-next-line jsdoc/require-returns-check
+    /**
+     * Build a request to generate character scene (scenario, system prompt).
+     *
+     * @param {string} _description - character concept in plain language
+     * @param {{ name: string, description: string, personality: string }} _behavior - previously generated behavior
+     * @returns {import('../../domain/value-objects/GenerationRequest.js').GenerationRequest} generation request
+     */
+    buildSceneRequest(_description, _behavior) {
+        throw new Error('IPromptBuilder.buildSceneRequest must be implemented by subclass');
+    }
+
+    // eslint-disable-next-line jsdoc/require-returns-check
+    /**
+     * Build a request to generate character dialogue examples.
+     *
+     * @param {string} _description - character concept in plain language
+     * @param {{ name: string, personality: string, first_mes: string }} _scene - previously generated scene data
+     * @returns {import('../../domain/value-objects/GenerationRequest.js').GenerationRequest} generation request
+     */
+    buildDialogueRequest(_description, _scene) {
+        throw new Error('IPromptBuilder.buildDialogueRequest must be implemented by subclass');
+    }
+
+    // eslint-disable-next-line jsdoc/require-returns-check
+    /**
+     * Build a request for step 5: alternate_greetings as a JSON array.
+     *
+     * @param {string} _description - character concept
+     * @param {{name: string, first_mes: string, scenario: string}} _context - prior step output
+     * @param {object} [_options] - generation options
+     * @param {string} [_options.groupDescription] - parent group concept for group_only_greetings
+     * @returns {import('../../domain/value-objects/GenerationRequest.js').GenerationRequest}
+     */
+    buildGreetingsRequest(_description, _context, _options = {}) {
+        throw new Error('IPromptBuilder.buildGreetingsRequest must be implemented by subclass');
+    }
 }

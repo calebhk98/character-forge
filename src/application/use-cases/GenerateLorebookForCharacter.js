@@ -58,7 +58,9 @@ export class GenerateLorebookForCharacter {
                 return new LorebookEntry({
                     keys: entryData.keys,
                     content: entryData.content,
-                    name: entryData.name,
+                    name: entryData.name || (entryData.keys?.[0]
+                        ? entryData.keys[0].charAt(0).toUpperCase() + entryData.keys[0].slice(1)
+                        : `Entry ${index + 1}`),
                     comment: entryData.comment,
                     priority: entryData.priority ?? 0,
                     insertion_order: index,
