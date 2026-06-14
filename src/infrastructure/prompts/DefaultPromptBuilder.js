@@ -423,6 +423,7 @@ Return ONLY a valid JSON object with the "entries" array. No additional text.`;
      */
     buildGreetingsRequest(description, context, options = {}) {
         const { name, first_mes, scenario } = context;
+        const firstMesPreview = (first_mes || '').slice(0, 400);
         const systemPrompt =
             'You are writing alternate_greetings for a SillyTavern character card. ' +
             'Return a JSON array of EXACTLY 3 strings. ' +
@@ -431,14 +432,13 @@ Return ONLY a valid JSON object with the "entries" array. No additional text.`;
             `Character concept: "${description}"\n` +
             `Character name: ${name}\n` +
             `Scenario: ${scenario}\n\n` +
-            `Main opening message (for reference):\n${first_mes}\n\n` +
-            'Write 3 alternate opening messages, each 150–300 words. ' +
+            `Main opening message (reference, truncated):\n${firstMesPreview}\n\n` +
+            'Write 3 alternate opening messages, each 75–150 words. ' +
             'Same quality bar as the main opening (narrative scene, action + dialogue, ends with hook):\n' +
             '1. A different TONE (must contrast the main opening)\n' +
             '2. A different SCENARIO (e.g. first encounter, mid-crisis, unusual setting)\n' +
             '3. A GROUP-CHAT-SAFE opener — no assumed prior context, written to engage multiple readers\n\n' +
-            'Each must be meaningfully different — not a minor rewrite.\n' +
-            'You may optionally use {{random::a::b::c}} in scenario or first_mes to add variety across sessions.\n\n' +
+            'Each must be meaningfully different — not a minor rewrite.\n\n' +
             'Return ONLY a JSON array: ["greeting 1 text", "greeting 2 text", "greeting 3 text"]';
         if (options.groupDescription) {
             userPrompt += `\n\nThis character is part of a group: "${options.groupDescription}". ` +

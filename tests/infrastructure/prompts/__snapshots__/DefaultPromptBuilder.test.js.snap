@@ -195,16 +195,15 @@ exports[`DefaultPromptBuilder - field-by-field step method snapshots > buildGree
 Character name: Aldric
 Scenario: In a library.
 
-Main opening message (for reference):
+Main opening message (reference, truncated):
 Greetings, traveler.
 
-Write 3 alternate opening messages, each 150–300 words. Same quality bar as the main opening (narrative scene, action + dialogue, ends with hook):
+Write 3 alternate opening messages, each 75–150 words. Same quality bar as the main opening (narrative scene, action + dialogue, ends with hook):
 1. A different TONE (must contrast the main opening)
 2. A different SCENARIO (e.g. first encounter, mid-crisis, unusual setting)
 3. A GROUP-CHAT-SAFE opener — no assumed prior context, written to engage multiple readers
 
 Each must be meaningfully different — not a minor rewrite.
-You may optionally use {{random::a::b::c}} in scenario or first_mes to add variety across sessions.
 
 Return ONLY a JSON array: ["greeting 1 text", "greeting 2 text", "greeting 3 text"]"
 `;
