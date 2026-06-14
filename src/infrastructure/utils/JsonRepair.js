@@ -59,15 +59,35 @@ export function isTruncated(input) {
 }
 
 /**
+ * Slice a string to the tightest JSON object or array boundary, discarding
+ * preamble/postamble text the LLM emits around the JSON value.
+ *
+ * @param {string} str - pre-trimmed string after stripping markdown
+ * @returns {string} string trimmed to the outermost JSON boundary, or the
+ *   original string unchanged when no boundary is found
+ */
+function extractJsonBoundary(str) {
+    const objStart = str.indexOf('{');
+    const arrStart = str.indexOf('[');
+    const useArr = arrStart !== -1 && (objStart === -1 || arrStart < objStart);
+    if (useArr) {
+        const arrEnd = str.lastIndexOf(']');
+        return arrEnd > arrStart ? str.slice(arrStart, arrEnd + 1) : str;
+    }
+    const objEnd = str.lastIndexOf('}');
+    return (objStart !== -1 && objEnd > objStart) ? str.slice(objStart, objEnd + 1) : str;
+}
+
+/**
  * Repair malformed JSON from LLM output.
  *
  * Attempts a sequence of repairs:
  * 1. Strip markdown code blocks (```json ... ```)
  * 2. Remove leading/trailing whitespace
- * 3. Escape unescaped newlines in strings
- * 4. Remove trailing commas before closing brackets
- * 5. Convert single quotes to double quotes in object keys
- * 6. Handle missing colons in key-value pairs
+ * 3. Extract JSON object or array boundaries (strips LLM preamble/postamble)
+ * 4. Escape unescaped newlines in strings
+ * 5. Remove trailing commas before closing brackets
+ * 6. Convert single quotes to double quotes as a last resort
  *
  * @param {string} input - raw LLM output
  * @returns {object|null} parsed JSON object or null if repair fails
@@ -82,16 +102,8 @@ export function repairJson(input) {
     // Strip markdown code blocks
     json = json.replace(/^```(?:json)?\s*/, '').replace(/\s*```$/, '');
 
-    // Trim whitespace
-    json = json.trim();
-
-    // Extract JSON object boundaries — handles preamble/postamble text that
-    // the LLM emits around the JSON (e.g. "Here is your character: {...} Note: …")
-    const jsonStart = json.indexOf('{');
-    const jsonEnd = json.lastIndexOf('}');
-    if (jsonStart !== -1 && jsonEnd > jsonStart) {
-        json = json.slice(jsonStart, jsonEnd + 1);
-    }
+    // Trim whitespace, then slice to the outermost JSON boundary
+    json = extractJsonBoundary(json.trim());
 
     // Try direct parse first
     try {

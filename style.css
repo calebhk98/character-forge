@@ -164,3 +164,38 @@
     color: inherit;
     opacity: 0.75;
 }
+
+.edit-input,
+.edit-textarea {
+    width: 100%;
+    padding: 0.5rem;
+    background-color: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: inherit;
+    font-family: inherit;
+    font-size: inherit;
+    border-radius: 4px;
+    box-sizing: border-box;
+}
+
+.edit-input:focus,
+.edit-textarea:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.4);
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.regen-btn {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: inherit;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 0.2rem 0.5rem;
+    font-size: 1rem;
+    line-height: 1;
+}
+
+.regen-btn:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
