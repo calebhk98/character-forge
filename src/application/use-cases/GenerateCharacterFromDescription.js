@@ -61,6 +61,7 @@ function parseStepJson(response, context, required, jsonRepair, logger) {
  * @returns {string[]} greetings array
  */
 function parseGreetingsArray(response, jsonRepair, logger) {
+    logger.debug('parseGreetingsArray: raw response', { length: response?.length, preview: response?.slice(0, 200) });
     let parsed;
     try {
         parsed = JSON.parse(response);
@@ -202,6 +203,8 @@ export class GenerateCharacterFromDescription {
 
     /**
      * Step 5: alternate_greetings as a string array.
+     * Returns an empty array (with a warning) when the LLM response cannot be
+     * parsed, so a JSON failure here never aborts the rest of the generation.
      *
      * @private
      * @param {string} description
@@ -213,6 +216,12 @@ export class GenerateCharacterFromDescription {
         this.logger.debug('Step 5: generating greetings');
         const request = this.promptBuilder.buildGreetingsRequest(description, context, options);
         const response = await this.llmProvider.generate(request);
-        return parseGreetingsArray(response, this.jsonRepair, this.logger);
+        this.logger.debug('Step 5: raw greetings response', { response });
+        try {
+            return parseGreetingsArray(response, this.jsonRepair, this.logger);
+        } catch (err) {
+            this.logger.warn('Alternate greetings could not be parsed; continuing with empty array', { error: err.message, response });
+            return [];
+        }
     }
 }
