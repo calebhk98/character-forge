@@ -425,4 +425,29 @@ describe('GenerateCharacterFromDescription - Field defaults', () => {
         const character = await useCase.execute('A brave knight');
         expect(character.creator_notes).toBe('A test.');
     });
+
+    it('should return empty alternate_greetings and continue when LLM returns unparseable greetings', async () => {
+        const badGreetings = 'This is not JSON at all, just some prose text.';
+        const { useCase } = buildUseCase([META, BEHAVIOR, SCENE, DIALOGUE, badGreetings]);
+        const character = await useCase.execute('A brave knight');
+        expect(character.alternate_greetings).toEqual([]);
+    });
+
+    it('should log a warning when greetings parsing fails', async () => {
+        const badGreetings = 'This is not JSON at all, just some prose text.';
+        const { useCase, logger } = buildUseCase([META, BEHAVIOR, SCENE, DIALOGUE, badGreetings]);
+        await useCase.execute('A brave knight');
+        const warnMessages = logger.messages.filter((m) => m.level === 'warn');
+        expect(warnMessages.length).toBeGreaterThan(0);
+    });
+
+    it('should still fire the greetings onProgress callback with empty array when parsing fails', async () => {
+        const badGreetings = 'This is not JSON at all, just some prose text.';
+        const { useCase } = buildUseCase([META, BEHAVIOR, SCENE, DIALOGUE, badGreetings]);
+        const steps = [];
+        await useCase.execute('A brave knight', {}, (step, data) => steps.push({ step, data }));
+        const greetingsStep = steps.find((s) => s.step === 'greetings');
+        expect(greetingsStep).toBeDefined();
+        expect(greetingsStep.data.alternate_greetings).toEqual([]);
+    });
 });
