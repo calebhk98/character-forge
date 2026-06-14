@@ -387,7 +387,7 @@ Return ONLY a valid JSON object with the "entries" array. No additional text.`;
             'descriptions (*action*) with natural dialogue. End with something that invites the user to engage.\n' +
             'You may optionally use {{random::a::b::c}} in scenario or first_mes to add variety across sessions.\n\n' +
             'Return JSON: {"scenario": "...", "first_mes": "..."}';
-        return new GenerationRequest({ systemPrompt, userPrompt });
+        return new GenerationRequest({ systemPrompt, userPrompt, maxTokens: 800 });
     }
 
     /**
@@ -442,7 +442,8 @@ Return ONLY a valid JSON object with the "entries" array. No additional text.`;
             'You are writing alternate_greetings for a SillyTavern character card. ' +
             'Plan each greeting\'s distinct entry point before writing. ' +
             'Return a JSON array of EXACTLY 3 strings. ' +
-            'No markdown, no wrapper object — just the raw JSON array.';
+            'Do NOT use backticks or code blocks. ' +
+            'Start your response with [ and end with ]. Raw JSON only.';
         let userPrompt =
             `Character concept: "${description}"\n` +
             `Character name: ${name}\n` +
@@ -454,11 +455,11 @@ Return ONLY a valid JSON object with the "entries" array. No additional text.`;
             '2. A different SCENARIO (e.g. first encounter, mid-crisis, unusual setting)\n' +
             '3. A GROUP-CHAT-SAFE opener — no assumed prior context, written to engage multiple readers\n\n' +
             'Each must be meaningfully different — not a minor rewrite.\n\n' +
-            'Return ONLY a JSON array: ["greeting 1 text", "greeting 2 text", "greeting 3 text"]';
+            'Return ONLY a JSON array (NO code blocks, NO backticks): ["greeting 1 text", "greeting 2 text", "greeting 3 text"]';
         if (options.groupDescription) {
             userPrompt += `\n\nThis character is part of a group: "${options.groupDescription}". ` +
                 'Greeting 3 should reference the shared group context.';
         }
-        return new GenerationRequest({ systemPrompt, userPrompt });
+        return new GenerationRequest({ systemPrompt, userPrompt, maxTokens: 700 });
     }
 }
