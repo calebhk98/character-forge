@@ -40,6 +40,7 @@ export class JsonRepairAdapter extends IJsonRepair {
             const result = this.repair(input);
             if (!result) {
                 const suffix = context ? ` for ${context}` : '';
+                const preview = input.slice(0, 300).replace(/\n/g, ' ');
                 if (isTruncated(input)) {
                     throw new Error(
                         `LLM response was cut off mid-generation${suffix} (token limit reached). ` +
@@ -47,7 +48,8 @@ export class JsonRepairAdapter extends IJsonRepair {
                     );
                 }
                 throw new Error(
-                    `LLM returned invalid JSON${suffix} and repair failed. Please try again.`,
+                    `LLM returned invalid JSON${suffix} and repair failed. ` +
+                    `Raw response: "${preview}"`,
                 );
             }
             return result;
